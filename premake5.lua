@@ -26,17 +26,18 @@ project "DXRenderer"
 
     includedirs
     {
-        "%{prj.name}/src"
+        "%{prj.name}/src",
     }
     
-    links{
-            "d3d11.lib"
-        }
+    links
+    {
+        "d3d11.lib"
+    }
 
     files
     {
         "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp"
+        "%{prj.name}/src/**.cpp",
     }
 
     filter "configurations:Debug"

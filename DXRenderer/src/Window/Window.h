@@ -1,13 +1,13 @@
 #pragma once
 
-#include "WinUtils.h"
 #include "WindowClass.h"
-#include <string>
+#include "Input.h"
 
 #define DEFINE_WINDOW_CLASS(ClassName) friend class ClassName
 
 class Window
 {
+	using EventCallbackFn = std::function<void(Event&)>;
 public:
 	Window(uint32_t width = 1920, uint32_t height = 1080, const std::string& name = "Direct3D Window");
 	Window(const Window&) = delete;
@@ -20,6 +20,7 @@ public:
 	inline WinMessage GetWinMessage() const { return GetMessageImpl(Handle); }
 	inline static WinMessage GetAppMessage() { return GetMessageImpl(nullptr); }
 
+	void OnEvent(Event& event);
 private:
 	inline static WinMessage GetMessageImpl(HWND handle)
 	{
@@ -27,6 +28,8 @@ private:
 		auto result = GetMessage(&msg, handle, 0, 0);
 		return WinMessage(result, msg);
 	}
+
+	void SetEventCallbackFunction(const EventCallbackFn& fn);
 	
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
@@ -35,6 +38,10 @@ private:
 
 	DEFINE_WINDOW_CLASS(WindowClass);
 
+public:
+	Input EventHandler;
+
 private:
 	HWND Handle;
+	EventCallbackFn EventCallback;
 };

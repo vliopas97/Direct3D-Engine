@@ -18,5 +18,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 		return -1;
 	else
 		return msg.Message.wParam;
-
+	return 0;
 }

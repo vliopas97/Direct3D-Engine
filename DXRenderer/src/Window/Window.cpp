@@ -1,13 +1,22 @@
 #include "Window.h"
 #include <sstream>
+#include <iostream>
+
+#define GENERATE_KEYBOARD_EVENT(Event)  {Event event(static_cast<uint8>(wParam));\
+										OnEvent(event);}\
+										break\
 
 Window::Window(uint32_t width, uint32_t height, const std::string& name)
+	: EventHandler()
 {
 	Handle = CreateWindow(WindowClass::GetName().c_str(),
 						  std::wstring(name.begin(), name.end()).c_str(),
 						  WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 						  200, 200, width, height,
 						  nullptr, nullptr, WindowClass::GetInstance(), this);
+	if(!Handle)
+		throw WIN_EXCEPTION_LAST_ERROR;
+
 	Show(true);
 }
 
@@ -27,10 +36,15 @@ void Window::SetWindowName(const std::string& name)
 	SetWindowText(Handle, wName.c_str());
 }
 
-void Window::SetWindowName(HWND handle, const std::string& name)
+void Window::OnEvent(Event& event)
 {
-	std::wstring wName(name.begin(), name.end());
-	SetWindowText(handle, wName.c_str());
+	EventHandler.OnEvent(event);
+}
+
+
+void Window::SetEventCallbackFunction(const EventCallbackFn& fn)
+{
+	EventCallback = fn;
 }
 
 LRESULT Window::InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
@@ -49,7 +63,7 @@ LRESULT Window::InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam,
 
 LRESULT CALLBACK Window::WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	Window* const windowPtr = reinterpret_cast<Window*>(GetWindowLongPtr(windowHandle, GWLP_WNDPROC));
+	Window* const windowPtr = reinterpret_cast<Window*>(GetWindowLongPtr(windowHandle, GWLP_USERDATA));
 	return windowPtr->WindProcImpl(windowHandle, message, wParam, lParam);
 }
 
@@ -61,25 +75,11 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			PostQuitMessage(WM_CLOSE);
 			break;
 		case WM_KEYDOWN:
-			if (wParam == 'F')
-			{
-				Window::SetWindowName(windowHandle, "F Key Pressed!");
-			}
-			break;
+			GENERATE_KEYBOARD_EVENT(KeyPressedEvent);
 		case WM_CHAR:
-		{
-			static std::string title;
-			title.push_back((char)wParam);
-			Window::SetWindowName(windowHandle, title);
-		}
-		break;
-		case WM_LBUTTONDOWN:
-		{
-			POINTS pt = MAKEPOINTS(lParam);
-			std::ostringstream oss;
-			oss << "(" << pt.x << ", " << pt.y << ")";
-			Window::SetWindowName(windowHandle, oss.str());
-		}
+			GENERATE_KEYBOARD_EVENT(KeyTypedEvent);
+		case WM_KEYUP:
+			GENERATE_KEYBOARD_EVENT(KeyReleasedEvent);
 		break;
 		default:
 			break;
