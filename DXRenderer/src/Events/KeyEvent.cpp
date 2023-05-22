@@ -6,9 +6,14 @@ KeyEvent::KeyEvent(uint8 keycode)
 {
 }
 
-KeyPressedEvent::KeyPressedEvent(uint8 keycode)
-	:KeyEvent(keycode)
+KeyPressedEvent::KeyPressedEvent(uint8 keycode, bool repeated)
+	:KeyEvent(keycode), Repeated(repeated)
 {
+}
+
+bool KeyPressedEvent::IsRepeated() const
+{
+	return Repeated;
 }
 
 EventType KeyPressedEvent::GetEventTypeStatic()

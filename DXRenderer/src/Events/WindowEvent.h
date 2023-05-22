@@ -1,27 +1,13 @@
 #pragma once
 #include "Event.h"
 
-class KeyEvent : public Event
+class WindowResizeEvent : public Event
 {
 public:
-	virtual ~KeyEvent() = default;
-	inline int GetKeycode() const
-	{
-		return static_cast<int>(Keycode);
-	}
-	
-protected:
-	KeyEvent(uint8 keycode);
+	WindowResizeEvent(uint32_t width, uint32_t height);
 
-	uint8 Keycode;
-};
-
-class KeyPressedEvent : public KeyEvent
-{
-public:
-	KeyPressedEvent(uint8 keycode, bool repeated);
-
-	bool IsRepeated() const;
+	inline uint32_t GetWidth() const { return Width; }
+	inline uint32_t GetHeight() const { return Height; }
 
 	static EventType GetEventTypeStatic();
 	virtual EventType GetEventType() const override;
@@ -29,13 +15,13 @@ public:
 	virtual std::string GetEventInfo() const override;
 
 private:
-	bool Repeated;
+	uint32_t Width, Height;
 };
 
-class KeyReleasedEvent : public KeyEvent
+class WindowCloseEvent : public Event
 {
 public:
-	KeyReleasedEvent(uint8 keycode);
+	WindowCloseEvent() = default;
 
 	static EventType GetEventTypeStatic();
 	virtual EventType GetEventType() const override;
@@ -43,10 +29,10 @@ public:
 	virtual std::string GetEventInfo() const override;
 };
 
-class KeyTypedEvent : public KeyEvent
+class WindowLostFocusEvent : public Event
 {
 public:
-	KeyTypedEvent(uint8 keycode);
+	WindowLostFocusEvent() = default;
 
 	static EventType GetEventTypeStatic();
 	virtual EventType GetEventType() const override;

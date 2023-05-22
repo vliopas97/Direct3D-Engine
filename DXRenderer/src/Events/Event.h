@@ -9,7 +9,19 @@ using uint8 = unsigned char;
 enum class EventType
 {
     None = 0,
-    KeyPressed = WM_KEYDOWN, KeyReleased = WM_KEYUP, KeyTyped = WM_CHAR
+    WindowResize, WindowClose, WindowLostFocus,
+    KeyPressed, KeyReleased, KeyTyped,
+    MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled, MouseEnter, MouseLeave
+
+};
+
+enum class MouseButtonCode : uint16_t
+{
+    ButtonLeft = VK_LBUTTON,
+    ButtonMiddle = VK_MBUTTON,
+    ButtonRight = VK_RBUTTON,
+    ButtonExtended1 = VK_XBUTTON1,
+    ButtonExtended2 = VK_XBUTTON2
 };
 
 class Event
