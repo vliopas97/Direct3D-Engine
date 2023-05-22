@@ -185,7 +185,12 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			}
 			break;
 		case WM_MOUSEWHEEL:
-			GEN_MOUSESCROLLED_EVENT();
+			{
+				POINTS point = MAKEPOINTS(lParam); 
+				MouseScrolledEvent event(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam)); 
+				OnEvent(event);
+			}
+			break;
 		default:
 			break;
 	}

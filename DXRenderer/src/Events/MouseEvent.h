@@ -54,10 +54,11 @@ private:
 class MouseScrolledEvent : public Event
 {
 public:
-	MouseScrolledEvent(uint32_t xOffset, uint32_t yOffset);
+	MouseScrolledEvent(uint32_t xOffset, uint32_t yOffset, int delta);
 
 	inline uint32_t GetXOffset() const { return XOffset; }
 	inline uint32_t GetYOffset() const { return YOffset; }
+	inline int GetDelta() const { return Delta; }
 
 	static EventType GetEventTypeStatic();
 	virtual EventType GetEventType() const override;
@@ -66,6 +67,7 @@ public:
 
 private:
 	uint32_t XOffset, YOffset;
+	int Delta;
 };
 
 class MouseEnterEvent : public Event

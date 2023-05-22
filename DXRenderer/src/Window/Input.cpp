@@ -198,8 +198,18 @@ bool InputManager::OnMouseMoved(MouseMovedEvent& event) noexcept
 
 bool InputManager::OnMouseScrolled(MouseScrolledEvent& event) noexcept
 {
-	MouseEventBuffer.emplace(MakeUnique<MouseScrolledEvent>(event.GetXOffset(), event.GetYOffset()));
+	DeltaCarry += event.GetDelta();
+
+	while (std::abs(DeltaCarry) >= WHEEL_DELTA)
+	{
+		if (DeltaCarry > 0)
+			DeltaCarry -= WHEEL_DELTA;
+		else
+			DeltaCarry += WHEEL_DELTA;
+	}
+	MouseEventBuffer.emplace(MakeUnique<MouseScrolledEvent>(event.GetXOffset(), event.GetYOffset(), event.GetDelta()));
 	PreventBufferOverflow(MouseEventBuffer);
+
 	return true;
 }
 

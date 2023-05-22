@@ -85,8 +85,8 @@ std::string MouseMovedEvent::GetEventInfo() const
 	return MouseMovedEvent::GetName();
 }
 
-MouseScrolledEvent::MouseScrolledEvent(uint32_t xOffset, uint32_t yOffset)
-	:XOffset(xOffset), YOffset(yOffset)
+MouseScrolledEvent::MouseScrolledEvent(uint32_t xOffset, uint32_t yOffset, int delta)
+	:XOffset(xOffset), YOffset(yOffset), Delta(delta)
 {
 }
 

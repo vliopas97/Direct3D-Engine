@@ -67,5 +67,6 @@ private:
 	std::queue<uint8> CharBuffer;
 
 	bool RepeatEnabled = true;
-
+public:
+	int DeltaCarry = 0;
 };
