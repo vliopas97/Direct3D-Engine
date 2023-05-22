@@ -27,21 +27,6 @@ namespace
 	}
 }
 
-bool InputManager::IsKeyPressed(uint8 keycode) const noexcept
-{
-	return KeyStates[keycode];
-}
-
-bool InputManager::IsKeyBufferEmpty() const noexcept
-{
-	return KeyEventBuffer.empty();
-}
-
-bool InputManager::IsMouseBufferEmpty() const noexcept
-{
-	return MouseEventBuffer.empty();
-}
-
 void InputManager::FlushKeyEventBuffer() noexcept
 {
 	KeyEventBuffer = std::queue<UniquePtr<Event>>();
@@ -71,11 +56,6 @@ std::optional<UniquePtr<Event>> InputManager::FetchMouseEvent() noexcept
 		return std::nullopt;
 }
 
-bool InputManager::IsCharBufferEmpty() noexcept
-{
-	return CharBuffer.empty();
-}
-
 void InputManager::FlushCharBuffer() noexcept
 {
 	CharBuffer = std::queue<uint8>();
@@ -93,20 +73,35 @@ uint8 InputManager::FetchKeyTyped() noexcept
 		return 0;
 }
 
+void InputManager::ResetKeyStates() noexcept
+{
+	KeyStates.reset();
+}
+
 void InputManager::FlushAll() noexcept
 {
 	FlushKeyEventBuffer();
 	FlushCharBuffer();
 }
 
-void InputManager::EnableAutorepeat() noexcept
+void InputManager::SetAutoRepeat(bool autoRepeat) noexcept
 {
-	RepeatEnabled = true;
+	RepeatEnabled = autoRepeat;
 }
 
-void InputManager::DisableAutorepeat() noexcept
+bool InputManager::IsKeyPressed(uint8 keycode) const noexcept
 {
-	RepeatEnabled = false;
+	return KeyStates[keycode];
+}
+
+bool InputManager::IsKeyBufferEmpty() const noexcept
+{
+	return KeyEventBuffer.empty();
+}
+
+bool InputManager::IsMouseBufferEmpty() const noexcept
+{
+	return MouseEventBuffer.empty();
 }
 
 bool InputManager::IsAutoRepeatEnabled() const noexcept
@@ -119,14 +114,19 @@ bool InputManager::IsMouseInWindow() const noexcept
 	return MouseInWindow;
 }
 
+bool InputManager::IsCharBufferEmpty() noexcept
+{
+	return CharBuffer.empty();
+}
+
 void InputManager::OnEvent(Event& event)
 {
 	EventDispatcher dispatcher(event);
+
 	dispatcher.Dispatch<KeyPressedEvent>(BIND_EVENT_FN(OnKeyPressed));
 	dispatcher.Dispatch<KeyReleasedEvent>(BIND_EVENT_FN(OnKeyReleased));
 	dispatcher.Dispatch<KeyTypedEvent>(BIND_EVENT_FN(OnKeyTyped));
-	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
-	dispatcher.Dispatch<WindowLostFocusEvent>(BIND_EVENT_FN(OnWindowLostFocus));
+
 	dispatcher.Dispatch<MouseButtonPressedEvent>(BIND_EVENT_FN(OnMouseButtonPressed));
 	dispatcher.Dispatch<MouseButtonReleasedEvent>(BIND_EVENT_FN(OnMouseButtonReleased));
 	dispatcher.Dispatch<MouseMovedEvent>(BIND_EVENT_FN(OnMouseMoved));
@@ -158,18 +158,6 @@ bool InputManager::OnKeyTyped(KeyTypedEvent& event) noexcept
 {
 	CharBuffer.push(event.GetKeycode());
 	PreventBufferOverflow(KeyEventBuffer);
-	return true;
-}
-
-bool InputManager::OnWindowLostFocus(WindowLostFocusEvent& event) noexcept
-{
-	KeyStates.reset();
-	return true;
-}
-
-bool InputManager::OnWindowClose(WindowCloseEvent& event) noexcept
-{
-	PostQuitMessage(WM_CLOSE);
 	return true;
 }
 

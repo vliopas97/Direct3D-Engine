@@ -14,33 +14,30 @@ public:
 	InputManager(const InputManager&) = delete;
 	InputManager& operator=(const InputManager&) = delete;
 
-	bool IsKeyPressed(uint8 keycode) const noexcept;
-	bool IsKeyBufferEmpty() const noexcept;
-	bool IsMouseBufferEmpty() const noexcept;
 	void FlushKeyEventBuffer() noexcept;
 	std::optional<UniquePtr<Event>> FetchKeyEvent() noexcept;
 	std::optional<UniquePtr<Event>> FetchMouseEvent() noexcept;
 
-	bool IsCharBufferEmpty() noexcept;
 	void FlushCharBuffer() noexcept;
 	uint8 FetchKeyTyped() noexcept;
 
+	void ResetKeyStates() noexcept;
 	void FlushAll() noexcept;
 
-	void EnableAutorepeat() noexcept;
-	void DisableAutorepeat() noexcept;
-	bool IsAutoRepeatEnabled() const noexcept;
+	void SetAutoRepeat(bool autoRepeat) noexcept;
 
+	bool IsKeyPressed(uint8 keycode) const noexcept;
+	bool IsKeyBufferEmpty() const noexcept;
+	bool IsMouseBufferEmpty() const noexcept;
+	bool IsAutoRepeatEnabled() const noexcept;
 	bool IsMouseInWindow() const noexcept;
+	bool IsCharBufferEmpty() noexcept;
 
 	void OnEvent(Event& event);
 private:
 	bool OnKeyPressed(KeyPressedEvent& event) noexcept;
 	bool OnKeyReleased(KeyReleasedEvent& event) noexcept;
 	bool OnKeyTyped(KeyTypedEvent& event) noexcept;
-
-	bool OnWindowLostFocus(WindowLostFocusEvent& event) noexcept;
-	bool OnWindowClose(WindowCloseEvent& event) noexcept;
 
 	bool OnMouseButtonPressed(MouseButtonPressedEvent& event) noexcept;
 	bool OnMouseButtonReleased(MouseButtonReleasedEvent& event) noexcept;

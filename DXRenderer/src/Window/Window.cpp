@@ -2,6 +2,8 @@
 #include <sstream>
 #include <iostream>
 
+#define BIND_EVENT_FN(x) std::bind(&Window::x, this, std::placeholders::_1)
+
 #define GEN_KEYBOARD_EVENT(Event)		{Event event(static_cast<uint8>(wParam));\
 										OnEvent(event);}\
 										break
@@ -91,6 +93,11 @@ void Window::SetTitle(const std::string& name)
 
 void Window::OnEvent(Event& event)
 {
+	EventDispatcher dispatcher(event);
+
+	dispatcher.Dispatch<WindowLostFocusEvent>(BIND_EVENT_FN(OnWindowLostFocus));
+	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+
 	Input.OnEvent(event);
 }
 
@@ -196,4 +203,16 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 	}
 
 	return DefWindowProc(windowHandle, message, wParam, lParam);
+}
+
+bool Window::OnWindowLostFocus(WindowLostFocusEvent& event) noexcept
+{
+	Input.ResetKeyStates();
+	return true;
+}
+
+bool Window::OnWindowClose(WindowCloseEvent& event) noexcept
+{
+	PostQuitMessage(WM_CLOSE);
+	return true;
 }

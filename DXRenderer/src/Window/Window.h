@@ -26,6 +26,7 @@ public:
 	void SetTitle(const std::string& name);
 
 	void OnEvent(Event& event);
+
 private:
 	inline static WinMessage GetMessageImpl(HWND handle)
 	{
@@ -40,8 +41,8 @@ private:
 	static LRESULT CALLBACK WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 
-	DEFINE_WINDOW_CLASS(WindowClass);
-
+	bool OnWindowLostFocus(WindowLostFocusEvent& event) noexcept;
+	bool OnWindowClose(WindowCloseEvent& event) noexcept;
 public:
 	InputManager Input;
 	std::string Name;
@@ -51,4 +52,6 @@ private:
 
 	RECT Rect;
 	uint32_t Width, Height;
+	
+	DEFINE_WINDOW_CLASS(WindowClass);
 };
