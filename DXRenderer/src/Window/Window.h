@@ -17,8 +17,8 @@ public:
 
 	void SetWindowName(const std::string& name);
 
-	inline WinMessage GetWinMessage() const { return GetMessageImpl(Handle); }
-	inline static WinMessage GetAppMessage() { return GetMessageImpl(nullptr); }
+	WinMessage GetWinMessage() const;
+	static std::optional<int> ProcessMessages();
 
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
@@ -28,13 +28,6 @@ public:
 	void OnEvent(Event& event);
 
 private:
-	inline static WinMessage GetMessageImpl(HWND handle)
-	{
-		MSG msg;
-		auto result = GetMessage(&msg, handle, 0, 0);
-		return WinMessage(result, msg);
-	}
-
 	void SetEventCallbackFunction(const EventCallbackFn& fn);
 
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);

@@ -82,6 +82,28 @@ void Window::SetWindowName(const std::string& name)
 	SetWindowText(Handle, wName.c_str());
 }
 
+WinMessage Window::GetWinMessage() const
+{
+	MSG msg;
+	auto result = GetMessage(&msg, Handle, 0, 0);
+	return WinMessage(result, msg);
+}
+
+std::optional<int> Window::ProcessMessages()
+{
+	MSG msg;
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	{
+		if (msg.message == WM_QUIT)
+			return msg.wParam;
+
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	return std::nullopt;
+}
+
 void Window::SetTitle(const std::string& name)
 {
 	Name = name;
