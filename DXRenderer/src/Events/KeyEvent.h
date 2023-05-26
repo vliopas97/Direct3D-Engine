@@ -9,7 +9,7 @@ public:
 	{
 		return static_cast<int>(Keycode);
 	}
-	
+	virtual EventCategory GetCategory() const override;
 protected:
 	KeyEvent(uint8 keycode);
 
@@ -52,4 +52,9 @@ public:
 	virtual EventType GetEventType() const override;
 	virtual constexpr const char* GetName() const override;
 	virtual std::string GetEventInfo() const override;
+};
+
+struct KeyEventFactory : public EventFactoryBase
+{
+	UniquePtr<Event> Make(Event* e) const override;
 };

@@ -1,7 +1,12 @@
 #pragma once
 #include "Event.h"
 
-class MouseButtonEvent : public Event
+class MouseEvent : public Event
+{
+	virtual EventCategory GetCategory() const override;
+};
+
+class MouseButtonEvent : public MouseEvent
 {
 public:
 	inline uint32_t GetMouseButtonCode() const { return static_cast<uint32_t>(Button); }
@@ -34,7 +39,7 @@ public:
 	virtual std::string GetEventInfo() const override;
 };
 
-class MouseMovedEvent : public Event
+class MouseMovedEvent : public MouseEvent
 {
 public:
 	MouseMovedEvent(uint32_t x, uint32_t y);
@@ -51,7 +56,7 @@ private:
 	uint32_t XPos, YPos;
 };
 
-class MouseScrolledEvent : public Event
+class MouseScrolledEvent : public MouseEvent
 {
 public:
 	MouseScrolledEvent(uint32_t xOffset, uint32_t yOffset, int delta);
@@ -70,7 +75,7 @@ private:
 	int Delta;
 };
 
-class MouseEnterEvent : public Event
+class MouseEnterEvent : public MouseEvent
 {
 public:
 	MouseEnterEvent() = default;
@@ -81,7 +86,7 @@ public:
 	virtual std::string GetEventInfo() const override;
 };
 
-class MouseLeaveEvent : public Event
+class MouseLeaveEvent : public MouseEvent
 {
 public:
 	MouseLeaveEvent() = default;
@@ -90,4 +95,9 @@ public:
 	virtual EventType GetEventType() const override;
 	virtual constexpr const char* GetName() const override;
 	virtual std::string GetEventInfo() const override;
+};
+
+struct MouseEventFactory : public EventFactoryBase
+{
+	virtual UniquePtr<Event> Make(Event* e) const override;
 };

@@ -1,7 +1,12 @@
 #pragma once
 #include "Event.h"
 
-class WindowResizeEvent : public Event
+class WindowEvent : public Event
+{
+	virtual EventCategory GetCategory() const override;
+};
+
+class WindowResizeEvent : public WindowEvent
 {
 public:
 	WindowResizeEvent(uint32_t width, uint32_t height);
@@ -18,7 +23,7 @@ private:
 	uint32_t Width, Height;
 };
 
-class WindowCloseEvent : public Event
+class WindowCloseEvent : public WindowEvent
 {
 public:
 	WindowCloseEvent() = default;
@@ -29,7 +34,7 @@ public:
 	virtual std::string GetEventInfo() const override;
 };
 
-class WindowLostFocusEvent : public Event
+class WindowLostFocusEvent : public WindowEvent
 {
 public:
 	WindowLostFocusEvent() = default;

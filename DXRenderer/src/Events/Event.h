@@ -15,6 +15,14 @@ enum class EventType
 
 };
 
+enum class EventCategory
+{
+    None = 0,
+    WindowEvents,
+    KeyEvents,
+    MouseEvents
+};
+
 enum class MouseButtonCode : uint16_t
 {
     ButtonLeft = VK_LBUTTON,
@@ -30,8 +38,14 @@ public:
     virtual EventType GetEventType() const = 0;
     virtual constexpr const char* GetName() const = 0;
     virtual std::string GetEventInfo() const = 0;
+    virtual EventCategory GetCategory() const = 0;
 
     bool Handled = false;
+};
+
+struct EventFactoryBase
+{
+    virtual UniquePtr<Event> Make(Event* e) const = 0;
 };
 
 class EventDispatcher

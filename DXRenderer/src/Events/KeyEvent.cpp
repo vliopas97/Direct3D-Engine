@@ -1,6 +1,11 @@
 #include "KeyEvent.h"
 #include <sstream>
 
+EventCategory KeyEvent::GetCategory() const
+{
+	return EventCategory::KeyEvents;
+}
+
 KeyEvent::KeyEvent(uint8 keycode)
 	:Keycode(keycode)
 {
@@ -90,4 +95,17 @@ std::string KeyTypedEvent::GetEventInfo() const
 	std::stringstream ss;
 	ss << GetName() << "| Keycode: " << Keycode;
 	return ss.str();
+}
+
+UniquePtr<Event> KeyEventFactory::Make(Event* e) const
+{
+	const auto& typeID = typeid(*e);
+	if (typeID == typeid(KeyPressedEvent))
+		return std::unique_ptr<KeyPressedEvent>(dynamic_cast<KeyPressedEvent*>(e));
+	else if (typeID == typeid(KeyReleasedEvent))
+		return std::unique_ptr<KeyReleasedEvent>(dynamic_cast<KeyReleasedEvent*>(e));
+	else if (typeID == typeid(KeyTypedEvent))
+		return std::unique_ptr<KeyTypedEvent>(dynamic_cast<KeyTypedEvent*>(e));
+	else
+		return nullptr;
 }

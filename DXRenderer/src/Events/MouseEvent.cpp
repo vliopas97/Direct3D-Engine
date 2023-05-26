@@ -149,3 +149,28 @@ std::string MouseLeaveEvent::GetEventInfo() const
 {
 	return MouseLeaveEvent::GetName();
 }
+
+UniquePtr<Event> MouseEventFactory::Make(Event* e) const
+{
+	const auto& typeID = typeid(*e);
+	if (typeID == typeid(MouseButtonPressedEvent))
+		return std::unique_ptr<MouseButtonPressedEvent>(dynamic_cast<MouseButtonPressedEvent*>(e));
+	else if (typeID == typeid(MouseButtonReleasedEvent))
+		return std::unique_ptr<MouseButtonReleasedEvent>(dynamic_cast<MouseButtonReleasedEvent*>(e));
+	else if (typeID == typeid(MouseMovedEvent))
+		return std::unique_ptr<MouseMovedEvent>(dynamic_cast<MouseMovedEvent*>(e));
+	else if (typeID == typeid(MouseScrolledEvent))
+		return std::unique_ptr<MouseScrolledEvent>(dynamic_cast<MouseScrolledEvent*>(e));
+	else if (typeID == typeid(MouseEnterEvent))
+		return std::unique_ptr<MouseEnterEvent>(dynamic_cast<MouseEnterEvent*>(e));
+	else if (typeID == typeid(MouseLeaveEvent))
+		return std::unique_ptr<MouseLeaveEvent>(dynamic_cast<MouseLeaveEvent*>(e));
+	else
+		return nullptr;
+
+}
+
+EventCategory MouseEvent::GetCategory() const
+{
+	return EventCategory::MouseEvents;
+}

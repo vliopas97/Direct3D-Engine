@@ -26,6 +26,8 @@ int Application::Run()
 Application::Application()
 	:MainWindow(MakeUnique<Window>())
 {
+	auto cursor = LoadCursor(nullptr, IDC_ARROW);
+	SetCursor(cursor);
 }
 
 void Application::Tick()

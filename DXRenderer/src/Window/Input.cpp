@@ -1,31 +1,24 @@
 #include "Input.h"
 #include <typeinfo>
+#include <unordered_map>
 
 #define BIND_EVENT_FN(x) std::bind(&InputManager::x, this, std::placeholders::_1)
 
-namespace
+class EventFactory
 {
-	UniquePtr<Event> UniquePtrDispatcher(Event* e)
+	std::unordered_map<EventCategory, UniquePtr<EventFactoryBase>> EventFactories;
+public:
+	EventFactory()
 	{
-		const auto& typeID = typeid(*e);
-		if (typeID == typeid(KeyPressedEvent))
-			return std::unique_ptr<KeyPressedEvent>(dynamic_cast<KeyPressedEvent*>(e));
-		else if (typeID == typeid(KeyReleasedEvent))
-			return std::unique_ptr<KeyReleasedEvent>(dynamic_cast<KeyReleasedEvent*>(e));
-		else if (typeID == typeid(KeyTypedEvent))
-			return std::unique_ptr<KeyTypedEvent>(dynamic_cast<KeyTypedEvent*>(e));
-		else if (typeID == typeid(MouseButtonPressedEvent))
-			return std::unique_ptr<MouseButtonPressedEvent>(dynamic_cast<MouseButtonPressedEvent*>(e));
-		else if (typeID == typeid(MouseButtonReleasedEvent))
-			return std::unique_ptr<MouseButtonReleasedEvent>(dynamic_cast<MouseButtonReleasedEvent*>(e));
-		else if (typeID == typeid(MouseMovedEvent))
-			return std::unique_ptr<MouseMovedEvent>(dynamic_cast<MouseMovedEvent*>(e));
-		else if (typeID == typeid(MouseScrolledEvent))
-			return std::unique_ptr<MouseScrolledEvent>(dynamic_cast<MouseScrolledEvent*>(e));
-		else
-			return nullptr;
+		EventFactories[EventCategory::MouseEvents] = MakeUnique<MouseEventFactory>();
+		EventFactories[EventCategory::KeyEvents] = MakeUnique<KeyEventFactory>();
 	}
-}
+
+	UniquePtr<Event> Make(Event* e)
+	{
+		return EventFactories[e->GetCategory()]->Make(e);
+	}
+};
 
 void InputManager::FlushKeyEventBuffer() noexcept
 {
@@ -38,7 +31,8 @@ std::optional<UniquePtr<Event>> InputManager::FetchKeyEvent() noexcept
 	{
 		auto eventPtr = KeyEventBuffer.front().release();
 		KeyEventBuffer.pop();
-		return std::optional<UniquePtr<Event>>(UniquePtrDispatcher(eventPtr));
+		EventFactory eventGenerator;
+		return std::optional<UniquePtr<Event>>(eventGenerator.Make(eventPtr));
 	}
 	else
 		return std::nullopt;
@@ -50,7 +44,8 @@ std::optional<UniquePtr<Event>> InputManager::FetchMouseEvent() noexcept
 	{
 		auto eventPtr = MouseEventBuffer.front().release();
 		MouseEventBuffer.pop();
-		return std::optional<UniquePtr<Event>>(UniquePtrDispatcher(eventPtr));
+		EventFactory eventGenerator;
+		return std::optional<UniquePtr<Event>>(eventGenerator.Make(eventPtr));
 	}
 	else
 		return std::nullopt;

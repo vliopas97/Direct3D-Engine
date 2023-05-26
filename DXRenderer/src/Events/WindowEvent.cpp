@@ -67,3 +67,8 @@ std::string WindowLostFocusEvent::GetEventInfo() const
 {
 	return WindowLostFocusEvent::GetName();
 }
+
+EventCategory WindowEvent::GetCategory() const
+{
+	return EventCategory::WindowEvents;
+}
