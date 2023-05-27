@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "Core/Exception.h"
 #include <sstream>
 #include <iostream>
 
@@ -27,14 +28,6 @@
 
 #define GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode) GEN_MOUSEBUTTON_EVENT(MouseButtonPressedEvent, MouseButtonCode)
 #define GEN_MOUSEBUTTONRELEASED_EVENT(MouseButtonCode) GEN_MOUSEBUTTON_EVENT(MouseButtonReleasedEvent, MouseButtonCode)
-
-#define GEN_MOUSEDISPLACEMENT_EVENT(Event) { POINTS point = MAKEPOINTS(lParam);\
-											Event event(point.x, point.y);\
-											OnEvent(event);}\
-											break
-
-#define GEN_MOUSEMOVED_EVENT() GEN_MOUSEDISPLACEMENT_EVENT(MouseMovedEvent)
-#define GEN_MOUSESCROLLED_EVENT() GEN_MOUSEDISPLACEMENT_EVENT(MouseScrolledEvent)
 
 #define GEN_MOUSEENTER_EVENT() 		{SetCapture(Handle);\
 									MouseEnterEvent event;\
@@ -108,6 +101,8 @@ std::optional<int> Window::ProcessMessages()
 
 Graphics& Window::GetGraphicsContext() const
 {
+	if (!GraphicsContext)
+		throw NO_GRAPHICS_EXCEPTION();
 	return *GraphicsContext;
 }
 

@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "Core/Exception.h"
 
 Graphics::Graphics(HWND windowHandle)
 {
@@ -22,7 +23,8 @@ Graphics::Graphics(HWND windowHandle)
 	ID3D11Device* device = nullptr;
 	IDXGISwapChain* swapChain = nullptr;
 	ID3D11DeviceContext* context = nullptr;
-	D3D11CreateDeviceAndSwapChain(
+
+	GRAPHICS_ASSERT(D3D11CreateDeviceAndSwapChain(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
 		nullptr,
@@ -35,15 +37,16 @@ Graphics::Graphics(HWND windowHandle)
 		&device,
 		nullptr,
 		&context
-	);
+		));
+
 	Device = UniquePtr<ID3D11Device>(device, Deleter<ID3D11Device>);
 	SwapChain = UniquePtr<IDXGISwapChain>(swapChain, Deleter<IDXGISwapChain>);
 	Context = UniquePtr<ID3D11DeviceContext>(context, Deleter<ID3D11DeviceContext>);
 
 	ID3D11Resource* backBuffer = nullptr;
-	SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&backBuffer));
+	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&backBuffer)));
 	ID3D11RenderTargetView* target = nullptr;
-	Device->CreateRenderTargetView(backBuffer, nullptr, &target);
+	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer, nullptr, &target));
 	backBuffer->Release();
 
 	RenderTargetView = UniquePtr<ID3D11RenderTargetView>(target, Deleter<ID3D11RenderTargetView>);
@@ -51,7 +54,18 @@ Graphics::Graphics(HWND windowHandle)
 
 void Graphics::SwapBuffers()
 {
-	SwapChain->Present(1, 0);
+	HRESULT result;
+	if (FAILED(result = SwapChain->Present(1u, 0u)))
+	{
+		if (result == DXGI_ERROR_DEVICE_REMOVED)
+		{
+			throw GRAPHICS_DEVICE_REMOVED_EXCEPTION(Device->GetDeviceRemovedReason());
+		}
+		else
+		{
+			GRAPHICS_ASSERT(result);
+		}
+	}
 }
 
 void Graphics::ClearColor(float red, float green, float blue) noexcept

@@ -27,6 +27,7 @@ project "DXRenderer"
     includedirs
     {
         "%{prj.name}/src",
+        "%{prj.name}/vendor/DXErr"
     }
     
     links
@@ -38,6 +39,13 @@ project "DXRenderer"
     {
         "%{prj.name}/src/**.h",
         "%{prj.name}/src/**.cpp",
+        "%{prj.name}/vendor/DXErr/**.h",
+        "%{prj.name}/vendor/DXErr/**.cpp"
+    }
+
+    removefiles
+    {
+        "%{prj.name}/vendor/DXErr/**.inl"
     }
 
     filter "configurations:Debug"
