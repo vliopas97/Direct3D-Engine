@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Core/Core.h"
+#include "Core/Exception.h"
+
 #include <d3d11.h>
 #include <functional>
 
@@ -28,4 +30,9 @@ private:
 	UniquePtr<IDXGISwapChain>      SwapChain;
 	UniquePtr<ID3D11DeviceContext> Context;
 	UniquePtr<ID3D11RenderTargetView> RenderTargetView;
+
+	#ifndef NDEBUG
+	DXGIInfoManager InfoManager;
+	#endif // !NDEBUG
+
 };

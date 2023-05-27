@@ -20,6 +20,11 @@ Graphics::Graphics(HWND windowHandle)
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	sd.Flags = 0;
 
+	UINT swapCreateFlags = 0u;
+	#ifndef NDEBUG
+	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	#endif
+
 	ID3D11Device* device = nullptr;
 	IDXGISwapChain* swapChain = nullptr;
 	ID3D11DeviceContext* context = nullptr;
@@ -28,7 +33,7 @@ Graphics::Graphics(HWND windowHandle)
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
 		nullptr,
-		0,
+		swapCreateFlags,
 		nullptr,
 		0,
 		D3D11_SDK_VERSION,
@@ -54,6 +59,10 @@ Graphics::Graphics(HWND windowHandle)
 
 void Graphics::SwapBuffers()
 {
+	#ifndef NDEBUG
+	InfoManager.Reset();
+	#endif // !NDEBUG
+
 	HRESULT result;
 	if (FAILED(result = SwapChain->Present(1u, 0u)))
 	{
@@ -63,7 +72,7 @@ void Graphics::SwapBuffers()
 		}
 		else
 		{
-			GRAPHICS_ASSERT(result);
+			GRAPHICS_EXCEPTION(result);
 		}
 	}
 }

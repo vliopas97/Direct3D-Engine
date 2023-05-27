@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <exception>
+#include <vector>
 
 #include "Core.h"
 #include "dxerr.h"
@@ -67,15 +68,35 @@ private:
 #define WIN_EXCEPTION(result) WindowException(__LINE__, __FILE__, result)
 #define WIN_EXCEPTION_LAST_ERROR WindowException(__LINE__, __FILE__, GetLastError())
 
+///////////////////////
+// Direct3D Exceptions
+//////////////////////
+
+struct DXGIInfoManager
+{
+	DXGIInfoManager();
+	~DXGIInfoManager();
+	DXGIInfoManager(const DXGIInfoManager&) = delete;
+	DXGIInfoManager& operator=(const DXGIInfoManager) = delete;
+	
+	void Reset() noexcept;
+	std::vector <std::string> GetMessages() const;
+private:
+	unsigned long long Next = 0u;
+	struct IDXGIInfoQueue* InfoQueue = nullptr;
+};
+
 class GraphicsException : public ExceptionBase
 {
 public:
-	GraphicsException(int line, const char* file, HRESULT result) noexcept;
+	GraphicsException(int line, const char* file, HRESULT result, std::vector<std::string> messages = {}) noexcept;
 	const char* what() const noexcept override;
 	virtual const char* GetType() const noexcept override;
 	HRESULT GetErrorCode() const noexcept;
+	std::string GetErrorInfo() const noexcept;
 private:
 	HRESULT Result;
+	std::string Info;
 };
 
 class DeviceRemovedException : public GraphicsException
@@ -90,14 +111,32 @@ class NoGraphicsException : public ExceptionBase
 public:
 	using ExceptionBase::ExceptionBase;
 	const char* GetType() const noexcept override;
+private:
+	std::string Reason;
 };
 
-#define GRAPHICS_ASSERT(hrcall) \
+#define NO_GRAPHICS_EXCEPTION() NoGraphicsException( __LINE__,__FILE__ )
+#define GRAPHICS_EXCEPTION_NOINFO(hr) GraphicsException(__LINE__,__FILE__,(hr));
+#define GRAPHICS_ASSERT_NOINFO(hrcall) \
 { \
     HRESULT hr = (hrcall); \
     if (FAILED(hr)) \
         throw GraphicsException(__LINE__, __FILE__, hr); \
 }
 
-#define GRAPHICS_DEVICE_REMOVED_EXCEPTION(hr) DeviceRemovedException( __LINE__,__FILE__,(hr) )
-#define NO_GRAPHICS_EXCEPTION() NoGraphicsException( __LINE__,__FILE__ )
+
+#ifndef NDEBUG
+#define GRAPHICS_EXCEPTION(hr) GraphicsException( __LINE__,__FILE__,(hr),InfoManager.GetMessages() )
+#define GRAPHICS_ASSERT(hrcall)\
+{ \
+	InfoManager.Reset();\
+    HRESULT hr = (hrcall); \
+    if (FAILED(hr)) \
+        throw GraphicsException(__LINE__, __FILE__, hr, InfoManager.GetMessages()); \
+}
+#define GRAPHICS_DEVICE_REMOVED_EXCEPTION(hr) DeviceRemovedException( __LINE__,__FILE__,(hr),InfoManager.GetMessages() )
+#else
+#define GRAPHICS_EXCEPTION(hr) GraphicsException( __LINE__,__FILE__,(hr))
+#define GRAPHICS_ASSERT(hrcall) GRAPHICS_ASSERT_NOINFO(hrcall)
+#define GRAPHICS_DEVICE_REMOVED_EXCEPTION(hr) DeviceRemovedException( __LINE__,__FILE__,(hr))
+#endif

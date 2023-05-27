@@ -1,6 +1,7 @@
 #include "Exception.h"
 #include <sstream>
 #include <iomanip>
+#include <dxgidebug.h>
 
 ExceptionBase::ExceptionBase(uint32_t line, const char* file) noexcept
 	: Line(line), File(file)
@@ -83,9 +84,17 @@ HRESULT WindowException::GetErrorCode() const noexcept
 	return Result;
 }
 
-GraphicsException::GraphicsException(int line, const char* file, HRESULT result) noexcept
+GraphicsException::GraphicsException(int line, const char* file, HRESULT result, std::vector<std::string> messages) noexcept
 	:ExceptionBase(line, file), Result(result)
 {
+	for (const auto& m : messages)
+	{
+		Info += m;
+		Info.push_back('\n');
+	}
+
+	if (!Info.empty())
+		Info.pop_back();
 }
 
 const char* GraphicsException::what() const noexcept
@@ -94,8 +103,12 @@ const char* GraphicsException::what() const noexcept
 	oss << GetType() << std::endl <<
 		"Error Code: 0x" << std::hex << std::uppercase << GetErrorCode() << std::endl <<
 		std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl <<
-		"Error Code Demangle: " << TranslateErrorCode(Result) << std::endl <<
-		GetRawMessage();
+		"Error Code Demangle: " << TranslateErrorCode(Result) << std::endl;
+		if (!Info.empty())
+		{
+			oss << "\n[Error Info]\n" << GetErrorInfo() << std::endl << std::endl;
+		}
+		oss << GetRawMessage();
 	ErrorMessage = oss.str();
 	return ErrorMessage.c_str();
 }
@@ -110,6 +123,11 @@ HRESULT GraphicsException::GetErrorCode() const noexcept
 	return Result;
 }
 
+std::string GraphicsException::GetErrorInfo() const noexcept
+{
+	return Info;
+}
+
 const char* DeviceRemovedException::GetType() const noexcept
 {
 	return "Device Removed Exception";
@@ -118,4 +136,52 @@ const char* DeviceRemovedException::GetType() const noexcept
 const char* NoGraphicsException::GetType() const noexcept
 {
 	return "No Graphics Exception";
+}
+
+DXGIInfoManager::DXGIInfoManager()
+{
+	using DXGIGetDebugInterface = HRESULT(WINAPI*)(REFIID, void**);
+	
+	const auto modDxgiDebug = LoadLibraryEx(L"dxgidebug.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+	if (!modDxgiDebug)
+		throw WIN_EXCEPTION_LAST_ERROR;
+
+	const auto dxgiGetDebugInterface = reinterpret_cast<DXGIGetDebugInterface>(
+		reinterpret_cast<void*>(GetProcAddress(modDxgiDebug, "DXGIGetDebugInterface"))
+		);
+	if (!dxgiGetDebugInterface)
+		throw WIN_EXCEPTION_LAST_ERROR;
+
+	HRESULT result;
+	GRAPHICS_ASSERT_NOINFO(dxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), reinterpret_cast<void**>(&InfoQueue)));
+}
+
+DXGIInfoManager::~DXGIInfoManager()
+{
+	if (!InfoQueue)
+		InfoQueue->Release();
+}
+
+void DXGIInfoManager::Reset() noexcept
+{
+	Next = InfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
+}
+
+std::vector<std::string> DXGIInfoManager::GetMessages() const
+{
+	std::vector<std::string> messages;
+	const auto end = InfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
+	for (auto i = Next; i < end; i++)
+	{
+		SIZE_T messageLength;
+
+		GRAPHICS_ASSERT_NOINFO(InfoQueue->GetMessageW(DXGI_DEBUG_ALL, i, nullptr, &messageLength));
+
+		auto bytes = std::make_unique<byte[]>(messageLength);
+		auto message = reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(bytes.get());
+
+		GRAPHICS_ASSERT_NOINFO(InfoQueue->GetMessageW(DXGI_DEBUG_ALL, i, message, &messageLength));
+		messages.emplace_back(message->pDescription);
+	}
+	return messages;
 }

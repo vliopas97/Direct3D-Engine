@@ -32,7 +32,8 @@ project "DXRenderer"
     
     links
     {
-        "d3d11.lib"
+        "d3d11.lib",
+        "dxguid.lib"
     }
 
     files
