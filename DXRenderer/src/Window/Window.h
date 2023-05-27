@@ -2,6 +2,7 @@
 
 #include "WindowClass.h"
 #include "Input.h"
+#include "Rendering/Graphics.h"
 
 #define DEFINE_WINDOW_CLASS(ClassName) friend class ClassName
 
@@ -22,6 +23,7 @@ public:
 
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
+	Graphics& GetGraphicsContext() const;
 
 	void SetTitle(const std::string& name);
 
@@ -45,6 +47,7 @@ private:
 
 	RECT Rect;
 	uint32_t Width, Height;
+	UniquePtr<Graphics> GraphicsContext;
 	
 	DEFINE_WINDOW_CLASS(WindowClass);
 };

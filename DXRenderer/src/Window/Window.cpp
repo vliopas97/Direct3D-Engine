@@ -64,6 +64,8 @@ Window::Window(uint32_t width, uint32_t height, const std::string& name)
 		throw WIN_EXCEPTION_LAST_ERROR;
 
 	Show(true);
+
+	GraphicsContext = MakeUnique<Graphics>(Handle);
 }
 
 Window::~Window()
@@ -102,6 +104,11 @@ std::optional<int> Window::ProcessMessages()
 	}
 
 	return std::nullopt;
+}
+
+Graphics& Window::GetGraphicsContext() const
+{
+	return *GraphicsContext;
 }
 
 void Window::SetTitle(const std::string& name)
