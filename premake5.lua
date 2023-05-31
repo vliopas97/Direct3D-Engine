@@ -33,6 +33,7 @@ project "DXRenderer"
     links
     {
         "d3d11.lib",
+        "d3dcompiler.lib",
         "dxguid.lib"
     }
 
@@ -40,6 +41,7 @@ project "DXRenderer"
     {
         "%{prj.name}/src/**.h",
         "%{prj.name}/src/**.cpp",
+        "%{prj.name}/src/**.hlsl",
         "%{prj.name}/vendor/DXErr/**.h",
         "%{prj.name}/vendor/DXErr/**.cpp"
     }
@@ -48,7 +50,19 @@ project "DXRenderer"
     {
         "%{prj.name}/vendor/DXErr/**.inl"
     }
+    
+    filter "files:**.hlsl"
+        shadermodel "5.0"
+        buildmessage 'Compiling HLSL shader %{file.relpath}'
+        shaderobjectfileoutput 'src/Rendering/Shaders/%%(Filename).cso'
+    filter { "files:**/V**.hlsl" }
+        removeflags "ExcludeFromBuild"
+        shadertype "Vertex"
 
+    filter { "files:**/P**.hlsl" }
+        removeflags "ExcludeFromBuild"
+        shadertype "Pixel"
+    
     filter "configurations:Debug"
         runtime "Debug"
         symbols "on"

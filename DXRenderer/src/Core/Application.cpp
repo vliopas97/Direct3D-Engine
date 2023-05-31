@@ -33,5 +33,6 @@ Application::Application()
 void Application::Tick()
 {
 	MainWindow->GetGraphicsContext().ClearColor(1.0f, 0.5f, 0.0f);
+	MainWindow->GetGraphicsContext().DrawTriangle();
 	MainWindow->GetGraphicsContext().SwapBuffers();
 }

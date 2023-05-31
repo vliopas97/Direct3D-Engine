@@ -49,7 +49,6 @@ protected:
 	{\
 		MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);\
 	}\
-	return -1;\
 
 
 class WindowException : public ExceptionBase

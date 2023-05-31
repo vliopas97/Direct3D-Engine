@@ -25,6 +25,7 @@ public:
 
 	void SwapBuffers();
 	void ClearColor(float red, float green, float blue) noexcept;
+	void DrawTriangle();
 private:
 	UniquePtr<ID3D11Device>        Device;
 	UniquePtr<IDXGISwapChain>      SwapChain;
