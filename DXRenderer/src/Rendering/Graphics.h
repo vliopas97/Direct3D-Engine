@@ -8,6 +8,7 @@
 
 class Graphics
 {
+public:
 	template<typename T>
 	using UniquePtr = std::unique_ptr<T, std::function<void(T*)>>;
 
@@ -17,7 +18,6 @@ class Graphics
 		ptr->Release();
 	};
 
-public:
 	Graphics(HWND windowHandle);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;

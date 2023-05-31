@@ -3,8 +3,9 @@
 
 #include <wrl.h>
 #include <d3dcompiler.h>
-#include <filesystem>
 #include <source_location>
+
+#include "Buffer.h"
 
 Graphics::Graphics(HWND windowHandle)
 {
@@ -92,29 +93,16 @@ void Graphics::DrawTriangle()
 {
 	namespace WRL = Microsoft::WRL;
 
-	const float vertices[] =
+	float vertices[] =
 	{
 		0.0f, 0.5f,
 		0.5f, -0.5f,
 		-0.5f, -0.5f
 	};
 
-	WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-	vertexBufferDesc.ByteWidth = sizeof(vertices);
-	vertexBufferDesc.StructureByteStride = 2 * sizeof(float);
-
-	D3D11_SUBRESOURCE_DATA subResourceData;
-	subResourceData.pSysMem = vertices;
-	Device->CreateBuffer(&vertexBufferDesc, &subResourceData, &vertexBuffer);
-
-	const UINT stride = 2 * sizeof(float);
-	const UINT offset = 0;
-	Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	CurrentDeviceAndContext cd(Device, Context);
+	VertexBuffer vertexBuffer(cd, vertices, std::size(vertices));
+	vertexBuffer.Bind();
 
 	WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	WRL::ComPtr<ID3DBlob> blob;
@@ -132,15 +120,12 @@ void Graphics::DrawTriangle()
 
 	Context->VSSetShader(vertexShader.Get(), nullptr, 0);
 
-	WRL::ComPtr<ID3D11InputLayout> inputLayout;
-	const D3D11_INPUT_ELEMENT_DESC desc[] =
-	{
-		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
-	};
+	BufferLayout layout;
+	layout.AddElement({ "Position", LayoutElement::DataType::Float2 });
 
-	Device->CreateInputLayout(desc, (UINT)std::size(desc), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout);
-	
-	Context->IASetInputLayout(inputLayout.Get());
+	vertexBuffer.SetLayout(layout);
+	vertexBuffer.CreateLayout(blob);
+
 	ID3D11RenderTargetView* const ptr = reinterpret_cast<ID3D11RenderTargetView* const>(RenderTargetView.get());
 	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, &ptr, nullptr););
 	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
