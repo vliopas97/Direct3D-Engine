@@ -1,4 +1,6 @@
 #include "Buffer.h"
+#include "CurrentGraphicsContext.h"
+#include "Graphics.h"
 
 LayoutElement::LayoutElement(const std::string& name, DataType type)
 	:Name(name), Type(type), Size(CalcSize(type))
@@ -66,8 +68,7 @@ size_t BufferLayout::GetElementsSize() const
 	return Elements.size();
 }
 
-VertexBuffer::VertexBuffer(const CurrentDeviceAndContext& info, const float* vertices, int size)
-	:Info(info)
+VertexBuffer::VertexBuffer(const float* vertices, int size)
 {
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -80,19 +81,19 @@ VertexBuffer::VertexBuffer(const CurrentDeviceAndContext& info, const float* ver
 	D3D11_SUBRESOURCE_DATA subResourceData;
 	subResourceData.pSysMem = vertices;
 
-	Info.Device->CreateBuffer(&vertexBufferDesc, &subResourceData, &Buffer);
+	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateBuffer(&vertexBufferDesc, &subResourceData, &Buffer);
 }
 
 void VertexBuffer::Bind() const
 {
 	UINT stride = Layout.GetStride();
 	UINT offset = 0;
-	Info.Context->IASetVertexBuffers(0, 1, Buffer.GetAddressOf(), &stride, &offset);
+	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetVertexBuffers(0, 1, Buffer.GetAddressOf(), &stride, &offset);
 }
 
 void VertexBuffer::Unbind() const
 {
-	Info.Context->IASetVertexBuffers(0, 0, nullptr, 0, 0);
+	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
 void VertexBuffer::SetLayout(const BufferLayout& layout)
@@ -113,8 +114,9 @@ void VertexBuffer::CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 						  0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0);
 	}
 
-	Info.Device->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(),
+	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(),
 								   blob->GetBufferSize(), &inputLayout);
 
-	Info.Context->IASetInputLayout(inputLayout.Get());
+	//Info.Context->IASetInputLayout(inputLayout.Get());
+	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetInputLayout(inputLayout.Get());
 }

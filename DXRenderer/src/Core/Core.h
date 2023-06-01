@@ -44,6 +44,7 @@
 
 #include <Windows.h>
 #include <memory>
+#include <functional>
 
 template<typename T>
 using UniquePtr = std::unique_ptr<T>;
@@ -52,6 +53,9 @@ constexpr UniquePtr<T> MakeUnique(Args&& ... args)
 {
 	return std::make_unique<T>(std::forward<Args>(args)...);
 }
+
+template<typename T>
+using UniquePtrCustomDeleter = std::unique_ptr<T, std::function<void(T*)>>;
 
 template<typename T>
 using SharedPtr = std::shared_ptr<T>;

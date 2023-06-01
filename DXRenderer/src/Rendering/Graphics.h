@@ -10,9 +10,6 @@ class Graphics
 {
 public:
 	template<typename T>
-	using UniquePtr = std::unique_ptr<T, std::function<void(T*)>>;
-
-	template<typename T>
 	inline static std::function<void(T*)> Deleter = [](T* ptr)
 	{
 		ptr->Release();
@@ -26,11 +23,14 @@ public:
 	void SwapBuffers();
 	void ClearColor(float red, float green, float blue) noexcept;
 	void DrawTriangle();
+
+	const UniquePtrCustomDeleter<ID3D11Device>& GetDevice() const;
+	const UniquePtrCustomDeleter<ID3D11DeviceContext>& GetContext() const;
 private:
-	UniquePtr<ID3D11Device>        Device;
-	UniquePtr<IDXGISwapChain>      SwapChain;
-	UniquePtr<ID3D11DeviceContext> Context;
-	UniquePtr<ID3D11RenderTargetView> RenderTargetView;
+	UniquePtrCustomDeleter<ID3D11Device>        Device;
+	UniquePtrCustomDeleter<IDXGISwapChain>      SwapChain;
+	UniquePtrCustomDeleter<ID3D11DeviceContext> Context;
+	UniquePtrCustomDeleter<ID3D11RenderTargetView> RenderTargetView;
 
 	#ifndef NDEBUG
 	DXGIInfoManager InfoManager;

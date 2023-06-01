@@ -6,6 +6,7 @@
 #include <source_location>
 
 #include "Buffer.h"
+#include "CurrentGraphicsContext.h"
 
 Graphics::Graphics(HWND windowHandle)
 {
@@ -50,9 +51,9 @@ Graphics::Graphics(HWND windowHandle)
 		&context
 		));
 
-	Device = UniquePtr<ID3D11Device>(device, Deleter<ID3D11Device>);
-	SwapChain = UniquePtr<IDXGISwapChain>(swapChain, Deleter<IDXGISwapChain>);
-	Context = UniquePtr<ID3D11DeviceContext>(context, Deleter<ID3D11DeviceContext>);
+	Device = UniquePtrCustomDeleter<ID3D11Device>(device, Deleter<ID3D11Device>);
+	SwapChain = UniquePtrCustomDeleter<IDXGISwapChain>(swapChain, Deleter<IDXGISwapChain>);
+	Context = UniquePtrCustomDeleter<ID3D11DeviceContext>(context, Deleter<ID3D11DeviceContext>);
 
 	ID3D11Resource* backBuffer = nullptr;
 	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&backBuffer)));
@@ -60,7 +61,7 @@ Graphics::Graphics(HWND windowHandle)
 	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer, nullptr, &target));
 	backBuffer->Release();
 
-	RenderTargetView = UniquePtr<ID3D11RenderTargetView>(target, Deleter<ID3D11RenderTargetView>);
+	RenderTargetView = UniquePtrCustomDeleter<ID3D11RenderTargetView>(target, Deleter<ID3D11RenderTargetView>);
 }
 
 void Graphics::SwapBuffers()
@@ -100,8 +101,8 @@ void Graphics::DrawTriangle()
 		-0.5f, -0.5f
 	};
 
-	CurrentDeviceAndContext cd(Device, Context);
-	VertexBuffer vertexBuffer(cd, vertices, std::size(vertices));
+	CurrentGraphicsContext::GraphicsInfo = this;
+	VertexBuffer vertexBuffer(vertices, std::size(vertices));
 	vertexBuffer.Bind();
 
 	WRL::ComPtr<ID3D11PixelShader> pixelShader;
@@ -140,4 +141,14 @@ void Graphics::DrawTriangle()
 	Context->RSSetViewports(1, &viewport);
 
 	Context->Draw((UINT)std::size(vertices), 0);
+}
+
+const UniquePtrCustomDeleter<ID3D11Device>& Graphics::GetDevice() const
+{
+	return Device;
+}
+
+const UniquePtrCustomDeleter<ID3D11DeviceContext>& Graphics::GetContext() const
+{
+	return Context;
 }

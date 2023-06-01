@@ -1,5 +1,4 @@
 #pragma once
-#include "Graphics.h"
 
 #include <d3d11.h>
 #include <string>
@@ -47,22 +46,10 @@ private:
 	friend class VertexBuffer;
 };
 
-struct CurrentDeviceAndContext
-{
-	const Graphics::UniquePtr<ID3D11Device>& Device;
-	const Graphics::UniquePtr<ID3D11DeviceContext>& Context;
-
-	CurrentDeviceAndContext(const Graphics::UniquePtr<ID3D11Device>& device,
-							const Graphics::UniquePtr<ID3D11DeviceContext>& context)
-		:Device(device), Context(context)
-	{
-	};
-};
-
 class VertexBuffer
 {
 public:
-	VertexBuffer(const CurrentDeviceAndContext& info, const float* vertices, int size);
+	VertexBuffer(const float* vertices, int size);
 
 	void Bind() const;
 	void Unbind() const;
@@ -73,5 +60,4 @@ public:
 private:
 	BufferLayout Layout;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
-	const CurrentDeviceAndContext& Info;
 };

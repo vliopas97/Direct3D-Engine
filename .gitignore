@@ -19,3 +19,6 @@ bin-int/
 **.lo
 **.o
 **.obj
+
+# Compiled shaders
+**.cso
