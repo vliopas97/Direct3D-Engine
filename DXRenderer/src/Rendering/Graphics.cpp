@@ -7,6 +7,7 @@
 
 #include "Buffer.h"
 #include "CurrentGraphicsContext.h"
+#include "Shader.h"
 
 Graphics::Graphics(HWND windowHandle)
 {
@@ -105,27 +106,16 @@ void Graphics::DrawTriangle()
 	VertexBuffer vertexBuffer(vertices, std::size(vertices));
 	vertexBuffer.Bind();
 
-	WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	WRL::ComPtr<ID3DBlob> blob;
+	VertexShader vertexShader("VertexShader");
+	vertexShader.Bind();
 
-	std::string currentDir = std::string(std::source_location::current().file_name());
-	currentDir = currentDir.substr(0, currentDir.find_last_of("\\/"));
-	D3DReadFileToBlob(std::wstring(std::wstring(currentDir.begin(), currentDir.end()) + L"\\Shaders\\PixelShader.cso").c_str(), &blob);
-	Device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
-
-	Context->PSSetShader(pixelShader.Get(), nullptr, 0);
-
-	WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	D3DReadFileToBlob(std::wstring(std::wstring(currentDir.begin(), currentDir.end()) + L"\\Shaders\\VertexShader.cso").c_str(), &blob);
-	Device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
-
-	Context->VSSetShader(vertexShader.Get(), nullptr, 0);
+	PixelShader pixelShader("PixelShader");
+	pixelShader.Bind();
 
 	BufferLayout layout;
 	layout.AddElement({ "Position", LayoutElement::DataType::Float2 });
-
 	vertexBuffer.SetLayout(layout);
-	vertexBuffer.CreateLayout(blob);
+	vertexBuffer.CreateLayout(vertexShader.GetBlob());
 
 	ID3D11RenderTargetView* const ptr = reinterpret_cast<ID3D11RenderTargetView* const>(RenderTargetView.get());
 	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, &ptr, nullptr););
