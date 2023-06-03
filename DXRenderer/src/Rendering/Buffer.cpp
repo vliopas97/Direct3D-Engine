@@ -157,3 +157,37 @@ void IndexBuffer::Unbind() const
 {
 	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
 }
+
+template class ConstantBuffer<DirectX::XMMATRIX>;
+
+template<typename T>
+ConstantBuffer<T>::ConstantBuffer(const T& matrix)
+	:Matrix(matrix)
+{
+	D3D11_BUFFER_DESC indexBufferDesc;
+	indexBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	indexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	indexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	indexBufferDesc.MiscFlags = 0;
+	indexBufferDesc.ByteWidth = sizeof(Matrix);
+	indexBufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA subResourceData;
+	subResourceData.pSysMem = &Matrix;
+
+	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateBuffer(&indexBufferDesc, &subResourceData, &Buffer);
+}
+
+template<typename T>
+void ConstantBuffer<T>::Bind() const
+{
+	CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetConstantBuffers(0, 1, Buffer.GetAddressOf());
+}
+
+template<typename T>
+void ConstantBuffer<T>::Unbind() const
+{
+	CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetConstantBuffers(0, 1, nullptr);
+}
+
+

@@ -98,10 +98,10 @@ void Graphics::DrawTriangle()
 
 	VertexElement vertices[] =
 	{
-		{ 0.0f,-0.5f,255,0,0,0 },
-		{ -0.5f,-0.5f,0,0,255,0 },
-		{ -0.5f,0.5f,0,255,0,0 },
-		{ 0.0f,0.5f,255,255,0,0 },
+		{ 0.5f,-0.5f, 0.0f, 255,0,0,0 },
+		{ -0.5f,-0.5f,0.0f, 0,0,255,0 },
+		{ -0.5f,0.5f, 0.0f, 0,255,0,0 },
+		{ 0.5f,0.5f,  0.0f, 255,255,0,0 },
 	};
 
 	unsigned short indices[] =
@@ -116,14 +116,18 @@ void Graphics::DrawTriangle()
 	IndexBuffer indexBuffer(indices, std::size(indices));
 	indexBuffer.Bind();
 
-	VertexShader vertexShader("VertexShader");
-	vertexShader.Bind();
+	float angle = 40.0f;
+	ConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
+						*DirectX::XMMatrixScaling(9.0f/16.0f, 1.0f, 1.0f));
+	model.Bind();
 
+	VertexShader vertexShader("VertexShader");
 	PixelShader pixelShader("PixelShader");
+	vertexShader.Bind();
 	pixelShader.Bind();
 
 	BufferLayout layout;
-	layout.AddElement({ "Position", LayoutElement::DataType::Float2 }).
+	layout.AddElement({ "Position", LayoutElement::DataType::Float3 }).
 		   AddElement({ "Color", LayoutElement::DataType::UChar4Norm });
 	vertexBuffer.SetLayout(layout);
 	vertexBuffer.CreateLayout(vertexShader.GetBlob());

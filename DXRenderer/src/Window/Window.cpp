@@ -51,7 +51,7 @@ Window::Window(uint32_t width, uint32_t height, const std::string& name)
 	Handle = CreateWindow(WindowClass::GetName().c_str(),
 						  std::wstring(name.begin(), name.end()).c_str(),
 						  WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-						  200, 200, Rect.right - Rect.left, Rect.bottom - Rect.top,
+						  200, 200, Width, Height,
 						  nullptr, nullptr, WindowClass::GetInstance(), this);
 	if(!Handle)
 		throw WIN_EXCEPTION_LAST_ERROR;

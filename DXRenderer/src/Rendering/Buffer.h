@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <DirectXMath.h>
 #include <string>
 #include <vector>
 #include <wrl.h>
@@ -11,6 +12,7 @@ struct VertexElement
 	{
 		float x;
 		float y;
+		float z;
 	} Position;
 
 	struct
@@ -98,4 +100,15 @@ public:
 
 	void Bind() const override;
 	void Unbind() const override;
+};
+
+template<typename T>
+class ConstantBuffer : public Buffer
+{
+public:
+	ConstantBuffer(const T& matrix);
+	void Bind() const override;
+	void Unbind() const override;
+private:
+	T Matrix;
 };
