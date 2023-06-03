@@ -1,7 +1,6 @@
 #include "Graphics.h"
 #include "Core/Exception.h"
 
-#include <wrl.h>
 #include <d3dcompiler.h>
 #include <source_location>
 
@@ -85,10 +84,22 @@ void Graphics::SwapBuffers()
 	}
 }
 
+void Graphics::EndTick()
+{
+	SwapBuffers();
+	ClearColor(1.0f, 0.5f, 0.0f);
+	ClearDepth();
+}
+
 void Graphics::ClearColor(float red, float green, float blue) noexcept
 {
 	const float color[] = { red, green, blue };
 	Context->ClearRenderTargetView(RenderTargetView.get(), color);
+}
+
+void Graphics::ClearDepth() noexcept
+{
+	Context->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
 }
 
 void Graphics::DrawTriangle()
@@ -98,16 +109,24 @@ void Graphics::DrawTriangle()
 
 	VertexElement vertices[] =
 	{
-		{ 0.5f,-0.5f, 0.0f, 255,0,0,0 },
-		{ -0.5f,-0.5f,0.0f, 0,0,255,0 },
-		{ -0.5f,0.5f, 0.0f, 0,255,0,0 },
-		{ 0.5f,0.5f,  0.0f, 255,255,0,0 },
+		{-1.0f, -1.0f, -1.0f, 0, 0, 255, 1},
+		{ 1.0f, -1.0f, -1.0f, 0, 255, 255, 1},
+		{-1.0f,  1.0f, -1.0f, 255, 0, 0, 1},
+		{ 1.0f,  1.0f, -1.0f, 255, 0, 255, 1},
+		{-1.0f, -1.0f,  1.0f, 0, 255, 255, 1},
+		{ 1.0f, -1.0f,  1.0f, 255, 0, 255, 1},
+		{-1.0f,  1.0f,  1.0f, 0, 255, 255, 1},
+		{ 1.0f,  1.0f,  1.0f, 0, 255, 0, 1}
 	};
 
 	unsigned short indices[] =
 	{
-		0, 1, 2,
-		0, 2, 3,
+		0,2,1, 2,3,1,
+		1,3,5, 3,7,5,
+		2,6,3, 3,6,7,
+		4,5,7, 4,7,6,
+		0,4,2, 2,4,6,
+		0,1,4, 1,5,4
 	};
 
 	VertexBuffer vertexBuffer(vertices, std::size(vertices));
@@ -118,13 +137,26 @@ void Graphics::DrawTriangle()
 
 	float angle = 40.0f;
 	ConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
-						*DirectX::XMMatrixScaling(9.0f/16.0f, 1.0f, 1.0f));
-	model.Bind();
+											*DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
+											*DirectX::XMMatrixTranslation(0, 0, 4)
+											*DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f/9.0f, 0.1f, 10.0f));
+	model.Bind(ShaderToBind::Vertex);
 
 	VertexShader vertexShader("VertexShader");
 	PixelShader pixelShader("PixelShader");
 	vertexShader.Bind();
 	pixelShader.Bind();
+
+	ConstantBuffer<FaceColors> fColors(
+		{{
+			{1.0f,0.0f,1.0f, 1.0f},
+			{1.0f,0.0f,0.0f, 1.0f},
+			{0.0f,1.0f,0.0f, 1.0f},
+			{0.0f,0.0f,1.0f, 1.0f},
+			{1.0f,1.0f,0.0f, 1.0f},
+			{0.0f,1.0f,1.0f, 1.0f},
+		}});
+	fColors.Bind(ShaderToBind::Pixel);
 
 	BufferLayout layout;
 	layout.AddElement({ "Position", LayoutElement::DataType::Float3 }).
@@ -132,8 +164,23 @@ void Graphics::DrawTriangle()
 	vertexBuffer.SetLayout(layout);
 	vertexBuffer.CreateLayout(vertexShader.GetBlob());
 
+	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
+
+	// Second cube for depth testing
+	angle = -35.0f;
+	model = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
+		* DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
+		* DirectX::XMMatrixTranslation(-2, 0, 6)
+		* DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f);
+	model.Bind(ShaderToBind::Vertex);
+	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
+
+	// Create Depth Buffer
+	DepthBuffer depthBuffer(DepthStencilView);
+	depthBuffer.Bind();
+
 	ID3D11RenderTargetView* const ptr = reinterpret_cast<ID3D11RenderTargetView* const>(RenderTargetView.get());
-	Context->OMSetRenderTargets(1, &ptr, nullptr);
+	Context->OMSetRenderTargets(1, &ptr, DepthStencilView.Get());
 	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D11_VIEWPORT viewport;
@@ -144,8 +191,6 @@ void Graphics::DrawTriangle()
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);
-
-	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 }
 
 const UniquePtrCustomDeleter<ID3D11Device>& Graphics::GetDevice() const

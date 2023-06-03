@@ -1,4 +1,9 @@
-float4 main(float4 pos : SV_Position, float3 color : Color) : SV_Target
+cbuffer colors
 {
-    return float4(color, 1.0f);
+    float4 face_colors[6];
+};
+
+float4 main(uint index : SV_PrimitiveID) : SV_Target
+{
+    return face_colors[index / 2];
 }

@@ -67,15 +67,32 @@ private:
 	friend class VertexBuffer;
 };
 
+struct FaceColors
+{
+	struct
+	{
+		float r;
+		float g;
+		float b;
+		float a;
+	} face_colors[6];
+};
 
-class Buffer
+class BufferBase
+{
+public:
+	virtual void Unbind() const	= 0;
+	virtual ~BufferBase() = default;
+
+protected:
+	Microsoft::WRL::ComPtr<ID3D11Buffer> BufferID;
+};
+
+class Buffer : public BufferBase
 {
 public:
 	virtual void Bind() const = 0;
-	virtual void Unbind() const	= 0;
-
-protected:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+	virtual ~Buffer() = default;
 };
 
 class VertexBuffer : public Buffer
@@ -102,13 +119,36 @@ public:
 	void Unbind() const override;
 };
 
+enum ShaderToBind
+{
+	Vertex,
+	Pixel
+};
+
 template<typename T>
-class ConstantBuffer : public Buffer
+class ConstantBuffer : public BufferBase
 {
 public:
 	ConstantBuffer(const T& matrix);
-	void Bind() const override;
+	void Bind(ShaderToBind shader) const;
 	void Unbind() const override;
 private:
 	T Matrix;
+};
+
+class DepthBuffer
+{
+public:
+	DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV);
+
+	void Bind() const;
+	void Unbind() const;
+
+private:
+	void CreateDepthStencilState();
+	void CreateDepthStencilTexture();
+	void CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV) const;
+private:
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
 };
