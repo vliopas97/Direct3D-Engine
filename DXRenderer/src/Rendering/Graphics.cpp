@@ -94,17 +94,27 @@ void Graphics::ClearColor(float red, float green, float blue) noexcept
 void Graphics::DrawTriangle()
 {
 	namespace WRL = Microsoft::WRL;
+	CurrentGraphicsContext::GraphicsInfo = this;
 
-	float vertices[] =
+	VertexElement vertices[] =
 	{
-		0.0f, 0.5f,
-		0.5f, -0.5f,
-		-0.5f, -0.5f
+		{ 0.0f,-0.5f,255,0,0,0 },
+		{ -0.5f,-0.5f,0,0,255,0 },
+		{ -0.5f,0.5f,0,255,0,0 },
+		{ 0.0f,0.5f,255,255,0,0 },
 	};
 
-	CurrentGraphicsContext::GraphicsInfo = this;
+	unsigned short indices[] =
+	{
+		0, 1, 2,
+		0, 2, 3,
+	};
+
 	VertexBuffer vertexBuffer(vertices, std::size(vertices));
 	vertexBuffer.Bind();
+
+	IndexBuffer indexBuffer(indices, std::size(indices));
+	indexBuffer.Bind();
 
 	VertexShader vertexShader("VertexShader");
 	vertexShader.Bind();
@@ -113,12 +123,13 @@ void Graphics::DrawTriangle()
 	pixelShader.Bind();
 
 	BufferLayout layout;
-	layout.AddElement({ "Position", LayoutElement::DataType::Float2 });
+	layout.AddElement({ "Position", LayoutElement::DataType::Float2 }).
+		   AddElement({ "Color", LayoutElement::DataType::UChar4Norm });
 	vertexBuffer.SetLayout(layout);
 	vertexBuffer.CreateLayout(vertexShader.GetBlob());
 
 	ID3D11RenderTargetView* const ptr = reinterpret_cast<ID3D11RenderTargetView* const>(RenderTargetView.get());
-	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, &ptr, nullptr););
+	Context->OMSetRenderTargets(1, &ptr, nullptr);
 	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D11_VIEWPORT viewport;
@@ -130,7 +141,7 @@ void Graphics::DrawTriangle()
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);
 
-	Context->Draw((UINT)std::size(vertices), 0);
+	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 }
 
 const UniquePtrCustomDeleter<ID3D11Device>& Graphics::GetDevice() const

@@ -39,6 +39,7 @@ public:
     virtual constexpr const char* GetName() const = 0;
     virtual std::string GetEventInfo() const = 0;
     virtual EventCategory GetCategory() const = 0;
+    virtual ~Event() = default;
 
     bool Handled = false;
 };

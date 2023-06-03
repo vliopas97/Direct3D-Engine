@@ -5,10 +5,29 @@
 #include <vector>
 #include <wrl.h>
 
+struct VertexElement
+{
+	struct
+	{
+		float x;
+		float y;
+	} Position;
+
+	struct
+	{
+		unsigned char r;
+		unsigned char g;
+		unsigned char b;
+		unsigned char a;
+	} Color;
+};
+
 struct LayoutElement
 {
 	enum class DataType
 	{
+		UChar, UChar2, UChar4,
+		UCharNorm, UChar2Norm, UChar4Norm,
 		Float, Float2, Float3, Float4,
 		Int, Int2, Int3, Int4
 	};
@@ -46,18 +65,37 @@ private:
 	friend class VertexBuffer;
 };
 
-class VertexBuffer
+
+class Buffer
 {
 public:
-	VertexBuffer(const float* vertices, int size);
+	virtual void Bind() const = 0;
+	virtual void Unbind() const	= 0;
 
-	void Bind() const;
-	void Unbind() const;
+protected:
+	Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+};
+
+class VertexBuffer : public Buffer
+{
+public:
+	VertexBuffer(const VertexElement* vertices, int size);
+
+	void Bind() const override;
+	void Unbind() const override;
 
 	void SetLayout(const BufferLayout& layout);
 
 	void CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
 private:
 	BufferLayout Layout;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> Buffer;
+};
+
+class IndexBuffer : public Buffer
+{
+public:
+	IndexBuffer(const unsigned short* indices, int size);
+
+	void Bind() const override;
+	void Unbind() const override;
 };

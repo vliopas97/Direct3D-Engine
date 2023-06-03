@@ -3,14 +3,16 @@
 
 class MouseEvent : public Event
 {
+public:
 	virtual EventCategory GetCategory() const override;
+	virtual ~MouseEvent() = default;
 };
 
 class MouseButtonEvent : public MouseEvent
 {
 public:
 	inline uint32_t GetMouseButtonCode() const { return static_cast<uint32_t>(Button); }
-
+	virtual ~MouseButtonEvent() = default;
 protected:
 	MouseButtonEvent(MouseButtonCode button);
 

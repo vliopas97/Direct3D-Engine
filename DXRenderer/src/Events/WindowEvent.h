@@ -3,7 +3,9 @@
 
 class WindowEvent : public Event
 {
+public:
 	virtual EventCategory GetCategory() const override;
+	virtual ~WindowEvent() = default;
 };
 
 class WindowResizeEvent : public WindowEvent
