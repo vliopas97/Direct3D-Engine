@@ -43,6 +43,11 @@ void VertexShader::Unbind() const
 	CurrentGraphicsContext::Context()->VSSetShader(nullptr, nullptr, 0);
 }
 
+const ShaderType& VertexShader::GetType() const
+{
+	return Type;
+}
+
 PixelShader::PixelShader(const std::string& shaderName)
 {
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
@@ -57,4 +62,9 @@ void PixelShader::Bind() const
 void PixelShader::Unbind() const
 {
 	CurrentGraphicsContext::Context()->PSSetShader(nullptr, nullptr, 0);
+}
+
+const ShaderType& PixelShader::GetType() const
+{
+	return Type;
 }

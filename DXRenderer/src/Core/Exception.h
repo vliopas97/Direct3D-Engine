@@ -139,9 +139,3 @@ private:
 #define GRAPHICS_ASSERT(hrcall) GRAPHICS_ASSERT_NOINFO(hrcall)
 #define GRAPHICS_DEVICE_REMOVED_EXCEPTION(hr) DeviceRemovedException( __LINE__,__FILE__,(hr))
 #endif
-
-#ifdef HZ_ENABLE_ASSERTS
-#define ASSERT(x) { if(!(x)) { printf("Assertion Failed!"); __debugbreak(); } }
-#else
-#define ASSERT(x)
-#endif

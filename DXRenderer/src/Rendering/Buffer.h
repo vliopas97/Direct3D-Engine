@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CurrentGraphicsContext.h"
+
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <string>
@@ -78,21 +80,15 @@ struct FaceColors
 	} face_colors[6];
 };
 
-class BufferBase
-{
-public:
-	virtual void Unbind() const	= 0;
-	virtual ~BufferBase() = default;
-
-protected:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> BufferID;
-};
-
-class Buffer : public BufferBase
+class Buffer
 {
 public:
 	virtual void Bind() const = 0;
+	virtual void Unbind() const = 0;
 	virtual ~Buffer() = default;
+
+protected:
+	Microsoft::WRL::ComPtr<ID3D11Buffer> BufferID;
 };
 
 class VertexBuffer : public Buffer
@@ -104,6 +100,7 @@ public:
 	void Unbind() const override;
 
 	void SetLayout(const BufferLayout& layout);
+	VertexBuffer& AddLayoutElement(LayoutElement element);
 
 	void CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
 private:
@@ -119,21 +116,65 @@ public:
 	void Unbind() const override;
 };
 
-enum ShaderToBind
+
+template<typename T>
+class ConstantBuffer : public Buffer
 {
-	Vertex,
-	Pixel
+public:
+	virtual ~ConstantBuffer() = default;
+	ConstantBuffer(const T& matrix)
+		:Matrix(matrix)
+	{
+		D3D11_BUFFER_DESC indexBufferDesc;
+		indexBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		indexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		indexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		indexBufferDesc.MiscFlags = 0;
+		indexBufferDesc.ByteWidth = sizeof(Matrix);
+		indexBufferDesc.StructureByteStride = 0;
+
+		D3D11_SUBRESOURCE_DATA subResourceData;
+		subResourceData.pSysMem = &Matrix;
+
+		CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
+	}
+private:
+	T Matrix;
 };
 
 template<typename T>
-class ConstantBuffer : public BufferBase
+class VSConstantBuffer : public ConstantBuffer<T>
 {
 public:
-	ConstantBuffer(const T& matrix);
-	void Bind(ShaderToBind shader) const;
-	void Unbind() const override;
-private:
-	T Matrix;
+	using ConstantBuffer<T>::ConstantBuffer;
+	using ConstantBuffer<T>::BufferID;
+
+	void Bind() const override
+	{
+		CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+	}
+	void Unbind() const override
+	{
+		CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, nullptr);
+	}
+};
+
+template<typename T>
+class PSConstantBuffer : public ConstantBuffer<T>
+{
+public:
+	using ConstantBuffer<T>::ConstantBuffer;
+	using ConstantBuffer<T>::BufferID;
+
+	void Bind() const override
+	{
+		CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+	}
+
+	void Unbind() const override
+	{
+		CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, nullptr);
+	}
 };
 
 class DepthBuffer

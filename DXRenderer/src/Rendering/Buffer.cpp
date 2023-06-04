@@ -113,6 +113,12 @@ void VertexBuffer::SetLayout(const BufferLayout& layout)
 	Layout = layout;
 }
 
+VertexBuffer& VertexBuffer::AddLayoutElement(LayoutElement element)
+{
+	Layout.AddElement(element);
+	return *this;
+}
+
 void VertexBuffer::CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 {
 	Bind();
@@ -155,50 +161,6 @@ void IndexBuffer::Bind() const
 void IndexBuffer::Unbind() const
 {
 	CurrentGraphicsContext::Context()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
-}
-
-template class ConstantBuffer<DirectX::XMMATRIX>;
-template class ConstantBuffer<FaceColors>;
-
-template<typename T>
-ConstantBuffer<T>::ConstantBuffer(const T& matrix)
-	:Matrix(matrix)
-{
-	D3D11_BUFFER_DESC indexBufferDesc;
-	indexBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	indexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	indexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	indexBufferDesc.MiscFlags = 0;
-	indexBufferDesc.ByteWidth = sizeof(Matrix);
-	indexBufferDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA subResourceData;
-	subResourceData.pSysMem = &Matrix;
-
-	CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
-}
-
-template<typename T>
-void ConstantBuffer<T>::Bind(ShaderToBind shader) const
-{
-	switch (shader)
-	{
-		case ShaderToBind::Vertex:
-			CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
-			break;
-		case ShaderToBind::Pixel:
-			CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
-			break;
-		default:
-			ASSERT(false);
-	}
-	
-}
-
-template<typename T>
-void ConstantBuffer<T>::Unbind() const
-{
-	CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, nullptr);
 }
 
 DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)

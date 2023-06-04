@@ -5,7 +5,6 @@
 #include <source_location>
 
 #include "Buffer.h"
-#include "CurrentGraphicsContext.h"
 #include "Shader.h"
 
 Graphics::Graphics(HWND windowHandle)
@@ -124,18 +123,22 @@ void Graphics::DrawTriangle()
 	indexBuffer.Bind();
 
 	float angle = 40.0f;
-	ConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
+	VSConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
 											*DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
 											*DirectX::XMMatrixTranslation(0, 0, 4)
 											*DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f/9.0f, 0.1f, 10.0f));
-	model.Bind(ShaderToBind::Vertex);
+	model.Bind();
 
-	VertexShader vertexShader("VertexShader");
-	PixelShader pixelShader("PixelShader");
-	vertexShader.Bind();
-	pixelShader.Bind();
+	ShaderGroup shaderGroup;
 
-	ConstantBuffer<FaceColors> fColors(
+	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("VertexShader");
+	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("PixelShader");
+
+	shaderGroup.AddShader(std::move(vertexShader));
+	shaderGroup.AddShader(std::move(pixelShader));
+	shaderGroup.Bind();
+
+	PSConstantBuffer<FaceColors> fColors(
 		{{
 			{1.0f,0.0f,1.0f, 1.0f},
 			{1.0f,0.0f,0.0f, 1.0f},
@@ -144,13 +147,11 @@ void Graphics::DrawTriangle()
 			{1.0f,1.0f,0.0f, 1.0f},
 			{0.0f,1.0f,1.0f, 1.0f},
 		}});
-	fColors.Bind(ShaderToBind::Pixel);
+	fColors.Bind();
 
-	BufferLayout layout;
-	layout.AddElement({ "Position", LayoutElement::DataType::Float3 }).
-		   AddElement({ "Color", LayoutElement::DataType::UChar4Norm });
-	vertexBuffer.SetLayout(layout);
-	vertexBuffer.CreateLayout(vertexShader.GetBlob());
+	vertexBuffer.AddLayoutElement({ "Position", LayoutElement::DataType::Float3 }).
+				 AddLayoutElement({ "Color", LayoutElement::DataType::UChar4Norm });
+	vertexBuffer.CreateLayout(shaderGroup.GetBlob(ShaderType::Vertex));
 
 	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 
@@ -160,7 +161,7 @@ void Graphics::DrawTriangle()
 		* DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
 		* DirectX::XMMatrixTranslation(-2, 0, 6)
 		* DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f);
-	model.Bind(ShaderToBind::Vertex);
+	model.Bind();
 	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 
 	// Create Depth Buffer

@@ -72,3 +72,8 @@ constexpr WeakPtr<T> MakeWeak(Args&& ... args)
 {
 	return std::weak_ptr<T>(std::forward<Args>(args)...);
 }
+#ifndef NDEBUG
+#define ASSERT(x) { if(!(x)) { printf("Assertion Failed!"); __debugbreak(); } }
+#else
+#define ASSERT(x)
+#endif
