@@ -32,10 +32,6 @@ Graphics::Graphics(HWND windowHandle)
 	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
 
-	ID3D11Device* device = nullptr;
-	IDXGISwapChain* swapChain = nullptr;
-	ID3D11DeviceContext* context = nullptr;
-
 	GRAPHICS_ASSERT(D3D11CreateDeviceAndSwapChain(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
@@ -45,23 +41,15 @@ Graphics::Graphics(HWND windowHandle)
 		0,
 		D3D11_SDK_VERSION,
 		&sd,
-		&swapChain,
-		&device,
+		&SwapChain,
+		&Device,
 		nullptr,
-		&context
+		&Context
 		));
 
-	Device = UniquePtrCustomDeleter<ID3D11Device>(device, Deleter<ID3D11Device>);
-	SwapChain = UniquePtrCustomDeleter<IDXGISwapChain>(swapChain, Deleter<IDXGISwapChain>);
-	Context = UniquePtrCustomDeleter<ID3D11DeviceContext>(context, Deleter<ID3D11DeviceContext>);
-
-	ID3D11Resource* backBuffer = nullptr;
-	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&backBuffer)));
-	ID3D11RenderTargetView* target = nullptr;
-	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer, nullptr, &target));
-	backBuffer->Release();
-
-	RenderTargetView = UniquePtrCustomDeleter<ID3D11RenderTargetView>(target, Deleter<ID3D11RenderTargetView>);
+	Microsoft::WRL::ComPtr<ID3D11Resource> backBuffer = nullptr;
+	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
+	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, &RenderTargetView));
 }
 
 void Graphics::SwapBuffers()
@@ -94,7 +82,7 @@ void Graphics::EndTick()
 void Graphics::ClearColor(float red, float green, float blue) noexcept
 {
 	const float color[] = { red, green, blue };
-	Context->ClearRenderTargetView(RenderTargetView.get(), color);
+	Context->ClearRenderTargetView(RenderTargetView.Get(), color);
 }
 
 void Graphics::ClearDepth() noexcept
@@ -179,8 +167,7 @@ void Graphics::DrawTriangle()
 	DepthBuffer depthBuffer(DepthStencilView);
 	depthBuffer.Bind();
 
-	ID3D11RenderTargetView* const ptr = reinterpret_cast<ID3D11RenderTargetView* const>(RenderTargetView.get());
-	Context->OMSetRenderTargets(1, &ptr, DepthStencilView.Get());
+	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
 	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D11_VIEWPORT viewport;
@@ -193,12 +180,12 @@ void Graphics::DrawTriangle()
 	Context->RSSetViewports(1, &viewport);
 }
 
-const UniquePtrCustomDeleter<ID3D11Device>& Graphics::GetDevice() const
+const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const
 {
 	return Device;
 }
 
-const UniquePtrCustomDeleter<ID3D11DeviceContext>& Graphics::GetContext() const
+const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& Graphics::GetContext() const
 {
 	return Context;
 }

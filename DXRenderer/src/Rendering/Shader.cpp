@@ -30,31 +30,31 @@ std::wstring Shader::SetUpPath(const std::string& shaderName)
 VertexShader::VertexShader(const std::string& shaderName)
 {
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
+	CurrentGraphicsContext::Device()->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
 }
 
 void VertexShader::Bind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetShader(ShaderID.Get(), nullptr, 0);
+	CurrentGraphicsContext::Context()->VSSetShader(ShaderID.Get(), nullptr, 0);
 }
 
 void VertexShader::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetShader(nullptr, nullptr, 0);
+	CurrentGraphicsContext::Context()->VSSetShader(nullptr, nullptr, 0);
 }
 
 PixelShader::PixelShader(const std::string& shaderName)
 {
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
+	CurrentGraphicsContext::Device()->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
 }
 
 void PixelShader::Bind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->PSSetShader(ShaderID.Get(), nullptr, 0);
+	CurrentGraphicsContext::Context()->PSSetShader(ShaderID.Get(), nullptr, 0);
 }
 
 void PixelShader::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->PSSetShader(nullptr, nullptr, 0);
+	CurrentGraphicsContext::Context()->PSSetShader(nullptr, nullptr, 0);
 }

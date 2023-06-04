@@ -93,19 +93,19 @@ VertexBuffer::VertexBuffer(const VertexElement* vertices, int size)
 	D3D11_SUBRESOURCE_DATA subResourceData;
 	subResourceData.pSysMem = vertices;
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
+	CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
 }
 
 void VertexBuffer::Bind() const
 {
 	UINT stride = Layout.GetStride();
 	UINT offset = 0;
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
+	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
 }
 
 void VertexBuffer::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
+	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
 void VertexBuffer::SetLayout(const BufferLayout& layout)
@@ -126,11 +126,10 @@ void VertexBuffer::CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 						  0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
 	}
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(),
+	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(),
 								   blob->GetBufferSize(), &inputLayout);
 
-	//Info.Context->IASetInputLayout(inputLayout.Get());
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetInputLayout(inputLayout.Get());
+	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
 }
 
 IndexBuffer::IndexBuffer(const unsigned short* indices, int size)
@@ -145,17 +144,17 @@ IndexBuffer::IndexBuffer(const unsigned short* indices, int size)
 
 	D3D11_SUBRESOURCE_DATA subResourceData;
 	subResourceData.pSysMem = indices;
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
+	CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
 }
 
 void IndexBuffer::Bind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetIndexBuffer(BufferID.Get(), DXGI_FORMAT_R16_UINT, 0);
+	CurrentGraphicsContext::Context()->IASetIndexBuffer(BufferID.Get(), DXGI_FORMAT_R16_UINT, 0);
 }
 
 void IndexBuffer::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
+	CurrentGraphicsContext::Context()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
 }
 
 template class ConstantBuffer<DirectX::XMMATRIX>;
@@ -176,7 +175,7 @@ ConstantBuffer<T>::ConstantBuffer(const T& matrix)
 	D3D11_SUBRESOURCE_DATA subResourceData;
 	subResourceData.pSysMem = &Matrix;
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
+	CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
 }
 
 template<typename T>
@@ -185,10 +184,10 @@ void ConstantBuffer<T>::Bind(ShaderToBind shader) const
 	switch (shader)
 	{
 		case ShaderToBind::Vertex:
-			CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+			CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
 			break;
 		case ShaderToBind::Pixel:
-			CurrentGraphicsContext::GraphicsInfo->GetContext()->PSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+			CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
 			break;
 		default:
 			ASSERT(false);
@@ -199,7 +198,7 @@ void ConstantBuffer<T>::Bind(ShaderToBind shader) const
 template<typename T>
 void ConstantBuffer<T>::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->VSSetConstantBuffers(0, 1, nullptr);
+	CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, nullptr);
 }
 
 DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)
@@ -211,12 +210,12 @@ DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)
 
 void DepthBuffer::Bind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->OMSetDepthStencilState(depthStencilState.Get(), 1);
+	CurrentGraphicsContext::Context()->OMSetDepthStencilState(depthStencilState.Get(), 1);
 }
 
 void DepthBuffer::Unbind() const
 {
-	CurrentGraphicsContext::GraphicsInfo->GetContext()->OMSetDepthStencilState(nullptr, 1);
+	CurrentGraphicsContext::Context()->OMSetDepthStencilState(nullptr, 1);
 }
 
 void DepthBuffer::CreateDepthStencilState()
@@ -226,7 +225,7 @@ void DepthBuffer::CreateDepthStencilState()
 	depthBufferDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthBufferDesc.DepthFunc = D3D11_COMPARISON_LESS;
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateDepthStencilState(&depthBufferDesc, &depthStencilState);
+	CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthBufferDesc, &depthStencilState);
 }
 
 void DepthBuffer::CreateDepthStencilTexture()
@@ -242,7 +241,7 @@ void DepthBuffer::CreateDepthStencilTexture()
 	descDepth.Usage = D3D11_USAGE_DEFAULT;
 	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateTexture2D(&descDepth, nullptr, &depthStencil);
+	CurrentGraphicsContext::Device()->CreateTexture2D(&descDepth, nullptr, &depthStencil);
 }
 
 void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV) const
@@ -252,5 +251,5 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0u;
 
-	CurrentGraphicsContext::GraphicsInfo->GetDevice()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
+	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
 }
