@@ -3,6 +3,7 @@
 #include "CurrentGraphicsContext.h"
 #include "Graphics.h"
 
+#include <algorithm>
 #include <source_location>
 
 namespace
@@ -67,4 +68,26 @@ void PixelShader::Unbind() const
 const ShaderType& PixelShader::GetType() const
 {
 	return Type;
+}
+
+void ShaderGroup::AddShader(UniquePtr<Shader> shader)
+{
+	Shaders[shader->GetType()] = std::move(shader);
+}
+
+void ShaderGroup::Bind() const
+{
+	for (auto& shader : Shaders)
+		shader->Bind();
+}
+
+void ShaderGroup::Unbind() const
+{
+	for (auto& shader : Shaders)
+		shader->Unbind();
+}
+
+const Microsoft::WRL::ComPtr<ID3DBlob>& ShaderGroup::GetBlob(ShaderType type) const
+{
+	return Shaders[type]->GetBlob();
 }

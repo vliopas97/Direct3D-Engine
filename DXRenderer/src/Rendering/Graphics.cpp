@@ -7,8 +7,12 @@
 #include "Buffer.h"
 #include "Shader.h"
 
+#include "Actors\Actor.h"
+
 Graphics::Graphics(HWND windowHandle)
 {
+	CurrentGraphicsContext::GraphicsInfo = this;
+
 	DXGI_SWAP_CHAIN_DESC sd = {};
 	sd.BufferDesc.Width = 0;
 	sd.BufferDesc.Height = 0;
@@ -49,6 +53,22 @@ Graphics::Graphics(HWND windowHandle)
 	Microsoft::WRL::ComPtr<ID3D11Resource> backBuffer = nullptr;
 	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
 	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, &RenderTargetView));
+
+	// Create Depth Buffer
+	DepthBuffer depthBuffer(DepthStencilView);
+	depthBuffer.Bind();
+
+	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
+	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	D3D11_VIEWPORT viewport;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	viewport.Width = 1920.0f;
+	viewport.Height = 1080.0f;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	Context->RSSetViewports(1, &viewport);
 }
 
 void Graphics::SwapBuffers()
@@ -91,94 +111,96 @@ void Graphics::ClearDepth() noexcept
 
 void Graphics::DrawTriangle()
 {
-	namespace WRL = Microsoft::WRL;
+	//namespace WRL = Microsoft::WRL;
 	CurrentGraphicsContext::GraphicsInfo = this;
 
-	VertexElement vertices[] =
-	{
-		{-1.0f, -1.0f, -1.0f, 0, 0, 255, 1},
-		{ 1.0f, -1.0f, -1.0f, 0, 255, 255, 1},
-		{-1.0f,  1.0f, -1.0f, 255, 0, 0, 1},
-		{ 1.0f,  1.0f, -1.0f, 255, 0, 255, 1},
-		{-1.0f, -1.0f,  1.0f, 0, 255, 255, 1},
-		{ 1.0f, -1.0f,  1.0f, 255, 0, 255, 1},
-		{-1.0f,  1.0f,  1.0f, 0, 255, 255, 1},
-		{ 1.0f,  1.0f,  1.0f, 0, 255, 0, 1}
-	};
+	//VertexElement vertices[] =
+	//{
+	//	{-1.0f, -1.0f, -1.0f, 0, 0, 255, 1},
+	//	{ 1.0f, -1.0f, -1.0f, 0, 255, 255, 1},
+	//	{-1.0f,  1.0f, -1.0f, 255, 0, 0, 1},
+	//	{ 1.0f,  1.0f, -1.0f, 255, 0, 255, 1},
+	//	{-1.0f, -1.0f,  1.0f, 0, 255, 255, 1},
+	//	{ 1.0f, -1.0f,  1.0f, 255, 0, 255, 1},
+	//	{-1.0f,  1.0f,  1.0f, 0, 255, 255, 1},
+	//	{ 1.0f,  1.0f,  1.0f, 0, 255, 0, 1}
+	//};
 
-	unsigned short indices[] =
-	{
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
-	};
+	//unsigned short indices[] =
+	//{
+	//	0,2,1, 2,3,1,
+	//	1,3,5, 3,7,5,
+	//	2,6,3, 3,6,7,
+	//	4,5,7, 4,7,6,
+	//	0,4,2, 2,4,6,
+	//	0,1,4, 1,5,4
+	//};
 
-	VertexBuffer vertexBuffer(vertices, std::size(vertices));
-	vertexBuffer.Bind();
+	//VertexBuffer vertexBuffer(vertices, std::size(vertices));
+	//vertexBuffer.Bind();
 
-	IndexBuffer indexBuffer(indices, std::size(indices));
-	indexBuffer.Bind();
+	//IndexBuffer indexBuffer(indices, std::size(indices));
+	//indexBuffer.Bind();
 
-	float angle = 40.0f;
-	VSConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
-											*DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
-											*DirectX::XMMatrixTranslation(0, 0, 4)
-											*DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f/9.0f, 0.1f, 10.0f));
-	model.Bind();
+	//float angle = 40.0f;
+	//VSConstantBuffer<DirectX::XMMATRIX> model(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
+	//										*DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
+	//										*DirectX::XMMatrixTranslation(0, 0, 4)
+	//										*DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f/9.0f, 0.1f, 10.0f));
+	//model.Bind();
 
-	ShaderGroup shaderGroup;
+	//ShaderGroup shaderGroup;
 
-	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("VertexShader");
-	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("PixelShader");
+	//UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("VertexShader");
+	//UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("PixelShader");
 
-	shaderGroup.AddShader(std::move(vertexShader));
-	shaderGroup.AddShader(std::move(pixelShader));
-	shaderGroup.Bind();
+	//shaderGroup.AddShader(std::move(vertexShader));
+	//shaderGroup.AddShader(std::move(pixelShader));
+	//shaderGroup.Bind();
 
-	PSConstantBuffer<FaceColors> fColors(
-		{{
-			{1.0f,0.0f,1.0f, 1.0f},
-			{1.0f,0.0f,0.0f, 1.0f},
-			{0.0f,1.0f,0.0f, 1.0f},
-			{0.0f,0.0f,1.0f, 1.0f},
-			{1.0f,1.0f,0.0f, 1.0f},
-			{0.0f,1.0f,1.0f, 1.0f},
-		}});
-	fColors.Bind();
+	//PSConstantBuffer<FaceColors> fColors(
+	//	{{
+	//		{1.0f,0.0f,1.0f, 1.0f},
+	//		{1.0f,0.0f,0.0f, 1.0f},
+	//		{0.0f,1.0f,0.0f, 1.0f},
+	//		{0.0f,0.0f,1.0f, 1.0f},
+	//		{1.0f,1.0f,0.0f, 1.0f},
+	//		{0.0f,1.0f,1.0f, 1.0f},
+	//	}});
+	//fColors.Bind();
 
-	vertexBuffer.AddLayoutElement({ "Position", LayoutElement::DataType::Float3 }).
-				 AddLayoutElement({ "Color", LayoutElement::DataType::UChar4Norm });
-	vertexBuffer.CreateLayout(shaderGroup.GetBlob(ShaderType::Vertex));
+	//vertexBuffer.AddLayoutElement({ "Position", LayoutElement::DataType::Float3 }).
+	//			 AddLayoutElement({ "Color", LayoutElement::DataType::UChar4Norm });
+	//vertexBuffer.CreateLayout(shaderGroup.GetBlob(ShaderType::Vertex));
 
-	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
+	//Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 
-	// Second cube for depth testing
-	angle = -35.0f;
-	model = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
-		* DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
-		* DirectX::XMMatrixTranslation(-2, 0, 6)
-		* DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f);
-	model.Bind();
-	Context->DrawIndexed((UINT)std::size(indices), 0, 0);
+	//// Second cube for depth testing
+	//angle = -35.0f;
+	//model = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
+	//	* DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
+	//	* DirectX::XMMatrixTranslation(-2, 0, 6)
+	//	* DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f);
+	//model.Bind();
+	//Context->DrawIndexed((UINT)std::size(indices), 0, 0);
 
-	// Create Depth Buffer
-	DepthBuffer depthBuffer(DepthStencilView);
-	depthBuffer.Bind();
+	//// Create Depth Buffer
+	//DepthBuffer depthBuffer(DepthStencilView);
+	//depthBuffer.Bind();
 
-	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
-	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
+	//Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	D3D11_VIEWPORT viewport;
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-	viewport.Width = 1920.0f;
-	viewport.Height = 1080.0f;
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	Context->RSSetViewports(1, &viewport);
+	//D3D11_VIEWPORT viewport;
+	//viewport.TopLeftX = 0.0f;
+	//viewport.TopLeftY = 0.0f;
+	//viewport.Width = 1920.0f;
+	//viewport.Height = 1080.0f;
+	//viewport.MinDepth = 0.0f;
+	//viewport.MaxDepth = 1.0f;
+	//Context->RSSetViewports(1, &viewport);
+	Cube cube;
+	cube.Draw();
 }
 
 const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const

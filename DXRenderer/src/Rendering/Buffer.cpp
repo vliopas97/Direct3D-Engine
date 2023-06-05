@@ -80,27 +80,12 @@ size_t BufferLayout::GetElementsSize() const
 	return Elements.size();
 }
 
-VertexBuffer::VertexBuffer(const VertexElement* vertices, int size)
-{
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-	vertexBufferDesc.ByteWidth = sizeof(VertexElement) * size;
-	vertexBufferDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA subResourceData;
-	subResourceData.pSysMem = vertices;
-
-	CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
-}
-
 void VertexBuffer::Bind() const
 {
 	UINT stride = Layout.GetStride();
 	UINT offset = 0;
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
+	BindLayout();
 }
 
 void VertexBuffer::Unbind() const
@@ -119,9 +104,8 @@ VertexBuffer& VertexBuffer::AddLayoutElement(LayoutElement element)
 	return *this;
 }
 
-void VertexBuffer::CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+void VertexBuffer::BindLayout() const
 {
-	Bind();
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
 	desc.reserve(Layout.GetElementsSize());
@@ -132,24 +116,30 @@ void VertexBuffer::CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 						  0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
 	}
 
-	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(),
-								   blob->GetBufferSize(), &inputLayout);
+	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
+								   Blob->GetBufferSize(), &inputLayout);
 
 	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
 }
 
-IndexBuffer::IndexBuffer(const unsigned short* indices, int size)
+BufferType VertexBuffer::GetType() const
+{
+	return Type;
+}
+
+IndexBuffer::IndexBuffer(const std::vector<unsigned short>& indices)
+	:Count(static_cast<UINT>(indices.size()))
 {
 	D3D11_BUFFER_DESC indexBufferDesc;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
-	indexBufferDesc.ByteWidth = sizeof(indices) * size;
-	indexBufferDesc.StructureByteStride = 0;
+	indexBufferDesc.ByteWidth = sizeof(unsigned short) * indices.size();
+	indexBufferDesc.StructureByteStride = sizeof(unsigned short);
 
 	D3D11_SUBRESOURCE_DATA subResourceData;
-	subResourceData.pSysMem = indices;
+	subResourceData.pSysMem = indices.data();
 	CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
 }
 
@@ -161,6 +151,16 @@ void IndexBuffer::Bind() const
 void IndexBuffer::Unbind() const
 {
 	CurrentGraphicsContext::Context()->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
+}
+
+BufferType IndexBuffer::GetType() const
+{
+	return Type;
+}
+
+UINT IndexBuffer::GetCount() const
+{
+	return Count;
 }
 
 DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)
@@ -186,7 +186,7 @@ void DepthBuffer::CreateDepthStencilState()
 	depthBufferDesc.DepthEnable = TRUE;
 	depthBufferDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthBufferDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
+	
 	CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthBufferDesc, &depthStencilState);
 }
 
@@ -214,4 +214,39 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 	depthStencilViewDesc.Texture2D.MipSlice = 0u;
 
 	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
+}
+
+void BufferGroup::AddBuffer(UniquePtr<Buffer> buffer)
+{
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const UniquePtr<Buffer>& element)
+						   {
+							   return typeid(*element) == typeid(buffer);
+						   });
+	if (it != Buffers.end())
+		return;
+
+	Buffers.emplace_back(std::move(buffer));
+}
+
+const IndexBuffer* BufferGroup::GetIndexBuffer() const
+{
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const UniquePtr<Buffer>& element)
+						   {
+							   return dynamic_cast<IndexBuffer*>(element.get());
+						   });
+
+	ASSERT(it != Buffers.end());
+	return dynamic_cast<IndexBuffer*>(it->get());
+}
+
+void BufferGroup::Bind() const
+{
+	for (const auto& buffer : Buffers)
+		buffer->Bind();
+}
+
+void BufferGroup::Unbind() const
+{
+	for (const auto& buffer : Buffers)
+		buffer->Unbind();
 }

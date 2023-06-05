@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core\Core.h"
 #include "CurrentGraphicsContext.h"
 
 #include <d3d11.h>
@@ -24,6 +25,17 @@ struct VertexElement
 		unsigned char b;
 		unsigned char a;
 	} Color;
+};
+
+struct FaceColors
+{
+	struct
+	{
+		float r;
+		float g;
+		float b;
+		float a;
+	} face_colors[6];
 };
 
 struct LayoutElement
@@ -69,15 +81,11 @@ private:
 	friend class VertexBuffer;
 };
 
-struct FaceColors
+enum BufferType
 {
-	struct
-	{
-		float r;
-		float g;
-		float b;
-		float a;
-	} face_colors[6];
+	VertexB = 0,
+	IndexB,
+	ConstantB
 };
 
 class Buffer
@@ -94,7 +102,23 @@ protected:
 class VertexBuffer : public Buffer
 {
 public:
-	VertexBuffer(const VertexElement* vertices, int size);
+	template<typename Vertex>
+	VertexBuffer(const std::vector<Vertex>& vertices, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+		:Blob(blob)
+	{
+		D3D11_BUFFER_DESC vertexBufferDesc;
+		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		vertexBufferDesc.CPUAccessFlags = 0;
+		vertexBufferDesc.MiscFlags = 0;
+		vertexBufferDesc.ByteWidth = sizeof(Vertex) * vertices.size();
+		vertexBufferDesc.StructureByteStride = sizeof(Vertex);
+
+		D3D11_SUBRESOURCE_DATA subResourceData;
+		subResourceData.pSysMem = vertices.data();
+
+		CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
+	}
 
 	void Bind() const override;
 	void Unbind() const override;
@@ -102,18 +126,31 @@ public:
 	void SetLayout(const BufferLayout& layout);
 	VertexBuffer& AddLayoutElement(LayoutElement element);
 
-	void CreateLayout(const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+	BufferType GetType() const;
+
+private:
+	void BindLayout() const;
+
 private:
 	BufferLayout Layout;
+	const Microsoft::WRL::ComPtr<ID3DBlob>& Blob;
+
+	static const BufferType Type = BufferType::VertexB;
 };
 
 class IndexBuffer : public Buffer
 {
 public:
-	IndexBuffer(const unsigned short* indices, int size);
+	IndexBuffer(const std::vector<unsigned short>& indices);
 
 	void Bind() const override;
 	void Unbind() const override;
+
+	BufferType GetType() const;
+	UINT GetCount() const;
+private:
+	static const BufferType Type = BufferType::IndexB;
+	UINT Count;
 };
 
 
@@ -138,8 +175,12 @@ public:
 
 		CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
 	}
+
+	BufferType GetType() const { return Type; }
+
 private:
 	T Matrix;
+	static const BufferType Type = BufferType::ConstantB;
 };
 
 template<typename T>
@@ -192,4 +233,16 @@ private:
 private:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
+};
+
+
+class BufferGroup : public Buffer
+{
+	std::vector<UniquePtr<Buffer>> Buffers;
+public:
+	void AddBuffer(UniquePtr<Buffer> buffer);
+	const IndexBuffer* GetIndexBuffer() const;
+
+	virtual void Bind() const override;
+	virtual void Unbind() const override;
 };
