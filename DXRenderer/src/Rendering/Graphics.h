@@ -4,6 +4,7 @@
 #include "Core/Exception.h"
 
 #include <d3d11.h>
+#include <DirectXMath.h>
 #include <functional>
 #include <wrl.h>
 
@@ -16,11 +17,12 @@ public:
 	~Graphics() = default;
 
 	void EndTick();
-	void DrawTriangle();
+	void DrawScene();
 	
 	const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetContext() const;
 	const Microsoft::WRL::ComPtr<ID3D11Device>& GetDevice() const;
 
+	const DirectX::XMMATRIX& GetProjection() const;
 private:
 	void ClearColor(float red, float green, float blue) noexcept;
 	void ClearDepth() noexcept;
@@ -38,4 +40,5 @@ private:
 	DXGIInfoManager InfoManager;
 	#endif // !NDEBUG
 
+	DirectX::XMMATRIX Projection;
 };

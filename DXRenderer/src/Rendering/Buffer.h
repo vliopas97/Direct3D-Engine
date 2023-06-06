@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Actors\Actor.h"
 #include "Core\Core.h"
 #include "CurrentGraphicsContext.h"
 
@@ -153,34 +154,42 @@ private:
 	UINT Count;
 };
 
-
 template<typename T>
 class ConstantBuffer : public Buffer
 {
 public:
 	virtual ~ConstantBuffer() = default;
-	ConstantBuffer(const T& matrix)
-		:Matrix(matrix)
+	ConstantBuffer(const T& resource, uint32_t slot = 0)
+		:Resource(resource), Slot(slot)
 	{
 		D3D11_BUFFER_DESC indexBufferDesc;
 		indexBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		indexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 		indexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		indexBufferDesc.MiscFlags = 0;
-		indexBufferDesc.ByteWidth = sizeof(Matrix);
+		indexBufferDesc.ByteWidth = sizeof(Resource);
 		indexBufferDesc.StructureByteStride = 0;
 
 		D3D11_SUBRESOURCE_DATA subResourceData;
-		subResourceData.pSysMem = &Matrix;
+		subResourceData.pSysMem = &Resource;
 
 		CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
 	}
 
-	BufferType GetType() const { return Type; }
+	BufferType GetType() const
+	{
+		return Type;
+	}
 
+protected:
+	uint32_t Slot;
 private:
-	T Matrix;
+	T Resource;
+
 	static const BufferType Type = BufferType::ConstantB;
+
+	template<typename T>
+	friend class Uniform;
 };
 
 template<typename T>
@@ -189,14 +198,15 @@ class VSConstantBuffer : public ConstantBuffer<T>
 public:
 	using ConstantBuffer<T>::ConstantBuffer;
 	using ConstantBuffer<T>::BufferID;
+	using ConstantBuffer<T>::Slot;
 
 	void Bind() const override
 	{
-		CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, BufferID.GetAddressOf());
 	}
 	void Unbind() const override
 	{
-		CurrentGraphicsContext::Context()->VSSetConstantBuffers(0, 1, nullptr);
+		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, nullptr);
 	}
 };
 
@@ -206,16 +216,52 @@ class PSConstantBuffer : public ConstantBuffer<T>
 public:
 	using ConstantBuffer<T>::ConstantBuffer;
 	using ConstantBuffer<T>::BufferID;
+	using ConstantBuffer<T>::Slot;
 
 	void Bind() const override
 	{
-		CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, BufferID.GetAddressOf());
+		CurrentGraphicsContext::Context()->PSSetConstantBuffers(Slot, 1, BufferID.GetAddressOf());
 	}
 
 	void Unbind() const override
 	{
-		CurrentGraphicsContext::Context()->PSSetConstantBuffers(0, 1, nullptr);
+		CurrentGraphicsContext::Context()->PSSetConstantBuffers(Slot, 1, nullptr);
 	}
+};
+
+template<typename T>
+class Uniform : public Buffer
+{
+public:
+	Uniform(const UniquePtr<ConstantBuffer<T>>& constantBuffer, const T& resource)
+		:ConstantBufferRef(const_cast<UniquePtr<ConstantBuffer<T>>&>(constantBuffer).release()), Resource(resource)
+	{
+		BufferID = ConstantBufferRef->BufferID;
+	}
+
+	void Bind() const override
+	{
+		Update();
+		ConstantBufferRef->Bind();
+	}
+
+	void Unbind() const override
+	{
+		ConstantBufferRef->Unbind();
+	}
+
+private:
+	void Update() const
+	{
+		D3D11_MAPPED_SUBRESOURCE subResource;
+		CurrentGraphicsContext::Context()->Map(BufferID.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &subResource);
+		memcpy(subResource.pData, &Resource, sizeof(Resource));
+		CurrentGraphicsContext::Context()->Unmap(BufferID.Get(), 0);
+	}
+
+private:
+	UniquePtr<ConstantBuffer<T>> ConstantBufferRef;
+	const T& Resource;
 };
 
 class DepthBuffer
@@ -234,7 +280,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
 };
-
 
 class BufferGroup : public Buffer
 {

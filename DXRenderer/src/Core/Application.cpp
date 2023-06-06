@@ -32,6 +32,6 @@ Application::Application()
 
 void Application::Tick()
 {
-	MainWindow->GetGraphicsContext().DrawTriangle();
+	MainWindow->GetGraphicsContext().DrawScene();
 	MainWindow->GetGraphicsContext().EndTick();
 }

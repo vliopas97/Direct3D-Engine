@@ -1,26 +1,82 @@
 #include "Actor.h"
 
+#include "Rendering\Graphics.h"
 #include "Rendering\CurrentGraphicsContext.h"
+#include "Rendering\Buffer.h"
+#include "Rendering\Shader.h"
+
 #include <vector>
 
-inline void Actor::AddBuffer(UniquePtr<Buffer> buffer)
+
+TransformationMatrix::TransformationMatrix()
+	: Intrinsics(), Matrix(DirectX::XMMatrixIdentity())
 {
-	Buffers.AddBuffer(std::move(buffer));
 }
 
-inline void Actor::AddShader(UniquePtr<Shader> shader)
+inline TransformationMatrix::TransformationMatrix(const DirectX::XMMATRIX& matrix)
+	: Intrinsics(), Matrix(matrix)
 {
-	Shaders.AddShader(std::move(shader));
+}
+
+inline TransformationMatrix::TransformationMatrix(const TransformationIntrinsics& intrinsics)
+	: Intrinsics(intrinsics), Matrix(DirectX::XMMatrixIdentity())
+{
+	Update();
+}
+
+inline void TransformationMatrix::Update()
+{
+	Matrix = DirectX::XMMatrixScaling(Sx, Sy, Sz) *
+		DirectX::XMMatrixRotationRollPitchYaw(DirectX::XMConvertToRadians(Pitch),
+											  DirectX::XMConvertToRadians(Yaw),
+											  DirectX::XMConvertToRadians(Roll)) *
+		DirectX::XMMatrixTranslation(X, Y, Z);
+}
+
+Actor::Actor()
+	: Transform(), Buffers(MakeUnique<BufferGroup>()), Shaders(MakeUnique<ShaderGroup>())
+{
+}
+
+Actor::Actor(const TransformationIntrinsics& intrinsics)
+	: Transform(intrinsics), Buffers(MakeUnique<BufferGroup>()), Shaders(MakeUnique<ShaderGroup>())
+{
+}
+
+void Actor::AddBuffer(UniquePtr<Buffer> buffer)
+{
+	Buffers->AddBuffer(std::move(buffer));
+}
+
+void Actor::AddShader(UniquePtr<Shader> shader)
+{
+	Shaders->AddShader(std::move(shader));
 }
 
 void Actor::Draw()
 {
-	Shaders.Bind();
-	Buffers.Bind();
-	CurrentGraphicsContext::Context()->DrawIndexed(Buffers.GetIndexBuffer()->GetCount(), 0, 0);
+	Shaders->Bind();
+	Buffers->Bind();
+	CurrentGraphicsContext::Context()->DrawIndexed(Buffers->GetIndexBuffer()->GetCount(), 0, 0);
+}
+
+DirectX::XMMATRIX Actor::GetTransform() const
+{
+	return Transform;
 }
 
 Cube::Cube()
+{
+	Init();
+}
+
+Cube::Cube(const TransformationIntrinsics& intrinsics)
+	:Actor(intrinsics)
+{
+	Init();
+}
+
+void Cube::Init()
 {
 	namespace WRL = Microsoft::WRL;
 
@@ -50,20 +106,20 @@ Cube::Cube()
 		0,1,4, 1,5,4
 	};
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(vertices, Shaders.GetBlob(ShaderType::Vertex));
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(vertices, Shaders->GetBlob(ShaderType::Vertex));
 	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 }).
 		AddLayoutElement({ "Color", LayoutElement::DataType::UChar4Norm });
 
 	AddBuffer(std::move(vertexBuffer));
 	AddBuffer(MakeUnique<IndexBuffer>(indices));
 
-	float angle = 40.0f;
-	UniquePtr<VSConstantBuffer<DirectX::XMMATRIX>> model
-		= MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(angle))
-														  * DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(angle))
-														  * DirectX::XMMatrixTranslation(0, 0, 4)
-														  * DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f));
-	AddBuffer(std::move(model));
+	Transform.Update();
+
+	UniquePtr<Uniform<DirectX::XMMATRIX>> Model = MakeUnique<Uniform<DirectX::XMMATRIX>>(
+		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform()),
+		this->Transform.Matrix);
+
+	AddBuffer(std::move(Model));
 
 	AddBuffer(MakeUnique< PSConstantBuffer<FaceColors>>(FaceColors{ {
 		{ 1.0f,0.0f,1.0f, 1.0f },
@@ -73,4 +129,7 @@ Cube::Cube()
 			  { 1.0f,1.0f,0.0f, 1.0f },
 			  { 0.0f,1.0f,1.0f, 1.0f },
 		} }));
+
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
+	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
 }
