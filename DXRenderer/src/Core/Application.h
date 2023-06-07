@@ -3,6 +3,8 @@
 #include "Window/Window.h"
 #include "Timer.h"
 
+#include <vector>
+
 class Application
 {
 public:
@@ -21,4 +23,6 @@ private:
 	UniquePtr<Window> MainWindow;
 
 	Timer Benchmarker;
+	
+	std::vector <UniquePtr< class Cube >> Cubes;
 };

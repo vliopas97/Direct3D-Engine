@@ -70,7 +70,7 @@ const ShaderType& PixelShader::GetType() const
 	return Type;
 }
 
-void ShaderGroup::AddShader(UniquePtr<Shader> shader)
+void ShaderGroup::Add(UniquePtr<Shader> shader)
 {
 	Shaders[shader->GetType()] = std::move(shader);
 }

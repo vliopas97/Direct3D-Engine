@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Actors\Actor.h"
 #include "Core\Core.h"
 #include "CurrentGraphicsContext.h"
 
@@ -105,7 +104,7 @@ class VertexBuffer : public Buffer
 public:
 	template<typename Vertex>
 	VertexBuffer(const std::vector<Vertex>& vertices, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-		:Blob(blob)
+		:Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
 		D3D11_BUFFER_DESC vertexBufferDesc;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -128,6 +127,9 @@ public:
 	VertexBuffer& AddLayoutElement(LayoutElement element);
 
 	BufferType GetType() const;
+
+public:
+	D3D11_PRIMITIVE_TOPOLOGY Topology;
 
 private:
 	void BindLayout() const;
@@ -283,11 +285,14 @@ private:
 
 class BufferGroup : public Buffer
 {
-	std::vector<UniquePtr<Buffer>> Buffers;
 public:
-	void AddBuffer(UniquePtr<Buffer> buffer);
+	void Add(UniquePtr<Buffer> buffer);
 	const IndexBuffer* GetIndexBuffer() const;
 
 	virtual void Bind() const override;
 	virtual void Unbind() const override;
+
+	inline size_t Size() const { return Buffers.size(); }
+private:
+	std::vector<UniquePtr<Buffer>> Buffers;
 };

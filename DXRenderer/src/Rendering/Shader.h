@@ -66,12 +66,14 @@ private:
 
 struct ShaderGroup : public IShader
 {
-	void AddShader(UniquePtr<Shader> shader);
+	void Add(UniquePtr<Shader> shader);
 
 	virtual void Bind() const override;
 	virtual void Unbind() const override;
 
 	const Microsoft::WRL::ComPtr<ID3DBlob>& GetBlob(ShaderType type) const;
+	inline size_t Size() const { return Shaders.size(); }
 
+private:
 	std::array<UniquePtr<Shader>, ShaderType::Size> Shaders;
 };

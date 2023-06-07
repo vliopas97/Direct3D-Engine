@@ -59,7 +59,6 @@ Graphics::Graphics(HWND windowHandle)
 	depthBuffer.Bind();
 
 	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
-	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D11_VIEWPORT viewport;
 	viewport.TopLeftX = 0.0f;
@@ -113,19 +112,6 @@ void Graphics::ClearDepth() noexcept
 
 void Graphics::DrawScene()
 {
-	CurrentGraphicsContext::GraphicsInfo = this;
-	TransformationIntrinsics trInt;
-	trInt.Pitch = trInt.Roll = 40.0f;
-	trInt.Z = 4;
-	Cube cube(trInt);
-	cube.Draw();
-
-	TransformationIntrinsics trInt2;
-	trInt2.Yaw = 45.0f;
-	trInt2.X = 2.0f;
-	trInt2.Z = 6.0f;
-	Cube anotherCube(trInt2);
-	anotherCube.Draw();
 }
 
 const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const

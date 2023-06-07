@@ -2,6 +2,9 @@
 
 #include "Core\Core.h"
 
+#include "Rendering\Buffer.h"
+#include "Rendering\Shader.h"
+
 #include <d3d11.h>
 #include <DirectXMath.h>
 
@@ -68,12 +71,15 @@ public:
 	Actor(const Actor&) = delete;
 	Actor& operator=(const Actor&) = delete;
 
-	void AddBuffer(UniquePtr<Buffer> buffer);
-	void AddShader(UniquePtr<Shader> shader);
-
 	void Draw();
 
 	DirectX::XMMATRIX GetTransform() const;
+
+	virtual void Update();
+
+protected:
+	virtual const BufferGroup& GetTypeBuffers() const = 0;
+	virtual const ShaderGroup& GetTypeShaders() const = 0;
 
 public:
 	union
@@ -94,16 +100,49 @@ public:
 	};
 
 protected:
-	UniquePtr<BufferGroup> Buffers;
-	UniquePtr<ShaderGroup> Shaders;
+	BufferGroup InstanceBuffers;
 };
 
-class Cube : public Actor
+template<typename T>
+class ActorBase : public Actor
 {
+	using Actor::Actor;
 public:
-	Cube();
-	Cube(const TransformationIntrinsics& intrinsics);
+	bool IsInitialized() const
+	{
+		return Shaders.Size() && Buffers.Size();
+	}
+
+	void AddBuffer(UniquePtr<Buffer> buffer)
+	{
+		Buffers.Add(std::move(buffer));
+	}
+
+	void AddShader(UniquePtr<Shader> shader)
+	{
+		Shaders.Add(std::move(shader));
+	}
+
+protected:
+	virtual void InitializeType() = 0;
+
+	const BufferGroup& GetTypeBuffers() const override
+	{
+		return Buffers;
+	}
+
+	const ShaderGroup& GetTypeShaders() const override
+	{
+		return Shaders;
+	}
 
 private:
-	void Init();
+	static BufferGroup Buffers;
+	static ShaderGroup Shaders;
 };
+
+template<typename T>
+BufferGroup ActorBase<T>::Buffers;
+
+template<typename T>
+ShaderGroup ActorBase<T>::Shaders;

@@ -85,6 +85,7 @@ void VertexBuffer::Bind() const
 	UINT stride = Layout.GetStride();
 	UINT offset = 0;
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
+	CurrentGraphicsContext::Context()->IASetPrimitiveTopology(Topology);
 	BindLayout();
 }
 
@@ -216,7 +217,7 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
 }
 
-void BufferGroup::AddBuffer(UniquePtr<Buffer> buffer)
+void BufferGroup::Add(UniquePtr<Buffer> buffer)
 {
 	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const UniquePtr<Buffer>& element)
 						   {
