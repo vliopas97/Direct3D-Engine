@@ -73,7 +73,7 @@ void Cube::Init()
 
 	InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
 		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 1),
-		this->Transform.Matrix));
+		this->Transform.GetMatrix()));
 }
 
 inline void Cube::Update()

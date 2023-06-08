@@ -35,29 +35,48 @@ struct TransformationMatrix
 	TransformationMatrix(const DirectX::XMMATRIX& matrix);
 	TransformationMatrix(const TransformationIntrinsics& intrinsics);
 
-	operator DirectX::XMMATRIX() const
-	{
-		return Matrix;
-	}
+	operator DirectX::XMMATRIX() const { return Matrix; }
+
+	inline const DirectX::XMMATRIX& GetMatrix() const { return Matrix; }
 
 	void Update();
 
-	union
+	struct
 	{
-		TransformationIntrinsics Intrinsics;
-		struct
+		union
 		{
-			float Sx;
-			float Sy;
-			float Sz;
-			float Roll;
-			float Pitch;
-			float Yaw;
-			float X;
-			float Y;
-			float Z;
+			DirectX::XMVECTOR Scale;
+			struct
+			{
+				float Sx;
+				float Sy;
+				float Sz;
+			};
+		};
+
+		union
+		{
+			DirectX::XMVECTOR Rotation;
+			struct
+			{
+				float Roll;
+				float Pitch;
+				float Yaw;
+			};
+		};
+
+		union
+		{
+			DirectX::XMVECTOR translation;
+			struct
+			{
+				float X;
+				float Y;
+				float Z;
+			};
 		};
 	};
+private:
 	DirectX::XMMATRIX Matrix;
 };
 

@@ -7,18 +7,27 @@
 
 
 TransformationMatrix::TransformationMatrix()
-	: Intrinsics(), Matrix(DirectX::XMMatrixIdentity())
+	: Matrix(DirectX::XMMatrixIdentity())
 {
 }
 
 inline TransformationMatrix::TransformationMatrix(const DirectX::XMMATRIX& matrix)
-	: Intrinsics(), Matrix(matrix)
+	: Matrix(matrix)
 {
 }
 
 inline TransformationMatrix::TransformationMatrix(const TransformationIntrinsics& intrinsics)
-	: Intrinsics(intrinsics), Matrix(DirectX::XMMatrixIdentity())
+	: Matrix(DirectX::XMMatrixIdentity())
 {
+	Sx = intrinsics.Sx;
+	Sy = intrinsics.Sy;
+	Sz = intrinsics.Sz;
+	Roll = intrinsics.Roll;
+	Pitch = intrinsics.Pitch;
+	Yaw = intrinsics.Yaw;
+	X = intrinsics.X;
+	Y = intrinsics.Y;
+	Z = intrinsics.Z;
 	Update();
 }
 
