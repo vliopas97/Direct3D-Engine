@@ -5,41 +5,6 @@
 
 #include <vector>
 
-
-TransformationMatrix::TransformationMatrix()
-	: Matrix(DirectX::XMMatrixIdentity())
-{
-}
-
-inline TransformationMatrix::TransformationMatrix(const DirectX::XMMATRIX& matrix)
-	: Matrix(matrix)
-{
-}
-
-inline TransformationMatrix::TransformationMatrix(const TransformationIntrinsics& intrinsics)
-	: Matrix(DirectX::XMMatrixIdentity())
-{
-	Sx = intrinsics.Sx;
-	Sy = intrinsics.Sy;
-	Sz = intrinsics.Sz;
-	Roll = intrinsics.Roll;
-	Pitch = intrinsics.Pitch;
-	Yaw = intrinsics.Yaw;
-	X = intrinsics.X;
-	Y = intrinsics.Y;
-	Z = intrinsics.Z;
-	Update();
-}
-
-inline void TransformationMatrix::Update()
-{
-	Matrix = DirectX::XMMatrixScaling(Sx, Sy, Sz) *
-		DirectX::XMMatrixRotationRollPitchYaw(DirectX::XMConvertToRadians(Pitch),
-											  DirectX::XMConvertToRadians(Yaw),
-											  DirectX::XMConvertToRadians(Roll)) *
-		DirectX::XMMatrixTranslation(X, Y, Z);
-}
-
 Actor::Actor()
 	: Transform()
 {

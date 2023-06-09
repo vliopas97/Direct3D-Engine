@@ -4,81 +4,10 @@
 
 #include "Rendering\Buffer.h"
 #include "Rendering\Shader.h"
+#include "Rendering\Utilities.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>
-
-class Buffer;
-class BufferGroup;
-struct Shader;
-struct ShaderGroup;
-
-struct TransformationIntrinsics
-{
-	TransformationIntrinsics() = default;
-	TransformationIntrinsics(const TransformationIntrinsics&) = default;
-
-	float Sx = 1.0f;
-	float Sy = 1.0f;
-	float Sz = 1.0f;
-	float Roll = 0.0f;
-	float Pitch = 0.0f;
-	float Yaw = 0.0f;
-	float X = 0.0f;
-	float Y = 0.0f;
-	float Z = 0.0f;
-};
-
-struct TransformationMatrix
-{
-	TransformationMatrix();
-	TransformationMatrix(const DirectX::XMMATRIX& matrix);
-	TransformationMatrix(const TransformationIntrinsics& intrinsics);
-
-	operator DirectX::XMMATRIX() const { return Matrix; }
-
-	inline const DirectX::XMMATRIX& GetMatrix() const { return Matrix; }
-
-	void Update();
-
-	struct
-	{
-		union
-		{
-			DirectX::XMVECTOR Scale;
-			struct
-			{
-				float Sx;
-				float Sy;
-				float Sz;
-			};
-		};
-
-		union
-		{
-			DirectX::XMVECTOR Rotation;
-			struct
-			{
-				float Roll;
-				float Pitch;
-				float Yaw;
-			};
-		};
-
-		union
-		{
-			DirectX::XMVECTOR translation;
-			struct
-			{
-				float X;
-				float Y;
-				float Z;
-			};
-		};
-	};
-private:
-	DirectX::XMMATRIX Matrix;
-};
 
 class Actor
 {

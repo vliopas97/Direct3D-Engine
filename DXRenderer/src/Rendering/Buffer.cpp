@@ -251,3 +251,8 @@ void BufferGroup::Unbind() const
 	for (const auto& buffer : Buffers)
 		buffer->Unbind();
 }
+
+VertexElement::VertexElement(float x, float y, float z) :
+	Position(DirectX::XMFLOAT3(x, y, z))
+{
+}

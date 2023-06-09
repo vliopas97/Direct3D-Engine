@@ -11,20 +11,9 @@
 
 struct VertexElement
 {
-	struct
-	{
-		float x;
-		float y;
-		float z;
-	} Position;
-
-	struct
-	{
-		unsigned char r;
-		unsigned char g;
-		unsigned char b;
-		unsigned char a;
-	} Color;
+	VertexElement() = default;
+	VertexElement(float x, float y, float z);
+	DirectX::XMFLOAT3 Position;
 };
 
 struct FaceColors

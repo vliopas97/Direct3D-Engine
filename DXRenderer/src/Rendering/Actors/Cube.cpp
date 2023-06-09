@@ -1,4 +1,6 @@
 #include "Cube.h"
+
+#include "Primitives.h"
 #include "Rendering\Graphics.h"
 #include "Rendering\CurrentGraphicsContext.h"
 
@@ -28,34 +30,15 @@ inline void Cube::InitializeType()
 	AddShader(std::move(vertexShader));
 	AddShader(std::move(pixelShader));
 
-	std::vector<VertexElement> vertices = {
-		{ -1.0f, -1.0f, -1.0f, 0, 0, 255, 1 },
-		{ 1.0f, -1.0f, -1.0f, 0, 255, 255, 1 },
-		{ -1.0f,  1.0f, -1.0f, 255, 0, 0, 1 },
-		{ 1.0f,  1.0f, -1.0f, 255, 0, 255, 1 },
-		{ -1.0f, -1.0f,  1.0f, 0, 255, 255, 1 },
-		{ 1.0f, -1.0f,  1.0f, 255, 0, 255, 1 },
-		{ -1.0f,  1.0f,  1.0f, 0, 255, 255, 1 },
-		{ 1.0f,  1.0f,  1.0f, 0, 255, 0, 1 }
-	};
-	std::vector<unsigned short> indices =
-	{
-		0,2,1, 2,3,1,
-		1,3,5, 3,7,5,
-		2,6,3, 3,6,7,
-		4,5,7, 4,7,6,
-		0,4,2, 2,4,6,
-		0,1,4, 1,5,4
-	};
+	auto data = Primitives::Cube::Create<VertexElement>();
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(vertices, GetTypeShaders().GetBlob(ShaderType::Vertex));
-	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 }).
-		AddLayoutElement({ "Color", LayoutElement::DataType::UChar4Norm });
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices, GetTypeShaders().GetBlob(ShaderType::Vertex));
+	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 });
 
 	AddBuffer(std::move(vertexBuffer));
-	AddBuffer(MakeUnique<IndexBuffer>(indices));
+	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
 	AddBuffer(MakeUnique< PSConstantBuffer<FaceColors>>(FaceColors{ {
-		{ 1.0f,0.0f,1.0f, 1.0f },
+			  { 1.0f,0.0f,1.0f, 1.0f },
 			  { 1.0f,0.0f,0.0f, 1.0f },
 			  { 0.0f,1.0f,0.0f, 1.0f },
 			  { 0.0f,0.0f,1.0f, 1.0f },
