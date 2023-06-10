@@ -236,8 +236,10 @@ const IndexBuffer* BufferGroup::GetIndexBuffer() const
 							   return dynamic_cast<IndexBuffer*>(element.get());
 						   });
 
-	ASSERT(it != Buffers.end());
-	return dynamic_cast<IndexBuffer*>(it->get());
+	if(it != Buffers.end())
+		return dynamic_cast<IndexBuffer*>(it->get());
+
+	return nullptr;
 }
 
 void BufferGroup::Bind() const

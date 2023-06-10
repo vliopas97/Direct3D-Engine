@@ -27,7 +27,8 @@ project "DXRenderer"
     includedirs
     {
         "%{prj.name}/src",
-        "%{prj.name}/vendor/DXErr"
+        "%{prj.name}/vendor/DXErr",
+        "%{prj.name}/vendor/stb_image"
     }
     
     links
@@ -43,7 +44,9 @@ project "DXRenderer"
         "%{prj.name}/src/**.cpp",
         "%{prj.name}/src/**.hlsl",
         "%{prj.name}/vendor/DXErr/**.h",
-        "%{prj.name}/vendor/DXErr/**.cpp"
+        "%{prj.name}/vendor/DXErr/**.cpp",
+        "%{prj.name}/vendor/stb_image/**.h",
+        "%{prj.name}/vendor/stb_image/**.cpp"
     }
 
     removefiles
@@ -55,11 +58,12 @@ project "DXRenderer"
         shadermodel "5.0"
         buildmessage 'Compiling HLSL shader %{file.relpath}'
         shaderobjectfileoutput 'src/Rendering/Shaders/%%(Filename).cso'
-    filter { "files:**/V**.hlsl" }
+
+    filter { "files:**/**VS.hlsl" }
         removeflags "ExcludeFromBuild"
         shadertype "Vertex"
 
-    filter { "files:**/P**.hlsl" }
+    filter { "files:**/**PS.hlsl" }
         removeflags "ExcludeFromBuild"
         shadertype "Pixel"
     

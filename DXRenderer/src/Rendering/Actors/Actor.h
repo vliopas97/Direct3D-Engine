@@ -5,6 +5,7 @@
 #include "Rendering\Buffer.h"
 #include "Rendering\Shader.h"
 #include "Rendering\Utilities.h"
+#include "Rendering\Texture.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -29,6 +30,8 @@ protected:
 	virtual const BufferGroup& GetTypeBuffers() const = 0;
 	virtual const ShaderGroup& GetTypeShaders() const = 0;
 
+private:
+	virtual const IndexBuffer* GetIndexBuffer() const;
 public:
 	union
 	{
@@ -49,6 +52,7 @@ public:
 
 protected:
 	BufferGroup InstanceBuffers;
+	ComponentGroup Components;
 };
 
 template<typename T>

@@ -20,7 +20,8 @@ void Actor::Draw()
 	GetTypeShaders().Bind();
 	GetTypeBuffers().Bind();
 	InstanceBuffers.Bind();
-	CurrentGraphicsContext::Context()->DrawIndexed(GetTypeBuffers().GetIndexBuffer()->GetCount(), 0, 0);
+	Components.Bind();
+	CurrentGraphicsContext::Context()->DrawIndexed(GetIndexBuffer()->GetCount(), 0, 0);
 }
 
 DirectX::XMMATRIX Actor::GetTransform() const
@@ -30,4 +31,11 @@ DirectX::XMMATRIX Actor::GetTransform() const
 
 void Actor::Update()
 {
+}
+
+inline const IndexBuffer* Actor::GetIndexBuffer() const
+{
+	const IndexBuffer* ptr = GetTypeBuffers().GetIndexBuffer();
+	ASSERT(ptr);
+	return ptr;
 }
