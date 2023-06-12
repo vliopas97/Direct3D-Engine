@@ -40,8 +40,6 @@
 
 #define NOMINMAX
 
-#define STRICT
-
 #include <Windows.h>
 #include <memory>
 #include <functional>

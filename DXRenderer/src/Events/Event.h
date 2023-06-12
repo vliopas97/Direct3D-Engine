@@ -64,7 +64,7 @@ public:
     bool Dispatch(EventFn<T> func)
     {
         auto eventType = DispatchedEvent.GetEventType();
-        if (eventType == T::GetEventTypeStatic())
+        if (!DispatchedEvent.Handled && eventType == T::GetEventTypeStatic())
         {
             DispatchedEvent.Handled = func(static_cast<T&>(DispatchedEvent));
             return true;

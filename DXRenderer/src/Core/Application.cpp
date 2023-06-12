@@ -1,10 +1,15 @@
 #include "Application.h"
+#include "Layer.h"
 #include "Rendering\Actors\Cube.h"
+
+Application* Application::Instance = nullptr;
 
 Application& Application::GetApp()
 {
-	static Application application;
-	return application;
+	//static Application application;
+	if (!Instance)
+		Instance = new Application();
+	return *Instance;
 }
 
 WinMessage Application::GetAppMessage()
@@ -24,11 +29,31 @@ int Application::Run()
 	}
 }
 
+const UniquePtr<Window>& Application::GetWindow()
+{
+	return MainWindow;
+}
+
+void Application::OnEvent(Event& e)
+{
+	EventDispatcher dispathcer(e);
+
+	ImGui->OnEvent(e);
+	MainWindow->OnEvent(e);
+}
+
 Application::Application()
 	:MainWindow(MakeUnique<Window>())
 {
+	ASSERT(!Instance);
+	Instance = this;
 	auto cursor = LoadCursor(nullptr, IDC_ARROW);
 	SetCursor(cursor);
+
+	MainWindow->SetEventCallbackFunction([this](Event& e)
+										 {
+											 OnEvent(e);
+										 });
 
 	// TEST
 	TransformationIntrinsics trInt;
@@ -41,16 +66,20 @@ Application::Application()
 	trInt2.X = 2.0f;
 	trInt2.Z = 6.0f;
 	Cubes.emplace_back(MakeUnique<Cube>(trInt2));
+
+	ImGui = MakeUnique<ImGuiLayer>();
+	ImGui->OnAttach();
 }
 
 void Application::Tick()
 {
+	ImGui->Begin();
 	for (auto& c : Cubes)
 	{
 		c->Pitch += 0.1f;
 		c->Update();
 		c->Draw();
 	}
-	MainWindow->GetGraphicsContext().DrawScene();
+	ImGui->End();
 	MainWindow->GetGraphicsContext().EndTick();
 }

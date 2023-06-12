@@ -8,6 +8,7 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
 {
+	//Application::CreateApp();
 	int msg;
 	EXCEPTION_WRAP(
 		auto & application = Application::GetApp();

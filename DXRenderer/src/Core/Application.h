@@ -10,8 +10,10 @@ class Application
 public:
 	static Application& GetApp();
 	static WinMessage GetAppMessage();
-
 	int Run();
+	const UniquePtr<Window>& GetWindow();
+
+	void OnEvent(Event& e);
 
 private:
 	Application();
@@ -21,8 +23,9 @@ private:
 	void Tick();
 private:
 	UniquePtr<Window> MainWindow;
-
+	UniquePtr<class ImGuiLayer> ImGui;
 	Timer Benchmarker;
 	
 	std::vector <UniquePtr< class Cube >> Cubes;
+	static Application* Instance;
 };

@@ -4,11 +4,6 @@
 #include <d3d11.h>
 #include <string>
 
-#include "stb_image.h"
-#include "Rendering\CurrentGraphicsContext.h"
-#include <wrl.h>
-#include <source_location>
-
 class Component
 {
 public:

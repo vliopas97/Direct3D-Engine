@@ -11,6 +11,10 @@ workspace "DXRenderer"
 
     OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+    group "Dependencies"
+        include "DXRenderer/vendor/ImGui"
+    group ""
+
 project "DXRenderer"
     location "DXRenderer"
     kind "WindowedApp"
@@ -28,14 +32,16 @@ project "DXRenderer"
     {
         "%{prj.name}/src",
         "%{prj.name}/vendor/DXErr",
-        "%{prj.name}/vendor/stb_image"
+        "%{prj.name}/vendor/stb_image",
+        "%{prj.name}/vendor/ImGui"
     }
     
     links
     {
         "d3d11.lib",
         "d3dcompiler.lib",
-        "dxguid.lib"
+        "dxguid.lib",
+        "ImGui"
     }
 
     files

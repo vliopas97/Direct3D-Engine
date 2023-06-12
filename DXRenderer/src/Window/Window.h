@@ -24,14 +24,14 @@ public:
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
 	Graphics& GetGraphicsContext() const;
+	inline const HWND GetHandle() const { return Handle; }
 
 	void SetTitle(const std::string& name);
 
 	void OnEvent(Event& event);
-
-private:
 	void SetEventCallbackFunction(const EventCallbackFn& fn);
 
+private:
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);

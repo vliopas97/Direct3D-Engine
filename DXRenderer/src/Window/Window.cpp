@@ -1,29 +1,33 @@
 #include "Window.h"
 #include "Core/Exception.h"
-#include <sstream>
+
+#include <backends\imgui_impl_win32.h>
 #include <iostream>
+#include <sstream>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define BIND_EVENT_FN(x) std::bind(&Window::x, this, std::placeholders::_1)
 
 #define GEN_KEYBOARD_EVENT(Event)		{Event event(static_cast<uint8>(wParam));\
-										OnEvent(event);}\
+										EventCallback(event);}\
 										break
 #define GEN_KEYPRESSED_EVENT()		    {KeyPressedEvent event(static_cast<uint8>(wParam), static_cast<bool>(lParam & 0x40000000));\
-										OnEvent(event);}\
+										EventCallback(event);}\
 										break
 
 #define GEN_KEYRELEASED_EVENT() GEN_KEYBOARD_EVENT(KeyReleasedEvent)
 #define GEN_KEYTYPED_EVENT() GEN_KEYBOARD_EVENT(KeyTypedEvent)
 
 #define GEN_WINDOWCLOSE_EVENT()        {WindowCloseEvent event;\
-										OnEvent(event);}\
+										EventCallback(event);}\
 										break
 #define GEN_WINDOWLOSTFOCUS_EVENT()     {WindowLostFocusEvent event;\
-										OnEvent(event);}\
+										EventCallback(event);}\
 										break
 
 #define GEN_MOUSEBUTTON_EVENT(Event , MouseButtonCode) {Event event(MouseButtonCode);\
-														OnEvent(event); }\
+														EventCallback(event); }\
 														break
 
 #define GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode) GEN_MOUSEBUTTON_EVENT(MouseButtonPressedEvent, MouseButtonCode)
@@ -31,11 +35,11 @@
 
 #define GEN_MOUSEENTER_EVENT() 		{SetCapture(Handle);\
 									MouseEnterEvent event;\
-									OnEvent(event);}
+									EventCallback(event);}
 
 #define GEN_MOUSELEAVE_EVENT() 		{ReleaseCapture();\
 									MouseLeaveEvent event;\
-									OnEvent(event);}
+									EventCallback(event);}
 
 Window::Window(uint32_t width, uint32_t height, const std::string& name)
 	: Name(name), Width(width), Height(height)
@@ -153,6 +157,11 @@ LRESULT CALLBACK Window::WindProc(HWND windowHandle, UINT message, WPARAM wParam
 
 LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(windowHandle, message, wParam, lParam))
+	{
+		return true;
+	}
+
 	switch (message)
 	{
 		// Window Events
@@ -179,7 +188,7 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 				if ((points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
 				{
 					MouseMovedEvent event(points.x, points.y);
-					OnEvent(event);
+					EventCallback(event);
 					if (Input.IsMouseInWindow())
 						GEN_MOUSEENTER_EVENT();
 				}
@@ -188,7 +197,7 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 					if (wParam & (MK_LBUTTON | MK_RBUTTON))
 					{
 						MouseMovedEvent event(points.x, points.y);
-						OnEvent(event);
+						EventCallback(event);
 					}
 					else
 						GEN_MOUSELEAVE_EVENT();
@@ -219,7 +228,7 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			{
 				POINTS point = MAKEPOINTS(lParam); 
 				MouseScrolledEvent event(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam)); 
-				OnEvent(event);
+				EventCallback(event);
 			}
 			break;
 		default:

@@ -42,8 +42,8 @@ inline void Cube::InitializeType()
 	auto data = Primitives::Cube::Create<VertexElementTex>();
 
 	data.Vertices[0].TexCoords = { 0.0f,0.0f };
-	data.Vertices[1].TexCoords = { 1.0f,0.0f };
-	data.Vertices[2].TexCoords = { 0.0f,1.0f };
+	data.Vertices[1].TexCoords = { 0.0f,1.0f };
+	data.Vertices[2].TexCoords = { 1.0f,0.0f };
 	data.Vertices[3].TexCoords = { 1.0f,1.0f };
 	data.Vertices[4].TexCoords = { 0.0f,0.0f };
 	data.Vertices[5].TexCoords = { 1.0f,0.0f };

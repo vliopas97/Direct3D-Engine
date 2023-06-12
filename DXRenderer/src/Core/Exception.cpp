@@ -152,7 +152,6 @@ DXGIInfoManager::DXGIInfoManager()
 	if (!dxgiGetDebugInterface)
 		throw WIN_EXCEPTION_LAST_ERROR;
 
-	HRESULT result;
 	GRAPHICS_ASSERT_NOINFO(dxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), reinterpret_cast<void**>(&InfoQueue)));
 }
 
@@ -173,7 +172,7 @@ std::vector<std::string> DXGIInfoManager::GetMessages() const
 	const auto end = InfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
 	for (auto i = Next; i < end; i++)
 	{
-		SIZE_T messageLength;
+		SIZE_T messageLength = 0;
 
 		GRAPHICS_ASSERT_NOINFO(InfoQueue->GetMessageW(DXGI_DEBUG_ALL, i, nullptr, &messageLength));
 

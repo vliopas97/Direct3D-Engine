@@ -1,5 +1,11 @@
-#include "Texture.h"
 #include "Core\Exception.h"
+#include "Rendering\CurrentGraphicsContext.h"
+#include "stb_image.h"
+#include "Texture.h"
+
+#include <wrl.h>
+#include <source_location>
+
 void ComponentGroup::Bind() const
 {
 	for (const auto& component : Components)
@@ -40,7 +46,6 @@ Texture::Texture(const std::string& filename)
 	int desiredChannels = 4;
 	stbi_uc* data;
 
-	stbi_set_flip_vertically_on_load(1);
 	auto filepath = std::string(std::source_location::current().file_name());
 	filepath = filepath.substr(0, filepath.find_last_of("\\/")) + "\\Img\\" + filename;
 
