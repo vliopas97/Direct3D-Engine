@@ -9,6 +9,7 @@ class Layer
 public:
 	virtual void OnAttach() {};
 	virtual void OnDetach() {};
+	virtual void Render() {};
 	virtual void OnEvent(Event& e) {};
 };
 
@@ -19,6 +20,7 @@ public:
 	~ImGuiLayer() = default;
 
 	void OnAttach() override;
+	void Render() override;
 	void OnDetach() override;
 	void OnEvent(Event& e) override;
 

@@ -25,6 +25,15 @@ void ImGuiLayer::OnAttach()
 	ImGui_ImplWin32_Init(Application::GetApp().GetWindow()->GetHandle());
 }
 
+void ImGuiLayer::Render()
+{
+	static bool showDemoWindow = false;
+	if (showDemoWindow)
+		ImGui::ShowDemoWindow(&showDemoWindow);
+
+	Application::GetApp().GetWindow()->GetGraphicsContext().GetCamera().GUI();
+}
+
 void ImGuiLayer::OnDetach()
 {
 	ImGui_ImplDX11_Shutdown();
@@ -52,9 +61,6 @@ void ImGuiLayer::End()
 	Application& app = Application::GetApp();
 	io.DisplaySize = ImVec2((float)app.GetWindow()->GetWidth(), (float)app.GetWindow()->GetHeight());
 
-	static bool showDemoWindow = true;
-	if (showDemoWindow)
-		ImGui::ShowDemoWindow(&showDemoWindow);
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 

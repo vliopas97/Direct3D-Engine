@@ -80,6 +80,7 @@ void Application::Tick()
 		c->Update();
 		c->Draw();
 	}
+	ImGui->Render();
 	ImGui->End();
 	MainWindow->GetGraphicsContext().EndTick();
 }

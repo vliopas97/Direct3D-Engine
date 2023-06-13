@@ -10,6 +10,7 @@
 #include "Actors\Actor.h"
 
 Graphics::Graphics(HWND windowHandle)
+	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 10.0f)
 {
 	CurrentGraphicsContext::GraphicsInfo = this;
 
@@ -68,8 +69,6 @@ Graphics::Graphics(HWND windowHandle)
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);
-
-	Projection = DirectX::XMMatrixPerspectiveFovLH(5.0f, 16.0f / 9.0f, 0.1f, 10.0f);
 }
 
 void Graphics::SwapBuffers()
@@ -119,9 +118,9 @@ const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const
 	return Device;
 }
 
-const DirectX::XMMATRIX& Graphics::GetProjection() const
+Camera& Graphics::GetCamera()
 {
-	return Projection;
+	return GraphicsCamera;
 }
 
 const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& Graphics::GetContext() const

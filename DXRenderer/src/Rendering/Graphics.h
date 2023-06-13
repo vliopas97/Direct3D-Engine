@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Camera.h"
 #include "Core/Core.h"
 #include "Core/Exception.h"
 
@@ -22,7 +23,7 @@ public:
 	const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetContext() const;
 	const Microsoft::WRL::ComPtr<ID3D11Device>& GetDevice() const;
 
-	const DirectX::XMMATRIX& GetProjection() const;
+	Camera& GetCamera();
 private:
 	void ClearColor(float red, float green, float blue) noexcept;
 	void ClearDepth() noexcept;
@@ -40,5 +41,5 @@ private:
 	DXGIInfoManager InfoManager;
 	#endif // !NDEBUG
 
-	DirectX::XMMATRIX Projection;
+	Camera GraphicsCamera;
 };

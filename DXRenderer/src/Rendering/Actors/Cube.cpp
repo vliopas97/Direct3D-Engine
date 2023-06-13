@@ -65,7 +65,7 @@ inline void Cube::InitializeType()
 	//		  { 0.0f,1.0f,1.0f, 1.0f },
 	//	} }));
 
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
 	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection), projection));
 }
 

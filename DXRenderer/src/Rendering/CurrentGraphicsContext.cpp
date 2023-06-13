@@ -1,7 +1,7 @@
 #include "CurrentGraphicsContext.h"
 #include "Graphics.h"
 
-const Graphics* CurrentGraphicsContext::GraphicsInfo = nullptr;
+Graphics* CurrentGraphicsContext::GraphicsInfo = nullptr;
 
 const Microsoft::WRL::ComPtr<ID3D11Device>& CurrentGraphicsContext::Device()
 {

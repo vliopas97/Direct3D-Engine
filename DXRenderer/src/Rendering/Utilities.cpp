@@ -23,8 +23,8 @@ TransformationMatrix::TransformationMatrix(const TransformationIntrinsics& intri
 void TransformationMatrix::Update()
 {
 	Matrix = DirectX::XMMatrixScaling(Sx, Sy, Sz) *
-		DirectX::XMMatrixRotationRollPitchYaw(DirectX::XMConvertToRadians(Pitch),
-											  DirectX::XMConvertToRadians(Yaw),
+		DirectX::XMMatrixRotationRollPitchYaw(DirectX::XMConvertToRadians(-Pitch),
+											  DirectX::XMConvertToRadians(-Yaw),
 											  DirectX::XMConvertToRadians(Roll)) *
-		DirectX::XMMatrixTranslation(X, Y, Z);
+		DirectX::XMMatrixTranslation(-X, -Y, Z);
 }
