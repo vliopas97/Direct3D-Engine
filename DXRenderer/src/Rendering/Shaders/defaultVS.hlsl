@@ -1,6 +1,6 @@
 cbuffer constBuffer : register(b0)
 {
-    row_major matrix projection;
+    row_major matrix viewProjection;
 }
 
 cbuffer constBuffer2 : register(b1)
@@ -10,5 +10,5 @@ cbuffer constBuffer2 : register(b1)
 
 float4 main( float3 pos : Position) : SV_Position
 {
-    return mul(mul(float4(pos, 1.0f), model), projection);
+    return mul(mul(float4(pos, 1.0f), model), viewProjection);
 }

@@ -63,7 +63,7 @@ project "DXRenderer"
     filter "files:**.hlsl"
         shadermodel "5.0"
         buildmessage 'Compiling HLSL shader %{file.relpath}'
-        shaderobjectfileoutput 'src/Rendering/Shaders/%%(Filename).cso'
+        shaderobjectfileoutput 'src/Rendering/Shaders/build/%%(Filename).cso'
 
     filter { "files:**/**VS.hlsl" }
         removeflags "ExcludeFromBuild"

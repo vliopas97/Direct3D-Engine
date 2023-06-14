@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Layer.h"
 #include "Rendering\Actors\Cube.h"
+#include "Rendering\Actors\Sphere.h"
 
 Application* Application::Instance = nullptr;
 
@@ -43,7 +44,7 @@ void Application::OnEvent(Event& e)
 }
 
 Application::Application()
-	:MainWindow(MakeUnique<Window>())
+	:MainWindow(MakeUnique<Window>()), Light()
 {
 	ASSERT(!Instance);
 	Instance = this;
@@ -58,7 +59,7 @@ Application::Application()
 	// TEST
 	TransformationIntrinsics trInt;
 	trInt.Pitch = trInt.Roll = 40.0f;
-	trInt.Z = 4;
+	trInt.Z = 4.0f;
 	Cubes.emplace_back(MakeUnique<Cube>(trInt));
 
 	TransformationIntrinsics trInt2;
@@ -74,12 +75,16 @@ Application::Application()
 void Application::Tick()
 {
 	ImGui->Begin();
+	Light.Bind();
 	for (auto& c : Cubes)
 	{
 		c->Pitch += 0.1f;
 		c->Update();
 		c->Draw();
 	}
+	Light.Update();
+	Light.Draw();
+	Light.GUI();
 	ImGui->Render();
 	ImGui->End();
 	MainWindow->GetGraphicsContext().EndTick();

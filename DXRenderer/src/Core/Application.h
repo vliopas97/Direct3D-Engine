@@ -1,6 +1,7 @@
 #pragma once
 #include "Events/Event.h"
 #include "Window/Window.h"
+#include "Rendering\Lights\PointLight.h"
 #include "Timer.h"
 
 #include <vector>
@@ -26,6 +27,7 @@ private:
 	UniquePtr<class ImGuiLayer> ImGui;
 	Timer Benchmarker;
 	
-	std::vector <UniquePtr< class Cube >> Cubes;
+	std::vector <UniquePtr< class Actor >> Cubes;
+	PointLight Light;
 	static Application* Instance;
 };

@@ -9,6 +9,8 @@
 #include <vector>
 #include <wrl.h>
 
+#include "Core\Exception.h"
+
 struct VertexElement
 {
 	VertexElement() = default;
@@ -153,24 +155,24 @@ public:
 	ConstantBuffer(const T& resource, uint32_t slot = 0)
 		:Resource(resource), Slot(slot)
 	{
-		D3D11_BUFFER_DESC indexBufferDesc;
-		indexBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		indexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-		indexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		indexBufferDesc.MiscFlags = 0;
-		indexBufferDesc.ByteWidth = sizeof(Resource);
-		indexBufferDesc.StructureByteStride = 0;
+		DXGIInfoManager InfoManager;
 
-		D3D11_SUBRESOURCE_DATA subResourceData;
+		D3D11_BUFFER_DESC constantBufferDesc{};
+		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		constantBufferDesc.MiscFlags = 0;
+		constantBufferDesc.ByteWidth = (sizeof(T) % 16 == 0) ? sizeof(T) : sizeof(T) + (16 - sizeof(T) % 16);
+		constantBufferDesc.StructureByteStride = 0;
+
+		D3D11_SUBRESOURCE_DATA subResourceData{};
 		subResourceData.pSysMem = &Resource;
 
-		CurrentGraphicsContext::Device()->CreateBuffer(&indexBufferDesc, &subResourceData, &BufferID);
+		GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateBuffer(&constantBufferDesc, &subResourceData, &BufferID));
 	}
 
-	BufferType GetType() const
-	{
-		return Type;
-	}
+	BufferType GetType() const { return Type; }
+	T& GetResource() { return Resource; }
 
 protected:
 	uint32_t Slot;
@@ -224,8 +226,14 @@ template<typename T>
 class Uniform : public Buffer
 {
 public:
-	Uniform(const UniquePtr<ConstantBuffer<T>>& constantBuffer, const T& resource)
-		:ConstantBufferRef(const_cast<UniquePtr<ConstantBuffer<T>>&>(constantBuffer).release()), Resource(resource)
+	//Uniform(const UniquePtr<ConstantBuffer<T>>& constantBuffer, const T& resource)
+	//	:ConstantBufferRef(const_cast<UniquePtr<ConstantBuffer<T>>&>(constantBuffer).release()), Resource(resource)
+	//{
+	//	BufferID = ConstantBufferRef->BufferID;
+	//}
+
+	Uniform(UniquePtr < ConstantBuffer<T>> constantBuffer, const T& resource)
+		:ConstantBufferRef(std::move(constantBuffer)), Resource(resource)
 	{
 		BufferID = ConstantBufferRef->BufferID;
 	}

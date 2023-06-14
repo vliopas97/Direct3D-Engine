@@ -45,6 +45,74 @@ namespace Primitives
 						}
 			};
 		}
+
+		template<IsVertexElement Vertex>
+		static IndexedVertices<Vertex> CreateWNormals()
+		{
+			constexpr float side = 0.5f;
+			std::vector<DirectX::XMFLOAT3> positions = {
+			DirectX::XMFLOAT3(-side,-side,-side),
+			DirectX::XMFLOAT3(side,-side,-side),
+			DirectX::XMFLOAT3(-side,side,-side),
+			DirectX::XMFLOAT3(side,side,-side),
+			DirectX::XMFLOAT3(-side,-side,side),
+			DirectX::XMFLOAT3(side,-side,side),
+			DirectX::XMFLOAT3(-side,side,side),
+			DirectX::XMFLOAT3(side,side,side),
+			DirectX::XMFLOAT3(-side,-side,-side),
+			DirectX::XMFLOAT3(-side,side,-side),
+			DirectX::XMFLOAT3(-side,-side,side),
+			DirectX::XMFLOAT3(-side,side,side),
+			DirectX::XMFLOAT3(side,-side,-side),
+			DirectX::XMFLOAT3(side,side,-side),
+			DirectX::XMFLOAT3(side,-side,side),
+			DirectX::XMFLOAT3(side,side,side),
+			DirectX::XMFLOAT3(-side,-side,-side),
+			DirectX::XMFLOAT3(side,-side,-side),
+			DirectX::XMFLOAT3(-side,-side,side),
+			DirectX::XMFLOAT3(side,-side,side),
+			DirectX::XMFLOAT3(-side,side,-side),
+			DirectX::XMFLOAT3(side,side,-side),
+			DirectX::XMFLOAT3(-side,side,side),
+			DirectX::XMFLOAT3(side,side,side)
+			};
+
+			std::vector<Vertex> vertices(positions.size());
+			for (size_t i = 0; i < positions.size(); i++)
+				vertices[i].Position = positions[i];
+
+			std::vector<unsigned short> indices = {
+						0,2, 1,    2,3,1,
+						4,5, 7,    4,7,6,
+						8,10, 9,  10,11,9,
+						12,13,15, 12,15,14,
+						16,17,18, 18,17,19,
+						20,23,21, 20,22,23
+			};
+
+			for (size_t i = 0; i < indices.size(); i += 3)
+			{
+				auto& v0 = vertices[indices[i]];
+				auto& v1 = vertices[indices[i + 1]];
+				auto& v2 = vertices[indices[i + 2]];
+				const auto p0 = DirectX::XMLoadFloat3(&v0.Position);
+				const auto p1 = DirectX::XMLoadFloat3(&v1.Position);
+				const auto p2 = DirectX::XMLoadFloat3(&v2.Position);
+
+				auto n = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(
+					DirectX::XMVectorSubtract(p1, p0), 
+					DirectX::XMVectorSubtract(p2, p0)));
+					
+				n.m128_f32[0] *= -1;
+				n.m128_f32[1] *= -1;
+
+				DirectX::XMStoreFloat3(&v0.Normal, n);
+				DirectX::XMStoreFloat3(&v1.Normal, n);
+				DirectX::XMStoreFloat3(&v2.Normal, n);
+			}
+
+			return { std::move(vertices), std::move(indices) };
+		}
 	};
 
 	class Cone
@@ -261,7 +329,7 @@ namespace Primitives
 			const auto northPole = (unsigned short)vertices.size();
 			vertices.emplace_back();
 			DirectX::XMStoreFloat3(&vertices.back().Position, base);
-			
+
 			const auto southPole = (unsigned short)vertices.size();
 			vertices.emplace_back();
 			DirectX::XMStoreFloat3(&vertices.back().Position, DirectX::XMVectorNegate(base));

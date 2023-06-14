@@ -65,7 +65,7 @@ struct TransformationMatrix
 
 		union
 		{
-			DirectX::XMVECTOR translation;
+			DirectX::XMVECTOR Translation;
 			struct
 			{
 				float X;
@@ -88,6 +88,11 @@ struct IndexedVertices
 	}
 
 	void Transform(const TransformationMatrix& matrix)
+	{
+		Transform(matrix.GetMatrix());
+	}
+
+	void Transform(const DirectX::XMMATRIX& matrix)
 	{
 		for (auto& v : Vertices)
 		{

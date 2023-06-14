@@ -12,7 +12,7 @@ namespace
 	{
 		std::string currentDir = std::string(std::source_location::current().file_name());
 		currentDir = currentDir.substr(0, currentDir.find_last_of("\\/"));
-		return std::wstring(currentDir.begin(), currentDir.end()) + L"\\Shaders\\";
+		return std::wstring(currentDir.begin(), currentDir.end()) + L"\\Shaders\\build\\";
 	}
 }
 

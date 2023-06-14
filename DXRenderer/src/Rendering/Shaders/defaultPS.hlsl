@@ -1,9 +1,9 @@
-cbuffer colors
+cbuffer ConstantBuffer
 {
-    float4 face_colors[6];
+    float4 color;
 };
 
-float4 main(uint index : SV_PrimitiveID) : SV_Target
+float4 main() : SV_Target
 {
-    return face_colors[index / 2 % 6];
+    return color;
 }
