@@ -1,27 +1,10 @@
 #pragma once
 
 #include "Core\Core.h"
+#include "Component.h"
+
 #include <d3d11.h>
 #include <string>
-
-class Component
-{
-public:
-	virtual void Bind() const = 0;
-};
-
-class ComponentGroup : public Component
-{
-public:
-	void Bind() const override;
-
-	void Add(UniquePtr<Component> component);
-
-	void Add(ComponentGroup componentGroup);
-
-private:
-	std::vector<UniquePtr<Component>> Components;
-};
 
 class Sampler
 {

@@ -5,8 +5,8 @@
 #include <imgui.h>
 
 PointLight::PointLight()
-	: Mesh(), Position(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)),
-	Model(MakeUnique<PSConstantBuffer<DirectX::XMFLOAT3>>(DirectX::XMFLOAT3()), Position)
+	: Mesh(), Properties(),
+	Model(MakeUnique<PSConstantBuffer<LightProperties>>(Properties), Properties)
 {
 }
 

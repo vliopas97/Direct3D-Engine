@@ -3,6 +3,7 @@
 #include "Primitives.h"
 #include "Rendering\Graphics.h"
 #include "Rendering\CurrentGraphicsContext.h"
+#include "Rendering\Material.h"
 
 Cube::Cube()
 {
@@ -42,8 +43,14 @@ inline void Cube::InitializeType()
 	AddBuffer(std::move(vertexBuffer));
 	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
 
-	const DirectX::XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(viewProjection), viewProjection));
+	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(view), view));
+	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<PSConstantBuffer<DirectX::XMMATRIX>>(view, 2), view));
+
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
+
+
 }
 
 void Cube::Init()
@@ -51,8 +58,10 @@ void Cube::Init()
 	InitializeType();
 
 	InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
-		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 1),
+		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
 		this->Transform.GetMatrix()));
+
+	Components.Add(MakeUnique < Material>(1));
 }
 
 inline void Cube::Update()

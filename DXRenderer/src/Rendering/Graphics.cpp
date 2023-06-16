@@ -53,15 +53,15 @@ Graphics::Graphics(HWND windowHandle)
 
 	Microsoft::WRL::ComPtr<ID3D11Resource> backBuffer = nullptr;
 	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
-	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, &RenderTargetView));
+	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, RenderTargetView.GetAddressOf()));
 
 	// Create Depth Buffer
 	DepthBuffer depthBuffer(DepthStencilView);
 	depthBuffer.Bind();
 
-	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
+	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get()););
 
-	D3D11_VIEWPORT viewport;
+	D3D11_VIEWPORT viewport{};
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
 	viewport.Width = 1920.0f;

@@ -131,7 +131,7 @@ BufferType VertexBuffer::GetType() const
 IndexBuffer::IndexBuffer(const std::vector<unsigned short>& indices)
 	:Count(static_cast<UINT>(indices.size()))
 {
-	D3D11_BUFFER_DESC indexBufferDesc;
+	D3D11_BUFFER_DESC indexBufferDesc{};
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	indexBufferDesc.CPUAccessFlags = 0;
@@ -183,7 +183,7 @@ void DepthBuffer::Unbind() const
 
 void DepthBuffer::CreateDepthStencilState()
 {
-	D3D11_DEPTH_STENCIL_DESC depthBufferDesc;
+	D3D11_DEPTH_STENCIL_DESC depthBufferDesc{};
 	depthBufferDesc.DepthEnable = TRUE;
 	depthBufferDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthBufferDesc.DepthFunc = D3D11_COMPARISON_LESS;
@@ -193,9 +193,9 @@ void DepthBuffer::CreateDepthStencilState()
 
 void DepthBuffer::CreateDepthStencilTexture()
 {
-	D3D11_TEXTURE2D_DESC descDepth = {};
-	descDepth.Width = 1920;
-	descDepth.Height = 1080;
+	D3D11_TEXTURE2D_DESC descDepth{};
+	descDepth.Width = 1904;
+	descDepth.Height = 1041;
 	descDepth.MipLevels = 1u;
 	descDepth.ArraySize = 1u;
 	descDepth.Format = DXGI_FORMAT_D32_FLOAT;
@@ -209,7 +209,7 @@ void DepthBuffer::CreateDepthStencilTexture()
 
 void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV) const
 {
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
 	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0u;
