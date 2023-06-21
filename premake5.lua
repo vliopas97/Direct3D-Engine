@@ -13,6 +13,7 @@ workspace "DXRenderer"
 
     group "Dependencies"
         include "DXRenderer/vendor/ImGui"
+        include "DXRenderer/vendor/assimp"
     group ""
 
 project "DXRenderer"
@@ -33,7 +34,8 @@ project "DXRenderer"
         "%{prj.name}/src",
         "%{prj.name}/vendor/DXErr",
         "%{prj.name}/vendor/stb_image",
-        "%{prj.name}/vendor/ImGui"
+        "%{prj.name}/vendor/ImGui",
+        "%{prj.name}/vendor/assimp/include"
     }
     
     links
@@ -41,7 +43,8 @@ project "DXRenderer"
         "d3d11.lib",
         "d3dcompiler.lib",
         "dxguid.lib",
-        "ImGui"
+        "ImGui",
+        "assimp"
     }
 
     files

@@ -22,3 +22,6 @@ bin-int/
 
 # Compiled shaders
 **.cso
+
+# 3D Model files not to be ignored
+!Content/Model/**.obj
