@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "Layer.h"
 #include "Rendering\Actors\Cube.h"
-#include "Rendering\Actors\Sphere.h"
+#include "Rendering\Actors\Leon.h"
 
 Application* Application::Instance = nullptr;
 
@@ -61,6 +61,10 @@ Application::Application()
 	trInt.Pitch = trInt.Roll = 40.0f;
 	trInt.Z = 4.0f;
 	Cubes.emplace_back(MakeUnique<Cube>(trInt));
+
+	trInt.Z = 3.0f;
+	trInt.X = 2.0f;
+	Cubes.emplace_back(MakeUnique<Leon>(trInt));
 
 	TransformationIntrinsics trInt2;
 	trInt2.Yaw = 45.0f;

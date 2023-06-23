@@ -2,11 +2,10 @@
 
 #include "Actor.h"
 
-class Cube : public ActorBase<Cube>
-{
+class Leon : public ActorBase<Leon> {
 public:
-	Cube();
-	Cube(const TransformationIntrinsics& intrinsics);
+	Leon();
+	Leon(const TransformationIntrinsics& intrinsics);
 
 	virtual void Update() override;
 

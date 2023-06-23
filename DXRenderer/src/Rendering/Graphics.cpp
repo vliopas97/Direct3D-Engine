@@ -10,7 +10,7 @@
 #include "Actors\Actor.h"
 
 Graphics::Graphics(HWND windowHandle)
-	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 10.0f)
+	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 40.0f)
 {
 	CurrentGraphicsContext::GraphicsInfo = this;
 
