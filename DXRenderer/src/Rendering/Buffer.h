@@ -5,25 +5,19 @@
 
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <DirectXPackedVector.h>
 #include <string>
 #include <vector>
 #include <wrl.h>
 
 #include "Core\Exception.h"
 
-struct VertexElement
-{
-	VertexElement() = default;
-	VertexElement(float x, float y, float z);
-	DirectX::XMFLOAT3 Position;
-};
-
 struct LayoutElement
 {
 	enum class DataType
 	{
-		UChar, UChar2, UChar4,
-		UCharNorm, UChar2Norm, UChar4Norm,
+		UChar2, UChar4,
+		UChar2Norm, UChar4Norm,
 		Float, Float2, Float3, Float4,
 		Int, Int2, Int3, Int4
 	};
@@ -42,23 +36,23 @@ public:
 
 	uint32_t GetSize() const { return Size; }
 	uint32_t GetOffset() const { return Offset; }
-	ElementType GetType() const { return Type; }
+	DataType GetType() const { return Type; }
 
 private:
 	static const char* ResolveNameFromType(ElementType type);
 	static DXGI_FORMAT DataTypeToDXGI(DataType type);
-	static DXGI_FORMAT DataTypeToDXGI(ElementType type);
+	static DataType ResolveDataType(ElementType type);
 	static uint32_t CalcSize(DataType type);
 	static uint32_t CalcSize(ElementType type);
 
 private:
-	ElementType Type;
 	std::string Name;
-	DXGI_FORMAT Format;
+	DataType Type;
 	uint32_t Size;
 	uint32_t Offset;
 
 	friend class VertexBuffer;
+	friend class VertexBufferBuilder;
 	friend struct BufferLayout;
 };
 
@@ -104,12 +98,18 @@ public:
 
 		switch (element.GetType())
 		{
-				case LayoutElement::ElementType::Position2: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
-				case LayoutElement::ElementType::Position3:SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
-				case LayoutElement::ElementType::Color3: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
-				case LayoutElement::ElementType::Color4: SetAttribute<DirectX::XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
-				case LayoutElement::ElementType::Normal: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
-				case LayoutElement::ElementType::TexCoords: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::UChar2Norm: SetAttribute<DirectX::PackedVector::XMUBYTEN2>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::UChar4Norm: SetAttribute<DirectX::PackedVector::XMUBYTEN4>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::UChar2: SetAttribute<DirectX::PackedVector::XMUBYTE2>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::UChar4: SetAttribute<DirectX::PackedVector::XMUBYTE4>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Float: SetAttribute<float>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Float2: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Float3: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Float4: SetAttribute<DirectX::XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Int: SetAttribute<int>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Int2: SetAttribute<DirectX::XMINT2>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Int3: SetAttribute<DirectX::XMINT3>(attributePtr, std::forward<T>(attr)); break;
+		case LayoutElement::DataType::Int4: SetAttribute<DirectX::XMINT4>(attributePtr, std::forward<T>(attr)); break;
 		}
 	}
 
@@ -175,6 +175,18 @@ public:
 		subResourceData.pSysMem = vertices.data();
 
 		CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
+
+		std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
+		desc.reserve(Layout.GetElementsSize());
+
+		for (auto& element : Layout.Elements)
+		{
+			desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
+				0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
+		}
+
+		CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
+			Blob->GetBufferSize(), &inputLayout);
 	}
 
 	VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
@@ -188,11 +200,9 @@ public:
 	D3D11_PRIMITIVE_TOPOLOGY Topology;
 
 private:
-	void BindLayout() const;
-
-private:
 	BufferLayout Layout;
 	const Microsoft::WRL::ComPtr<ID3DBlob>& Blob;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
 	static const BufferType Type = BufferType::VertexB;
 

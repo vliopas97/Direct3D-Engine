@@ -8,20 +8,12 @@
 #include <filesystem>
 
 LayoutElement::LayoutElement(const std::string& name, DataType type)
-	:Name(name), Format(DataTypeToDXGI(type)), Size(CalcSize(type)), Offset(0)
+	:Name(name), Type(type), Size(CalcSize(type)), Offset(0)
 {
-	if (std::strcmp(Name.c_str(), "Position") == 0)
-		Type = Format == DXGI_FORMAT_R32G32_FLOAT ? ElementType::Position2 : ElementType::Position3;
-	else if (std::strcmp(Name.c_str(), "Color") == 0)
-		Type = Format == DXGI_FORMAT_R32G32B32_FLOAT ? ElementType::Color3 : ElementType::Color4;
-	else if (std::strcmp(Name.c_str(), "Normal") == 0)
-		Type = ElementType::Normal;
-	else
-		Type = ElementType::TexCoords;
 }
 
 LayoutElement::LayoutElement(ElementType type)
-	:Type(type), Name(ResolveNameFromType(type)), Format(DataTypeToDXGI(type)), Size(CalcSize(type)), Offset(0)
+	:Name(ResolveNameFromType(type)), Type(ResolveDataType(type)), Size(CalcSize(type)), Offset(0)
 {}
 
 const char* LayoutElement::ResolveNameFromType(ElementType type)
@@ -41,10 +33,8 @@ DXGI_FORMAT LayoutElement::DataTypeToDXGI(DataType type)
 {
 	switch (type)
 	{
-	case DataType::UCharNorm:  return DXGI_FORMAT_R8_UNORM;
 	case DataType::UChar2Norm: return DXGI_FORMAT_R8G8_UNORM;
 	case DataType::UChar4Norm: return DXGI_FORMAT_R8G8B8A8_UNORM;
-	case DataType::UChar:  return DXGI_FORMAT_R8_UINT;
 	case DataType::UChar2: return DXGI_FORMAT_R8G8_UINT;
 	case DataType::UChar4: return DXGI_FORMAT_R8G8B8A8_UINT;
 	case DataType::Float: return DXGI_FORMAT_R32_FLOAT;
@@ -58,16 +48,16 @@ DXGI_FORMAT LayoutElement::DataTypeToDXGI(DataType type)
 	}
 }
 
-DXGI_FORMAT LayoutElement::DataTypeToDXGI(ElementType type)
+LayoutElement::DataType LayoutElement::ResolveDataType(ElementType type)
 {
 	switch (type)
 	{
-	case ElementType::Position2: return DXGI_FORMAT_R32G32_FLOAT;
-	case ElementType::Position3: return DXGI_FORMAT_R32G32B32_FLOAT;
-	case ElementType::Color3: return DXGI_FORMAT_R32G32B32_FLOAT;
-	case ElementType::Color4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-	case ElementType::Normal: return DXGI_FORMAT_R32G32B32_FLOAT;
-	case ElementType::TexCoords: return DXGI_FORMAT_R32G32_FLOAT;
+	case ElementType::Position2: return DataType::Float2;
+	case ElementType::Position3: return DataType::Float3;
+	case ElementType::Color3: return DataType::Float3;
+	case ElementType::Color4: return DataType::Float4;
+	case ElementType::Normal: return DataType::Float3;
+	case ElementType::TexCoords: return DataType::Int2;
 	}
 }
 
@@ -75,8 +65,6 @@ uint32_t LayoutElement::CalcSize(DataType type)
 {
 	switch (type)
 	{
-	case DataType::UChar:
-	case DataType::UCharNorm: return sizeof(unsigned char);
 	case DataType::UChar2:
 	case DataType::UChar2Norm: return sizeof(unsigned char) * 2;
 	case DataType::UChar4:
@@ -151,7 +139,7 @@ void VertexBuffer::Bind() const
 	UINT offset = 0;
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
 	CurrentGraphicsContext::Context()->IASetPrimitiveTopology(Topology);
-	BindLayout();
+	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
 }
 
 void VertexBuffer::Unbind() const
@@ -159,33 +147,27 @@ void VertexBuffer::Unbind() const
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
-void VertexBuffer::BindLayout() const
-{
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
-	desc.reserve(Layout.GetElementsSize());
-
-	for (auto& element : Layout.Elements)
-	{
-		desc.emplace_back(element.Name.c_str(), 0, element.Format,
-			0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
-	}
-
-	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
-		Blob->GetBufferSize(), &inputLayout);
-
-	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
-}
-
 BufferType VertexBuffer::GetType() const
 {
 	return Type;
 }
 
-
 VertexBufferBuilder::VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 	: Object(std::move(layout), blob)
 {
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
+	desc.reserve(Object.Layout.GetElementsSize());
+
+	for (size_t i = 0; i < Object.Layout.GetElementsSize(); i++)
+	{
+		const auto& element = Object.Layout[i];
+		desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
+			0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
+	}
+
+	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Object.Blob->GetBufferPointer(),
+		Object.Blob->GetBufferSize(), &inputLayout);
 }
 
 UniquePtr<VertexBuffer> VertexBufferBuilder::Release()
@@ -343,10 +325,6 @@ void BufferGroup::Unbind() const
 	for (const auto& buffer : Buffers)
 		buffer->Unbind();
 }
-
-VertexElement::VertexElement(float x, float y, float z) :
-	Position(DirectX::XMFLOAT3(x, y, z))
-{}
 
 inline Vertex::Vertex(char* ptr, const BufferLayout& layout)
 	: Ptr(ptr), Layout(layout)

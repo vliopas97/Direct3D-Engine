@@ -33,7 +33,7 @@ void Sphere::InitializeType()
 	AddShader(std::move(vertexShader));
 	AddShader(std::move(pixelShader));
 
-	auto data = Primitives::Sphere::Create<VertexElement>();
+	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
 	data.Transform(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f));
 
 	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,

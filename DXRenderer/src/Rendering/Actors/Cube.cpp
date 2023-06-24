@@ -29,7 +29,7 @@ inline void Cube::InitializeType()
 	AddShader(std::move(vertexShader));
 	AddShader(std::move(pixelShader));
 
-	struct VertexElementNormal : public VertexElement
+	struct VertexElementNormal : public Primitives::VertexElement
 	{
 		DirectX::XMFLOAT3 Normal;
 	};

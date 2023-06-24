@@ -78,7 +78,7 @@ private:
 	DirectX::XMMATRIX Matrix;
 };
 
-template<typename Vertex,typename = std::enable_if_t<std::is_base_of_v<VertexElement, Vertex>>>
+template<typename Vertex,typename = std::enable_if_t<std::is_base_of_v<Primitives::VertexElement, Vertex>>>
 struct IndexedVertices
 {
 	IndexedVertices() = default;

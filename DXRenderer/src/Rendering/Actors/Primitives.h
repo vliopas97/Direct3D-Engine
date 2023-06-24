@@ -8,8 +8,18 @@
 
 namespace Primitives
 {
+	struct VertexElement
+	{
+		VertexElement() = default;
+		VertexElement(float x, float y, float z)
+			: Position(DirectX::XMFLOAT3(x, y, z))
+		{}
+
+		DirectX::XMFLOAT3 Position;
+	};
+
 	template<typename Vertex>
-	concept IsVertexElement = std::is_base_of_v<VertexElement, Vertex>;
+	concept IsVertexElement = std::is_base_of_v<Primitives::VertexElement, Vertex>;
 
 	class Cube
 	{
@@ -100,9 +110,9 @@ namespace Primitives
 				const auto p2 = DirectX::XMLoadFloat3(&v2.Position);
 
 				auto n = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(
-					DirectX::XMVectorSubtract(p1, p0), 
+					DirectX::XMVectorSubtract(p1, p0),
 					DirectX::XMVectorSubtract(p2, p0)));
-					
+
 				n.m128_f32[0] *= -1;
 				n.m128_f32[1] *= -1;
 
