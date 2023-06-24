@@ -18,17 +18,6 @@ struct VertexElement
 	DirectX::XMFLOAT3 Position;
 };
 
-struct FaceColors
-{
-	struct
-	{
-		float r;
-		float g;
-		float b;
-		float a;
-	} face_colors[6];
-};
-
 struct LayoutElement
 {
 	enum class DataType
@@ -39,20 +28,38 @@ struct LayoutElement
 		Int, Int2, Int3, Int4
 	};
 
+	enum class ElementType
+	{
+		Position2, Position3,
+		Color3, Color4,
+		Normal,
+		TexCoords,
+	};
+
 public:
 	LayoutElement(const std::string& name, DataType type);
+	LayoutElement(ElementType type);
+
+	uint32_t GetSize() const { return Size; }
+	uint32_t GetOffset() const { return Offset; }
+	ElementType GetType() const { return Type; }
 
 private:
+	static const char* ResolveNameFromType(ElementType type);
 	static DXGI_FORMAT DataTypeToDXGI(DataType type);
+	static DXGI_FORMAT DataTypeToDXGI(ElementType type);
 	static uint32_t CalcSize(DataType type);
+	static uint32_t CalcSize(ElementType type);
 
-public:
+private:
+	ElementType Type;
 	std::string Name;
-	DataType Type;
-	uint32_t Offset;
+	DXGI_FORMAT Format;
 	uint32_t Size;
+	uint32_t Offset;
 
 	friend class VertexBuffer;
+	friend struct BufferLayout;
 };
 
 struct BufferLayout
@@ -64,12 +71,71 @@ struct BufferLayout
 
 	uint32_t GetStride() const;
 	size_t GetElementsSize() const;
+
+	template<LayoutElement::ElementType Type>
+	const LayoutElement& ResolveType() const
+	{
+		for (auto& element : Elements)
+		{
+			if (element.GetType() == Type)
+				return element;
+		}
+		ASSERT(false);
+		return Elements.front();
+	}
+
+	const LayoutElement& operator[](size_t i) const;
 private:
 
 	std::vector<LayoutElement> Elements;
 	uint32_t Stride = 0;
 
 	friend class VertexBuffer;
+};
+
+struct Vertex
+{
+public:
+	template<typename T>
+	void SetAttributeIndex(size_t i, T&& attr)
+	{
+		const auto& element = Layout[i];
+		auto attributePtr = Ptr + element.GetOffset();
+
+		switch (element.GetType())
+		{
+				case LayoutElement::ElementType::Position2: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+				case LayoutElement::ElementType::Position3:SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+				case LayoutElement::ElementType::Color3: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+				case LayoutElement::ElementType::Color4: SetAttribute<DirectX::XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
+				case LayoutElement::ElementType::Normal: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+				case LayoutElement::ElementType::TexCoords: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+		}
+	}
+
+private:
+	Vertex(char* ptr, const BufferLayout& layout);
+
+	template<typename First, typename ...Rest>
+	void SetAttributeIndex(size_t i, First&& first, Rest&&... rest)
+	{
+		SetAttributeIndex(i, std::forward<First>(first));
+		SetAttributeIndex(i + 1, std::forward<Rest>(rest)...);
+	}
+
+	template<typename Dest, typename Src>
+	void SetAttribute(char* attributePtr, Src&& attr)
+	{
+		if constexpr (std::is_assignable<Dest, Src>::value)
+			*reinterpret_cast<Dest*>(attributePtr) = attr;
+		else
+			ASSERT(false);
+	}
+private:
+	char* Ptr;
+	const BufferLayout& Layout;
+
+	friend class VertexBufferBuilder;
 };
 
 enum BufferType
@@ -94,8 +160,8 @@ class VertexBuffer : public Buffer
 {
 public:
 	template<typename Vertex>
-	VertexBuffer(const std::vector<Vertex>& vertices, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-		:Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	VertexBuffer(const std::vector<Vertex>& vertices, BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+		:Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
 		D3D11_BUFFER_DESC vertexBufferDesc;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -111,11 +177,10 @@ public:
 		CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
 	}
 
+	VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+
 	void Bind() const override;
 	void Unbind() const override;
-
-	void SetLayout(const BufferLayout& layout);
-	VertexBuffer& AddLayoutElement(LayoutElement element);
 
 	BufferType GetType() const;
 
@@ -130,6 +195,32 @@ private:
 	const Microsoft::WRL::ComPtr<ID3DBlob>& Blob;
 
 	static const BufferType Type = BufferType::VertexB;
+
+	friend class VertexBufferBuilder;
+};
+
+class VertexBufferBuilder
+{
+public:
+	VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+
+	template<typename ...Attributes>
+	void EmplaceBack(Attributes&&... attributes)
+	{
+		Vertices.resize(Vertices.size() + Object.Layout.GetStride());
+		Back().SetAttributeIndex(0, std::forward<Attributes>(attributes)...);
+	}
+
+	UniquePtr<VertexBuffer> Release();
+
+private:
+
+	Vertex Back();
+
+	Vertex Front();
+private:
+	std::vector<char> Vertices{};
+	VertexBuffer Object;
 };
 
 class IndexBuffer : public Buffer

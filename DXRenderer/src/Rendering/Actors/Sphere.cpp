@@ -35,9 +35,10 @@ void Sphere::InitializeType()
 
 	auto data = Primitives::Sphere::Create<VertexElement>();
 	data.Transform(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f));
-	
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices, GetTypeShaders().GetBlob(ShaderType::Vertex));
-	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 });
+
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,
+		BufferLayout{ {"Position", LayoutElement::DataType::Float3} },
+		GetTypeShaders().GetBlob(ShaderType::VertexS));
 	AddBuffer(std::move(vertexBuffer));
 	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
 

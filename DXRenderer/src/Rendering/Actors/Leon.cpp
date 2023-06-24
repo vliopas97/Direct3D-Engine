@@ -18,11 +18,6 @@ Leon::Leon(const TransformationIntrinsics& intrinsics)
 	Init();
 }
 
-void Leon::Update()
-{
-	Transform.Update();
-}
-
 void Leon::InitializeType()
 {
 	namespace WRL = Microsoft::WRL;
@@ -40,30 +35,27 @@ void Leon::InitializeType()
 
 	Assimp::Importer importer;
 	auto model = importer.ReadFile(solutionPath.string() + "\\Content\\Model\\LeonKennedy.obj",
-		aiProcess_Triangulate);
+		aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
-	struct VertexElementNormal : public VertexElement
-	{
-		DirectX::XMFLOAT3 Normal;
+	VertexBufferBuilder builder{
+		BufferLayout{
+			{ LayoutElement::ElementType::Position3 },
+			{ LayoutElement::ElementType::Normal }
+		},
+		GetTypeShaders().GetBlob(ShaderType::VertexS)
 	};
-
-	std::vector<VertexElementNormal> vertices;
-	vertices.reserve(model->mMeshes[0]->mNumVertices * model->mNumMeshes);
 
 	std::vector<unsigned short> indices;
 	indices.reserve(model->mMeshes[0]->mNumFaces * 3 * model->mNumMeshes);
 
 	unsigned int offset = 0;
-
 	for (unsigned int j = 0; j < model->mNumMeshes; j++)
 	{
 		auto& mesh = model->mMeshes[j];
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
-			vertices.push_back({
-				{ mesh->mVertices[i].x,mesh->mVertices[i].y,mesh->mVertices[i].z },
-				*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh->mNormals[i])
-				});
+			builder.EmplaceBack(DirectX::XMFLOAT3{ mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z },
+				* reinterpret_cast<DirectX::XMFLOAT3*>(&mesh->mNormals[i]));
 		}
 
 		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
@@ -78,10 +70,7 @@ void Leon::InitializeType()
 		offset += mesh->mNumVertices;
 	}
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(vertices, GetTypeShaders().GetBlob(ShaderType::Vertex));
-	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 })
-				 .AddLayoutElement({ "Normal", LayoutElement::DataType::Float3 });
-	AddBuffer(std::move(vertexBuffer));
+	AddBuffer(builder.Release());
 
 	AddBuffer(MakeUnique<IndexBuffer>(indices));
 

@@ -31,6 +31,7 @@ DirectX::XMMATRIX Actor::GetTransform() const
 
 void Actor::Update()
 {
+	Transform.Update();
 }
 
 inline const IndexBuffer* Actor::GetIndexBuffer() const

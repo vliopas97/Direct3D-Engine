@@ -36,9 +36,12 @@ inline void Cube::InitializeType()
 
 	auto data = Primitives::Cube::CreateWNormals<VertexElementNormal>();
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices, GetTypeShaders().GetBlob(ShaderType::Vertex));
-	vertexBuffer->AddLayoutElement({ "Position", LayoutElement::DataType::Float3 })
-				 .AddLayoutElement({ "Normal", LayoutElement::DataType::Float3 });
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,
+		BufferLayout{
+			{ "Position", LayoutElement::DataType::Float3 },
+			{ "Normal", LayoutElement::DataType::Float3 }
+		},
+		GetTypeShaders().GetBlob(ShaderType::VertexS));
 
 	AddBuffer(std::move(vertexBuffer));
 	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
@@ -61,9 +64,4 @@ void Cube::Init()
 		this->Transform.GetMatrix()));
 
 	Components.Add(MakeUnique < Material>(1));
-}
-
-inline void Cube::Update()
-{
-	Transform.Update();
 }

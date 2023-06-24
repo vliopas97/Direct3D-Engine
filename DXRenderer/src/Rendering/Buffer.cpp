@@ -2,29 +2,72 @@
 #include "CurrentGraphicsContext.h"
 #include "Graphics.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <filesystem>
+
 LayoutElement::LayoutElement(const std::string& name, DataType type)
-	:Name(name), Type(type), Size(CalcSize(type))
+	:Name(name), Format(DataTypeToDXGI(type)), Size(CalcSize(type)), Offset(0)
 {
+	if (std::strcmp(Name.c_str(), "Position") == 0)
+		Type = Format == DXGI_FORMAT_R32G32_FLOAT ? ElementType::Position2 : ElementType::Position3;
+	else if (std::strcmp(Name.c_str(), "Color") == 0)
+		Type = Format == DXGI_FORMAT_R32G32B32_FLOAT ? ElementType::Color3 : ElementType::Color4;
+	else if (std::strcmp(Name.c_str(), "Normal") == 0)
+		Type = ElementType::Normal;
+	else
+		Type = ElementType::TexCoords;
+}
+
+LayoutElement::LayoutElement(ElementType type)
+	:Type(type), Name(ResolveNameFromType(type)), Format(DataTypeToDXGI(type)), Size(CalcSize(type)), Offset(0)
+{}
+
+const char* LayoutElement::ResolveNameFromType(ElementType type)
+{
+	switch (type)
+	{
+	case ElementType::Position2:
+	case ElementType::Position3: return "Position";
+	case ElementType::Color3:
+	case ElementType::Color4: return "Color";
+	case ElementType::Normal: return "Normal";
+	case ElementType::TexCoords: return "TexCoords";
+	}
 }
 
 DXGI_FORMAT LayoutElement::DataTypeToDXGI(DataType type)
 {
 	switch (type)
 	{
-		case DataType::UCharNorm:  return DXGI_FORMAT_R8_UNORM;
-		case DataType::UChar2Norm: return DXGI_FORMAT_R8G8_UNORM;
-		case DataType::UChar4Norm: return DXGI_FORMAT_R8G8B8A8_UNORM;
-		case DataType::UChar:  return DXGI_FORMAT_R8_UINT;
-		case DataType::UChar2: return DXGI_FORMAT_R8G8_UINT;
-		case DataType::UChar4: return DXGI_FORMAT_R8G8B8A8_UINT;
-		case DataType::Float: return DXGI_FORMAT_R32_FLOAT;
-		case DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
-		case DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
-		case DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-		case DataType::Int: return  DXGI_FORMAT_R32_SINT;
-		case DataType::Int2: return DXGI_FORMAT_R32G32_SINT;
-		case DataType::Int3: return DXGI_FORMAT_R32G32B32_SINT;
-		case DataType::Int4: return DXGI_FORMAT_R32G32B32A32_SINT;
+	case DataType::UCharNorm:  return DXGI_FORMAT_R8_UNORM;
+	case DataType::UChar2Norm: return DXGI_FORMAT_R8G8_UNORM;
+	case DataType::UChar4Norm: return DXGI_FORMAT_R8G8B8A8_UNORM;
+	case DataType::UChar:  return DXGI_FORMAT_R8_UINT;
+	case DataType::UChar2: return DXGI_FORMAT_R8G8_UINT;
+	case DataType::UChar4: return DXGI_FORMAT_R8G8B8A8_UINT;
+	case DataType::Float: return DXGI_FORMAT_R32_FLOAT;
+	case DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
+	case DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
+	case DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+	case DataType::Int: return  DXGI_FORMAT_R32_SINT;
+	case DataType::Int2: return DXGI_FORMAT_R32G32_SINT;
+	case DataType::Int3: return DXGI_FORMAT_R32G32B32_SINT;
+	case DataType::Int4: return DXGI_FORMAT_R32G32B32A32_SINT;
+	}
+}
+
+DXGI_FORMAT LayoutElement::DataTypeToDXGI(ElementType type)
+{
+	switch (type)
+	{
+	case ElementType::Position2: return DXGI_FORMAT_R32G32_FLOAT;
+	case ElementType::Position3: return DXGI_FORMAT_R32G32B32_FLOAT;
+	case ElementType::Color3: return DXGI_FORMAT_R32G32B32_FLOAT;
+	case ElementType::Color4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+	case ElementType::Normal: return DXGI_FORMAT_R32G32B32_FLOAT;
+	case ElementType::TexCoords: return DXGI_FORMAT_R32G32_FLOAT;
 	}
 }
 
@@ -32,20 +75,33 @@ uint32_t LayoutElement::CalcSize(DataType type)
 {
 	switch (type)
 	{
-		case DataType::UChar:
-		case DataType::UCharNorm: return sizeof(unsigned char);
-		case DataType::UChar2:
-		case DataType::UChar2Norm: return sizeof(unsigned char) * 2;
-		case DataType::UChar4:
-		case DataType::UChar4Norm: return sizeof(unsigned char) * 4;
-		case DataType::Float: return sizeof(float);
-		case DataType::Float2: return sizeof(float) * 2;
-		case DataType::Float3: return sizeof(float) * 3;
-		case DataType::Float4: return sizeof(float) * 4;
-		case DataType::Int: return  sizeof(int);
-		case DataType::Int2: return sizeof(int) * 2;
-		case DataType::Int3: return sizeof(int) * 3;
-		case DataType::Int4: return sizeof(int) * 4;
+	case DataType::UChar:
+	case DataType::UCharNorm: return sizeof(unsigned char);
+	case DataType::UChar2:
+	case DataType::UChar2Norm: return sizeof(unsigned char) * 2;
+	case DataType::UChar4:
+	case DataType::UChar4Norm: return sizeof(unsigned char) * 4;
+	case DataType::Float: return sizeof(float);
+	case DataType::Float2: return sizeof(float) * 2;
+	case DataType::Float3: return sizeof(float) * 3;
+	case DataType::Float4: return sizeof(float) * 4;
+	case DataType::Int: return  sizeof(int);
+	case DataType::Int2: return sizeof(int) * 2;
+	case DataType::Int3: return sizeof(int) * 3;
+	case DataType::Int4: return sizeof(int) * 4;
+	}
+}
+
+uint32_t LayoutElement::CalcSize(ElementType type)
+{
+	switch (type)
+	{
+	case ElementType::Position2: return sizeof(float) * 2;
+	case ElementType::Position3: return sizeof(float) * 3;
+	case ElementType::Color3: return sizeof(float) * 3;
+	case ElementType::Color4: return sizeof(float) * 4;
+	case ElementType::Normal: return sizeof(float) * 3;
+	case ElementType::TexCoords: return sizeof(float) * 4;
 	}
 }
 
@@ -80,6 +136,15 @@ size_t BufferLayout::GetElementsSize() const
 	return Elements.size();
 }
 
+const LayoutElement& BufferLayout::operator[](size_t i) const
+{
+	return Elements[i];
+}
+
+inline VertexBuffer::VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+	:Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+{}
+
 void VertexBuffer::Bind() const
 {
 	UINT stride = Layout.GetStride();
@@ -94,17 +159,6 @@ void VertexBuffer::Unbind() const
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
-void VertexBuffer::SetLayout(const BufferLayout& layout)
-{
-	Layout = layout;
-}
-
-VertexBuffer& VertexBuffer::AddLayoutElement(LayoutElement element)
-{
-	Layout.AddElement(element);
-	return *this;
-}
-
 void VertexBuffer::BindLayout() const
 {
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
@@ -113,12 +167,12 @@ void VertexBuffer::BindLayout() const
 
 	for (auto& element : Layout.Elements)
 	{
-		desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
-						  0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
+		desc.emplace_back(element.Name.c_str(), 0, element.Format,
+			0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
 	}
 
 	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
-								   Blob->GetBufferSize(), &inputLayout);
+		Blob->GetBufferSize(), &inputLayout);
 
 	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
 }
@@ -126,6 +180,42 @@ void VertexBuffer::BindLayout() const
 BufferType VertexBuffer::GetType() const
 {
 	return Type;
+}
+
+
+VertexBufferBuilder::VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+	: Object(std::move(layout), blob)
+{
+}
+
+UniquePtr<VertexBuffer> VertexBufferBuilder::Release()
+{
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+	vertexBufferDesc.ByteWidth = Vertices.size();
+	vertexBufferDesc.StructureByteStride = Object.Layout.GetStride();
+
+	D3D11_SUBRESOURCE_DATA subResourceData;
+	subResourceData.pSysMem = Vertices.data();
+
+	CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &Object.BufferID);
+
+	return MakeUnique<VertexBuffer>(std::move(Object));
+}
+
+Vertex VertexBufferBuilder::Back()
+{
+	ASSERT(Vertices.size() != 0);
+	return Vertex{ Vertices.data() + Vertices.size() - Object.Layout.GetStride(), Object.Layout };
+}
+
+Vertex VertexBufferBuilder::Front()
+{
+	ASSERT(Vertices.size() != 0);
+	return Vertex{ Vertices.data(), Object.Layout };
 }
 
 IndexBuffer::IndexBuffer(const std::vector<unsigned short>& indices)
@@ -187,7 +277,7 @@ void DepthBuffer::CreateDepthStencilState()
 	depthBufferDesc.DepthEnable = TRUE;
 	depthBufferDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthBufferDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	
+
 	CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthBufferDesc, &depthStencilState);
 }
 
@@ -220,9 +310,9 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 void BufferGroup::Add(UniquePtr<Buffer> buffer)
 {
 	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const UniquePtr<Buffer>& element)
-						   {
-							   return typeid(*element) == typeid(buffer);
-						   });
+		{
+			return typeid(*element) == typeid(buffer);
+		});
 	if (it != Buffers.end())
 		return;
 
@@ -232,11 +322,11 @@ void BufferGroup::Add(UniquePtr<Buffer> buffer)
 const IndexBuffer* BufferGroup::GetIndexBuffer() const
 {
 	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const UniquePtr<Buffer>& element)
-						   {
-							   return dynamic_cast<IndexBuffer*>(element.get());
-						   });
+		{
+			return dynamic_cast<IndexBuffer*>(element.get());
+		});
 
-	if(it != Buffers.end())
+	if (it != Buffers.end())
 		return dynamic_cast<IndexBuffer*>(it->get());
 
 	return nullptr;
@@ -256,5 +346,10 @@ void BufferGroup::Unbind() const
 
 VertexElement::VertexElement(float x, float y, float z) :
 	Position(DirectX::XMFLOAT3(x, y, z))
+{}
+
+inline Vertex::Vertex(char* ptr, const BufferLayout& layout)
+	: Ptr(ptr), Layout(layout)
 {
+	ASSERT(ptr);
 }

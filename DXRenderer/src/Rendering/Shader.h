@@ -10,8 +10,8 @@
 
 enum ShaderType
 {
-	Vertex = 0,
-	Pixel,
+	VertexS = 0,
+	PixelS,
 	Size
 };
 
@@ -48,7 +48,7 @@ struct VertexShader : public Shader
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> ShaderID;
-	static const ShaderType Type = ShaderType::Vertex;
+	static const ShaderType Type = ShaderType::VertexS;
 };
 
 struct PixelShader : public Shader
@@ -61,7 +61,7 @@ struct PixelShader : public Shader
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ShaderID;
-	static const ShaderType Type = ShaderType::Pixel;
+	static const ShaderType Type = ShaderType::PixelS;
 };
 
 struct ShaderGroup : public IShader

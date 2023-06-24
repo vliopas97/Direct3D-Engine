@@ -7,8 +7,6 @@ public:
 	Leon();
 	Leon(const TransformationIntrinsics& intrinsics);
 
-	virtual void Update() override;
-
 protected:
 	void InitializeType() override;
 
