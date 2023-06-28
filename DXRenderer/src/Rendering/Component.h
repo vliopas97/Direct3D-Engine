@@ -5,7 +5,7 @@
 class Component
 {
 public:
-	virtual void Bind() const = 0;
+	virtual void Bind() const {};
 };
 
 class ComponentGroup : public Component

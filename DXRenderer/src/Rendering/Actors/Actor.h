@@ -20,7 +20,7 @@ public:
 	Actor(const Actor&) = delete;
 	Actor& operator=(const Actor&) = delete;
 
-	void Draw();
+	virtual void Draw();
 
 	DirectX::XMMATRIX GetTransform() const;
 
@@ -76,7 +76,7 @@ public:
 	}
 
 protected:
-	virtual void InitializeType() = 0;
+	virtual void InitializeType() {};
 
 	const BufferGroup& GetTypeBuffers() const override
 	{

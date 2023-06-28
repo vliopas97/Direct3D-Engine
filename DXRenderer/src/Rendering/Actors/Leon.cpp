@@ -7,6 +7,7 @@
 #include <assimp/postprocess.h>
 #include <filesystem>
 
+
 Leon::Leon()
 {
 	Init();
@@ -16,6 +17,18 @@ Leon::Leon(const TransformationIntrinsics& intrinsics)
 	:ActorBase(intrinsics)
 {
 	Init();
+}
+
+void Leon::Draw()
+{
+	Root->Draw();
+}
+
+void Leon::Update()
+{
+	ActorBase<Leon>::Update();
+	Root->SetTransform(Transform.GetMatrix());
+	Root->Update();
 }
 
 void Leon::InitializeType()
@@ -84,11 +97,13 @@ void Leon::InitializeType()
 
 void Leon::Init()
 {
-	InitializeType();
+	//InitializeType();
 
-	InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
-		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
-		this->Transform.GetMatrix()));
+	//InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
+	//	MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
+	//	this->Transform.GetMatrix()));
 
 	Components.Add(MakeUnique<Material>(1));
+
+	Root = Node::Build("LeonKennedy.obj");
 }

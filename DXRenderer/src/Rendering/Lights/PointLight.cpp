@@ -36,6 +36,6 @@ void PointLight::Draw()
 
 void PointLight::Update()
 {
-	Mesh.Transform.Translation = DirectX::XMLoadFloat3(&Position);
+	Mesh.Transform.Translation = Position;
 	Mesh.Update();
 }

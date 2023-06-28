@@ -139,7 +139,7 @@ void VertexBuffer::Bind() const
 	UINT offset = 0;
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
 	CurrentGraphicsContext::Context()->IASetPrimitiveTopology(Topology);
-	CurrentGraphicsContext::Context()->IASetInputLayout(inputLayout.Get());
+	CurrentGraphicsContext::Context()->IASetInputLayout(InputLayout.Get());
 }
 
 void VertexBuffer::Unbind() const
@@ -155,7 +155,6 @@ BufferType VertexBuffer::GetType() const
 VertexBufferBuilder::VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
 	: Object(std::move(layout), blob)
 {
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
 	desc.reserve(Object.Layout.GetElementsSize());
 
@@ -167,7 +166,7 @@ VertexBufferBuilder::VertexBufferBuilder(BufferLayout&& layout, const Microsoft:
 	}
 
 	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Object.Blob->GetBufferPointer(),
-		Object.Blob->GetBufferSize(), &inputLayout);
+		Object.Blob->GetBufferSize(), &Object.InputLayout);
 }
 
 UniquePtr<VertexBuffer> VertexBufferBuilder::Release()

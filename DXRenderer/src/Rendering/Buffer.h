@@ -186,7 +186,7 @@ public:
 		}
 
 		CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
-			Blob->GetBufferSize(), &inputLayout);
+			Blob->GetBufferSize(), &InputLayout);
 	}
 
 	VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
@@ -202,7 +202,7 @@ public:
 private:
 	BufferLayout Layout;
 	const Microsoft::WRL::ComPtr<ID3DBlob>& Blob;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> InputLayout;
 
 	static const BufferType Type = BufferType::VertexB;
 

@@ -43,7 +43,7 @@ struct TransformationMatrix
 	{
 		union
 		{
-			DirectX::XMVECTOR Scale;
+			DirectX::XMFLOAT3 Scale;
 			struct
 			{
 				float Sx;
@@ -54,7 +54,7 @@ struct TransformationMatrix
 
 		union
 		{
-			DirectX::XMVECTOR Rotation;
+			DirectX::XMFLOAT3 Rotation;
 			struct
 			{
 				float Roll;
@@ -65,7 +65,7 @@ struct TransformationMatrix
 
 		union
 		{
-			DirectX::XMVECTOR Translation;
+			DirectX::XMFLOAT3 Translation;
 			struct
 			{
 				float X;
@@ -77,6 +77,11 @@ struct TransformationMatrix
 private:
 	DirectX::XMMATRIX Matrix;
 };
+
+namespace Primitives
+{
+	struct VertexElement;
+}
 
 template<typename Vertex,typename = std::enable_if_t<std::is_base_of_v<Primitives::VertexElement, Vertex>>>
 struct IndexedVertices
