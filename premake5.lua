@@ -32,6 +32,7 @@ project "DXRenderer"
     includedirs
     {
         "%{prj.name}/src",
+        "%{prj.name}/vendor/glm",
         "%{prj.name}/vendor/DXErr",
         "%{prj.name}/vendor/stb_image",
         "%{prj.name}/vendor/ImGui",

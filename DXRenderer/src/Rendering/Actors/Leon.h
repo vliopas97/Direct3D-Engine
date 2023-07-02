@@ -10,6 +10,8 @@ public:
 
 	virtual void Draw() override;
 	virtual void Update() override;
+
+	void GUI();
 protected:
 	void InitializeType() override;
 

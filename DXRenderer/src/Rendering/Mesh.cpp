@@ -1,4 +1,10 @@
 #include "Mesh.h"
+#include "Utilities.h"
+
+#include <imgui.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 inline PrimitiveComponent::PrimitiveComponent()
 	:Buffers{}, Shaders{}
@@ -89,8 +95,8 @@ inline void Mesh::Draw()
 	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
 }
 
-Node::Node() 
-	:Children{}, Meshes{}
+Node::Node(const std::string& name)
+	:Children{}, Meshes{}, Name(name)
 {
 	DirectX::XMStoreFloat4x4(&Transform, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&RelativeTransform, DirectX::XMMatrixIdentity());
@@ -108,8 +114,12 @@ DirectX::XMMATRIX Node::GetTransform() const
 
 void Node::SetRelativeTransform(DirectX::XMMATRIX transform)
 {
-	auto newTransform = DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&Transform),
-		DirectX::XMLoadFloat4x4(&RelativeTransform));
+	DirectX::XMStoreFloat4x4(&RelativeTransform, transform);
+
+	if (Parent)
+		SetTransform(Parent->GetTransform() * GetRelativeTransform());
+	else
+		SetTransform(GetRelativeTransform());
 }
 
 DirectX::XMMATRIX Node::GetRelativeTransform() const
@@ -117,23 +127,23 @@ DirectX::XMMATRIX Node::GetRelativeTransform() const
 	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&RelativeTransform));
 }
 
-inline void Node::SetupAttachment(Node* parent)
-{
-	if (parent && parent != Parent && parent != this)
-	{
-		auto* oldParent = Parent;
-		Parent = parent;
-
-		auto it = std::find_if(oldParent->Children.begin(), oldParent->Children.end(), [this](auto& uniquePtr)
-			{
-				return uniquePtr.get() == this;
-			});
-
-		ASSERT(it != oldParent->Children.end());
-		Parent->Children.emplace_back(std::unique_ptr<Node>(it->release()));
-		oldParent->Children.erase(it);
-	}
-}
+//inline void Node::SetupAttachment(Node* parent)
+//{
+//	if (parent && parent != Parent && parent != this)
+//	{
+//		auto* oldParent = Parent;
+//		Parent = parent;
+//
+//		auto it = std::find_if(oldParent->Children.begin(), oldParent->Children.end(), [this](auto& uniquePtr)
+//			{
+//				return uniquePtr.get() == this;
+//			});
+//
+//		ASSERT(it != oldParent->Children.end());
+//		Parent->Children.emplace_back(std::unique_ptr<Node>(it->release()));
+//		oldParent->Children.erase(it);
+//	}
+//}
 
 void Node::Update()
 {
@@ -158,6 +168,83 @@ void Node::Draw()
 		child->Draw();
 }
 
+void Node::GUITransform(const Node* root)
+{
+	if (!(this->Parent))
+		return;
+
+	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
+
+	glm::vec3 translate(transform[3]);
+	translate.x *= -1;
+	translate.y *= -1;
+
+	transform = glm::transpose(transform);
+	glm::quat quaternion = glm::quat_cast(transform);
+	glm::vec3 angles = glm::eulerAngles(quaternion);
+	angles.z *= -1;
+
+	// Convert the quaternion to Euler angles
+	float& roll = angles.z;
+	float& pitch = angles.x;
+	float& yaw = angles.y;
+
+	float& x = translate.x;
+	float& y = translate.y;
+	float& z = translate.z;
+
+	ImGui::NextColumn();
+	ImGui::Text("Orientation (Relative)");
+	ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
+	ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+	ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+
+	ImGui::Text("Position (Relative)");
+	ImGui::SliderFloat("X", &x, -20.0f, 20.0f);
+	ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
+	ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
+
+	DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
+		DirectX::XMMatrixTranslation(-x, -y, z);
+	SetRelativeTransform(newTransform);
+}
+
+void Node::ShowTree()
+{
+	int trackedIndex = 0;
+	ShowTree(trackedIndex, SelectedIndex, SelectedNode);
+
+	if (SelectedNode)
+		SelectedNode->GUITransform(this);
+}
+
+void Node::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, Node*& selectedNode) const
+{
+	const int currentNodeIndex = trackedIndex;
+	trackedIndex++;
+
+	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
+		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)
+		| ((Children.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);
+
+	const auto expanded = ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, Name.c_str());
+
+	if (ImGui::IsItemClicked())
+	{
+		selectedIndex = currentNodeIndex;
+		selectedNode = const_cast<Node*>(this);
+	}
+
+	if (expanded)
+	{
+		selectedIndex = ImGui::IsItemClicked() ? currentNodeIndex : selectedIndex;
+		for(const auto& child : Children)
+			child->ShowTree(trackedIndex, selectedIndex, selectedNode);
+
+		ImGui::TreePop();
+	}
+}
+
 UniquePtr<Node> Node::Build(const std::string& filename)
 {
 	Assimp::Importer imp;
@@ -174,6 +261,7 @@ UniquePtr<Node> Node::Build(const std::string& filename)
 void Node::SetupChild(UniquePtr<Node> child)
 {
 	ASSERT(child);
+	child->Parent = this;
 	Children.emplace_back(std::move(child));
 }
 
@@ -188,7 +276,7 @@ inline UniquePtr<Node> Node::BuildImpl(const aiScene& scene, const aiNode& node)
 		meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
 	}
 
-	UniquePtr<Node> customNode = MakeUnique<Node>();
+	UniquePtr<Node> customNode = MakeUnique<Node>(node.mName.C_Str());
 	customNode->SetRelativeTransform(relativeTransform);
 	customNode->Meshes = std::move(meshes);
 

@@ -85,6 +85,11 @@ void Application::Tick()
 		c->Pitch += 0.1f;
 		c->Update();
 		c->Draw();
+		if (auto ptr = dynamic_cast<Leon*>(c.get()))
+		{
+			ptr->GUI();
+			continue;
+		}
 	}
 	Light.Update();
 	Light.Draw();

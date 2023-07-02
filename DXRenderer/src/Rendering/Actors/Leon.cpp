@@ -6,6 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <filesystem>
+#include <imgui.h>
 
 
 Leon::Leon()
@@ -29,6 +30,18 @@ void Leon::Update()
 	ActorBase<Leon>::Update();
 	Root->SetTransform(Transform.GetMatrix());
 	Root->Update();
+}
+
+void Leon::GUI()
+{
+	if (ImGui::Begin("Leon"))
+	{
+		ImGui::Columns(2, nullptr, true);
+
+		Root->ShowTree();
+
+	}
+	ImGui::End();
 }
 
 void Leon::InitializeType()
