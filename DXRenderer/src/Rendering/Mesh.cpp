@@ -1,10 +1,121 @@
 #include "Mesh.h"
 #include "Utilities.h"
 
-#include <imgui.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
+#include "Actors/Actor.h"
+
+
+
+class NodeInternal : public NodeBase
+{
+public:
+	NodeInternal(const std::string& name = "Unknown")
+		:NodeBase(name)
+	{
+		DirectX::XMStoreFloat4x4(&Transform, DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4(&RelativeTransform, DirectX::XMMatrixIdentity());
+	}
+
+	void SetTransform(DirectX::XMMATRIX transform) override
+	{
+		DirectX::XMStoreFloat4x4(&Transform, transform);
+	}
+
+	DirectX::XMMATRIX GetTransform() const override
+	{
+		return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
+	}
+
+	virtual void SetRelativeTransform(DirectX::XMMATRIX transform)
+	{
+		DirectX::XMStoreFloat4x4(&RelativeTransform, transform);
+
+		if (Parent)
+			SetTransform(Parent->GetTransform() * GetRelativeTransform());
+		else
+			SetTransform(GetRelativeTransform());
+	}
+
+	DirectX::XMMATRIX GetRelativeTransform() const
+	{
+		return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&RelativeTransform));
+	}
+
+	void Update()
+	{
+		for (auto* mesh : Meshes)
+		{
+			mesh->SetTransform(DirectX::XMLoadFloat4x4(&Transform));
+		}
+
+		for (auto& child : Children)
+		{
+			child->SetTransform(DirectX::XMLoadFloat4x4(&Transform) * child->GetRelativeTransform());
+			child->Update();
+		}
+	}
+
+	void Draw()
+	{
+		for (auto* mesh : Meshes)
+			mesh->Draw();
+
+		for (auto& child : Children)
+			child->Draw();
+	}
+
+	void SetupChild(UniquePtr<NodeInternal> child)
+	{
+		ASSERT(child);
+		child->Parent = this;
+		Children.emplace_back(std::move(child));
+	}
+
+	void NodeBase::GUITransform() override
+	{
+		glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
+
+		glm::vec3 translate(transform[3]);
+		translate.x *= -1;
+		translate.y *= -1;
+
+		transform = glm::transpose(transform);
+		glm::quat quaternion = glm::quat_cast(transform);
+		glm::vec3 angles = glm::eulerAngles(quaternion);
+		angles.z *= -1;
+
+		// Convert the quaternion to Euler angles
+		float& roll = angles.z;
+		float& pitch = angles.x;
+		float& yaw = angles.y;
+
+		float& x = translate.x;
+		float& y = translate.y;
+		float& z = translate.z;
+
+		ImGui::NextColumn();
+		ImGui::Text("Orientation (Relative)");
+		ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
+		ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+		ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+
+		ImGui::Text("Position (Relative)");
+		ImGui::SliderFloat("X", &x, -20.0f, 20.0f);
+		ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
+		ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
+
+		DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
+			DirectX::XMMatrixTranslation(-x, -y, z);
+		SetRelativeTransform(newTransform);
+	}
+
+private:
+	const NodeBase* Parent = nullptr;
+
+	DirectX::XMFLOAT4X4 Transform;
+	DirectX::XMFLOAT4X4 RelativeTransform;
+
+	friend class Node;
+};
 
 inline PrimitiveComponent::PrimitiveComponent()
 	:Buffers{}, Shaders{}
@@ -95,36 +206,19 @@ inline void Mesh::Draw()
 	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
 }
 
-Node::Node(const std::string& name)
-	:Children{}, Meshes{}, Name(name)
+Node::Node(const Actor& actor, const std::string& name)
+	:Owner(const_cast<Actor&>(actor)), NodeBase(name)
 {
-	DirectX::XMStoreFloat4x4(&Transform, DirectX::XMMatrixIdentity());
-	DirectX::XMStoreFloat4x4(&RelativeTransform, DirectX::XMMatrixIdentity());
 }
 
-void Node::SetTransform(DirectX::XMMATRIX transform)
+inline void Node::SetTransform(DirectX::XMMATRIX transform)
 {
-	DirectX::XMStoreFloat4x4(&Transform, transform);
+	const_cast<DirectX::XMMATRIX&>(Owner.Transform.GetMatrix()) = transform;
 }
 
-DirectX::XMMATRIX Node::GetTransform() const
+inline DirectX::XMMATRIX Node::GetTransform() const
 {
-	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
-}
-
-void Node::SetRelativeTransform(DirectX::XMMATRIX transform)
-{
-	DirectX::XMStoreFloat4x4(&RelativeTransform, transform);
-
-	if (Parent)
-		SetTransform(Parent->GetTransform() * GetRelativeTransform());
-	else
-		SetTransform(GetRelativeTransform());
-}
-
-DirectX::XMMATRIX Node::GetRelativeTransform() const
-{
-	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&RelativeTransform));
+	return Owner.GetTransform();
 }
 
 //inline void Node::SetupAttachment(Node* parent)
@@ -147,14 +241,34 @@ DirectX::XMMATRIX Node::GetRelativeTransform() const
 
 void Node::Update()
 {
+	//glm::mat tran = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
+
+	//glm::vec3 translate(tran[3]);
+	//translate.x *= -1;
+	//translate.y *= -1;
+
+	//tran = glm::transpose(tran);
+	//glm::quat quaternion = glm::quat_cast(tran);
+	//glm::vec3 angles = glm::eulerAngles(quaternion);
+	//angles.z *= -1;
+
+	//Owner.Roll = angles.z;
+	//Owner.Pitch = angles.x;
+	//Owner.Yaw = angles.y;
+
+	//Owner.X = translate.x;
+	//Owner.Y = translate.y;
+	//Owner.Z = translate.z;
+
+	auto& transform = Owner.Transform.GetMatrix();
 	for (auto* mesh : Meshes)
 	{
-		mesh->SetTransform(DirectX::XMLoadFloat4x4(&Transform));
+		mesh->SetTransform(transform);
 	}
 
 	for (auto& child : Children)
 	{
-		child->SetTransform(DirectX::XMLoadFloat4x4(&Transform) * child->GetRelativeTransform());
+		child->SetTransform(transform * child->GetRelativeTransform());
 		child->Update();
 	}
 }
@@ -168,12 +282,92 @@ void Node::Draw()
 		child->Draw();
 }
 
-void Node::GUITransform(const Node* root)
-{
-	if (!(this->Parent))
-		return;
+//void Node::GUITransform()
+//{
+//	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
+//
+//	glm::vec3 translate(transform[3]);
+//	translate.x *= -1;
+//	translate.y *= -1;
+//
+//	transform = glm::transpose(transform);
+//	glm::quat quaternion = glm::quat_cast(transform);
+//	glm::vec3 angles = glm::eulerAngles(quaternion);
+//	angles.z *= -1;
+//
+//	// Convert the quaternion to Euler angles
+//	float& roll = angles.z;
+//	float& pitch = angles.x;
+//	float& yaw = angles.y;
+//
+//	float& x = translate.x;
+//	float& y = translate.y;
+//	float& z = translate.z;
+//
+//	ImGui::NextColumn();
+//	ImGui::Text("Orientation (Relative)");
+//	ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
+//	ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+//	ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+//
+//	ImGui::Text("Position (Relative)");
+//	ImGui::SliderFloat("X", &x, -20.0f, 20.0f);
+//	ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
+//	ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
+//
+//	DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
+//		DirectX::XMMatrixTranslation(-x, -y, z);
+//	SetRelativeTransform(newTransform);
+//}
 
-	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
+void Node::ShowTree()
+{
+	int trackedIndex = 0;
+	NodeBase::ShowTree(trackedIndex, SelectedIndex, SelectedNode);
+
+	if (SelectedNode)
+		SelectedNode->GUITransform();
+}
+
+UniquePtr<Node> Node::Build(const Actor& actor, const std::string& filename)
+{
+	Assimp::Importer imp;
+	std::filesystem::path solutionPath = std::filesystem::current_path().parent_path();
+
+	const auto scene = imp.ReadFile(solutionPath.string() + "\\Content\\Model\\" + filename,
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices
+	);
+
+	auto& node = *scene->mRootNode;
+	UniquePtr<Node> customNode = MakeUnique<Node>(actor, node.mName.C_Str());
+
+	std::vector<Mesh*> meshes;
+
+	for (size_t i = 0; i < node.mNumMeshes; i++)
+	{
+		const auto index = node.mMeshes[i];
+		meshes.emplace_back(new Mesh(*scene->mMeshes[index]));
+	}
+
+	customNode->Meshes = std::move(meshes);
+	for (size_t i = 0; i < node.mNumChildren; i++)
+		customNode->SetupChild(BuildImpl(*scene, *node.mChildren[i]));
+
+	return std::move(customNode);
+}
+
+void Node::SetupChild(UniquePtr<NodeInternal> child)
+{
+	ASSERT(child);
+	child->Parent = this;
+	Children.emplace_back(std::move(child));
+}
+
+inline void Node::GUITransform()
+{
+	auto& ownerTransform = Owner.Transform.GetMatrix();
+	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&ownerTransform);
 
 	glm::vec3 translate(transform[3]);
 	translate.x *= -1;
@@ -184,7 +378,6 @@ void Node::GUITransform(const Node* root)
 	glm::vec3 angles = glm::eulerAngles(quaternion);
 	angles.z *= -1;
 
-	// Convert the quaternion to Euler angles
 	float& roll = angles.z;
 	float& pitch = angles.x;
 	float& yaw = angles.y;
@@ -194,31 +387,53 @@ void Node::GUITransform(const Node* root)
 	float& z = translate.z;
 
 	ImGui::NextColumn();
-	ImGui::Text("Orientation (Relative)");
+	ImGui::Text("Orientation");
 	ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
 	ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
 	ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
 
-	ImGui::Text("Position (Relative)");
+	ImGui::Text("Position");
 	ImGui::SliderFloat("X", &x, -20.0f, 20.0f);
 	ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
 	ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
 
-	DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
-		DirectX::XMMatrixTranslation(-x, -y, z);
-	SetRelativeTransform(newTransform);
+	Owner.X = x;
+	Owner.Y = y;
+	Owner.Z = z;
+
+	angles = glm::degrees(angles);
+	Owner.Roll = roll;
+	Owner.Pitch = pitch;
+	Owner.Yaw = yaw;
 }
 
-void Node::ShowTree()
+inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNode& node)
 {
-	int trackedIndex = 0;
-	ShowTree(trackedIndex, SelectedIndex, SelectedNode);
+	const auto relativeTransform = DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&node.mTransformation));
+	std::vector<Mesh*> meshes;
 
-	if (SelectedNode)
-		SelectedNode->GUITransform(this);
+	for (size_t i = 0; i < node.mNumMeshes; i++)
+	{
+		const auto index = node.mMeshes[i];
+		meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
+	}
+
+	UniquePtr<NodeInternal> customNode = MakeUnique<NodeInternal>(node.mName.C_Str());
+	customNode->SetRelativeTransform(relativeTransform);
+	customNode->Meshes = std::move(meshes);
+
+	for (size_t i = 0; i < node.mNumChildren; i++)
+		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i]));
+
+	return std::move(customNode);
 }
 
-void Node::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, Node*& selectedNode) const
+NodeBase::NodeBase(const std::string& name)
+	:Name(name), Children{}, Meshes{}
+{
+}
+
+inline void NodeBase::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, NodeBase*& selectedNode) const
 {
 	const int currentNodeIndex = trackedIndex;
 	trackedIndex++;
@@ -232,58 +447,15 @@ void Node::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, Node*&
 	if (ImGui::IsItemClicked())
 	{
 		selectedIndex = currentNodeIndex;
-		selectedNode = const_cast<Node*>(this);
+		selectedNode = const_cast<NodeBase*>(reinterpret_cast<const NodeBase*>(this));
 	}
 
 	if (expanded)
 	{
 		selectedIndex = ImGui::IsItemClicked() ? currentNodeIndex : selectedIndex;
-		for(const auto& child : Children)
+		for (const auto& child : Children)
 			child->ShowTree(trackedIndex, selectedIndex, selectedNode);
 
 		ImGui::TreePop();
 	}
-}
-
-UniquePtr<Node> Node::Build(const std::string& filename)
-{
-	Assimp::Importer imp;
-	std::filesystem::path solutionPath = std::filesystem::current_path().parent_path();
-
-	const auto scene = imp.ReadFile(solutionPath.string() + "\\Content\\Model\\" + filename,
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
-	);
-
-	return BuildImpl(*scene, *scene->mRootNode);
-}
-
-void Node::SetupChild(UniquePtr<Node> child)
-{
-	ASSERT(child);
-	child->Parent = this;
-	Children.emplace_back(std::move(child));
-}
-
-inline UniquePtr<Node> Node::BuildImpl(const aiScene& scene, const aiNode& node)
-{
-	const auto relativeTransform = DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&node.mTransformation));
-	std::vector<Mesh*> meshes;
-
-	for (size_t i = 0; i < node.mNumMeshes; i++)
-	{
-		const auto index = node.mMeshes[i];
-		meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
-	}
-
-	UniquePtr<Node> customNode = MakeUnique<Node>(node.mName.C_Str());
-	customNode->SetRelativeTransform(relativeTransform);
-	customNode->Meshes = std::move(meshes);
-
-	for (size_t i = 0; i < node.mNumChildren; i++)
-	{
-		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i]));
-	}
-
-	return std::move(customNode);
 }

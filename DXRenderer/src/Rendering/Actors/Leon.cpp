@@ -118,5 +118,5 @@ void Leon::Init()
 
 	Components.Add(MakeUnique<Material>(1));
 
-	Root = Node::Build("LeonKennedy.obj");
+	Root = Node::Build(*this, "LeonKennedy.obj");
 }

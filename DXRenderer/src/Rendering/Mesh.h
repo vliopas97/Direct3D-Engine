@@ -11,6 +11,11 @@
 #include <filesystem>
 #include <optional>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <imgui.h>
+
 class PrimitiveComponent : public Component
 {
 public:
@@ -45,18 +50,40 @@ public:
 	void Draw();
 };
 
-class Node
+class NodeBase
 {
 public:
 
-	Node(const std::string& name = "Unknown");
+	NodeBase(const std::string& name);
+	virtual ~NodeBase() = default;
 
-	void SetTransform(DirectX::XMMATRIX transform);
+	virtual void SetTransform(DirectX::XMMATRIX transform) = 0;
 
-	DirectX::XMMATRIX GetTransform() const;
-	void SetRelativeTransform(DirectX::XMMATRIX transform);
-	DirectX::XMMATRIX GetRelativeTransform() const;
+	virtual DirectX::XMMATRIX GetTransform() const = 0;
 
+	virtual void GUITransform() = 0;
+
+protected:
+	void ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, NodeBase*& selectedNode) const;
+
+protected:
+	std::vector<Mesh*> Meshes;
+	std::vector<UniquePtr<class NodeInternal>> Children;
+
+	std::string Name;
+};
+
+class Actor;
+
+class Node : public NodeBase
+{
+public:
+
+	Node(const Actor& actor, const std::string& name = "Unknown");
+
+	void SetTransform(DirectX::XMMATRIX transform) override;
+
+	DirectX::XMMATRIX GetTransform() const override;
 	//void SetupAttachment(Node* parent);
 
 	void Update();
@@ -64,24 +91,16 @@ public:
 
 	void ShowTree();
 
-	static UniquePtr<Node> Build(const std::string& filename);
+	static UniquePtr<Node> Build(const Actor& actor, const std::string& filename);
 
 private:
-	void SetupChild(UniquePtr<Node> child);
-	void ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, Node*& selectedNode) const;
-	void GUITransform(const Node* root);
+	void SetupChild(UniquePtr<class NodeInternal> child);
+	void GUITransform() override;
 
-	static UniquePtr<Node> BuildImpl(const aiScene& scene, const aiNode& node);
+	static UniquePtr<class NodeInternal> BuildImpl(const aiScene& scene, const aiNode& node);
 
 private:
-	const Node* Parent = nullptr;
-	std::vector<UniquePtr<Node>> Children;
-	std::vector<Mesh*> Meshes;
-	std::string Name;
-
-	DirectX::XMFLOAT4X4 Transform;
-	DirectX::XMFLOAT4X4 RelativeTransform;
-
 	std::optional<int> SelectedIndex;
-	mutable Node* SelectedNode = nullptr;
+	mutable NodeBase* SelectedNode = nullptr;
+	Actor& Owner;
 };
