@@ -112,6 +112,3 @@ public:
 	std::vector<Vertex> Vertices;
 	std::vector<unsigned short> Indices;
 };
-
-
-DirectX::XMVECTOR ToEuler(DirectX::XMVECTOR q);

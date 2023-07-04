@@ -31,6 +31,9 @@ public:
 	void OnEvent(Event& event);
 	void SetEventCallbackFunction(const EventCallbackFn& fn);
 
+	void ShowCursor();
+	void HideCursor();
+
 private:
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
@@ -38,6 +41,10 @@ private:
 
 	bool OnWindowLostFocus(WindowLostFocusEvent& event) noexcept;
 	bool OnWindowClose(WindowCloseEvent& event) noexcept;
+
+	void TrapCursor();
+	void FreeCursor();
+
 public:
 	InputManager Input;
 	std::string Name;

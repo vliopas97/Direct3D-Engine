@@ -129,10 +129,27 @@ void Window::OnEvent(Event& event)
 	Input.OnEvent(event);
 }
 
-
 void Window::SetEventCallbackFunction(const EventCallbackFn& fn)
 {
 	EventCallback = fn;
+}
+
+void Window::ShowCursor()
+{
+	Input.ShowCursor();
+	if(ImGui::GetCurrentContext())
+		ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+
+	FreeCursor();
+}
+
+void Window::HideCursor()
+{
+	Input.HideCursor();
+	if(ImGui::GetCurrentContext())
+		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
+
+	TrapCursor();
 }
 
 LRESULT Window::InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
@@ -162,6 +179,11 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 		return true;
 	}
 
+	if (!ImGui::GetCurrentContext())
+		return DefWindowProc(windowHandle, message, wParam, lParam);
+
+	const auto& IO = ImGui::GetIO();
+
 	switch (message)
 	{
 		// Window Events
@@ -169,20 +191,59 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			GEN_WINDOWCLOSE_EVENT();
 		case WM_KILLFOCUS:
 			GEN_WINDOWLOSTFOCUS_EVENT();
-
+		case WM_ACTIVATE:
+			{
+				if (!Input.IsCursorVisible())
+				{
+					if (wParam & WA_ACTIVE)
+					{
+						TrapCursor();
+						HideCursor();
+					}
+					else
+					{
+						FreeCursor();
+						ShowCursor();
+					}
+				}
+				break;
+			}
 		// Keyboard Events
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
-			GEN_KEYPRESSED_EVENT();
+			{
+				if (IO.WantCaptureKeyboard)
+					break;
+				GEN_KEYPRESSED_EVENT();
+			}
 		case WM_CHAR:
-			GEN_KEYTYPED_EVENT();
+			{
+				if (IO.WantCaptureKeyboard)
+					break;
+				GEN_KEYTYPED_EVENT();
+			}
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
+			if (IO.WantCaptureKeyboard)
+				break;
 			GEN_KEYRELEASED_EVENT();
 
 		// Mouse Events
 		case WM_MOUSEMOVE:
 			{
+				if(!Input.IsCursorVisible())
+				{
+					if (Input.IsMouseInWindow())
+					{
+						SetCapture(Handle);
+						GEN_MOUSEENTER_EVENT();
+						HideCursor();
+					}
+				}
+
+				if (IO.WantCaptureMouse)
+					break;
+
 				const POINTS points = MAKEPOINTS(lParam);
 			
 				if ((points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
@@ -205,11 +266,27 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			}
 			break;
 		case WM_LBUTTONDOWN:
-			GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonLeft);
+			{
+				SetForegroundWindow(Handle);
+				if (IO.WantCaptureMouse)
+					break;
+				GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonLeft);
+			}
 		case WM_RBUTTONDOWN:
-			GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonRight);
+			{
+				if (IO.WantCaptureMouse)
+					break;
+				GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonRight);
+			}
 		case WM_LBUTTONUP:
 			{
+				if (!Input.IsCursorVisible())
+				{
+					TrapCursor();
+					ShowCursor();
+				}
+				if (IO.WantCaptureMouse)
+					break;
 				const POINTS points = MAKEPOINTS(lParam);
 				MouseButtonReleasedEvent event(MouseButtonCode::ButtonLeft);
 				if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
@@ -218,6 +295,8 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			break;
 		case WM_RBUTTONUP:
 			{
+				if (IO.WantCaptureMouse)
+					break;
 				const POINTS points = MAKEPOINTS(lParam);
 				MouseButtonReleasedEvent event(MouseButtonCode::ButtonRight);
 				if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
@@ -226,6 +305,8 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 			break;
 		case WM_MOUSEWHEEL:
 			{
+				if (IO.WantCaptureMouse)
+					break;
 				POINTS point = MAKEPOINTS(lParam); 
 				MouseScrolledEvent event(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam)); 
 				EventCallback(event);
@@ -248,4 +329,17 @@ bool Window::OnWindowClose(WindowCloseEvent& event) noexcept
 {
 	PostQuitMessage(WM_CLOSE);
 	return true;
+}
+
+void Window::TrapCursor()
+{
+	RECT rectangle;
+	GetClientRect(Handle, &rectangle);
+	MapWindowPoints(Handle, nullptr, reinterpret_cast<POINT*>(&rectangle), 2);
+	ClipCursor(&rectangle);
+}
+
+void Window::FreeCursor()
+{
+	ClipCursor(nullptr);
 }

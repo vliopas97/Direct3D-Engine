@@ -1,4 +1,6 @@
 #include "Input.h"
+
+#include <imgui.h>
 #include <typeinfo>
 #include <unordered_map>
 
@@ -112,6 +114,23 @@ bool InputManager::IsMouseInWindow() const noexcept
 bool InputManager::IsCharBufferEmpty() noexcept
 {
 	return CharBuffer.empty();
+}
+
+void InputManager::HideCursor()
+{
+	CursorVisibility = false;
+	while (::ShowCursor(FALSE) >= 0);
+}
+
+void InputManager::ShowCursor()
+{
+	CursorVisibility = true;
+	while (::ShowCursor(TRUE) < 0);
+}
+
+bool InputManager::IsCursorVisible() const
+{
+	return CursorVisibility;
 }
 
 void InputManager::OnEvent(Event& event)

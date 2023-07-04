@@ -33,6 +33,10 @@ public:
 	bool IsMouseInWindow() const noexcept;
 	bool IsCharBufferEmpty() noexcept;
 
+	void HideCursor();
+	void ShowCursor();
+	bool IsCursorVisible() const;
+
 	void OnEvent(Event& event);
 private:
 	bool OnKeyPressed(KeyPressedEvent& event) noexcept;
@@ -64,6 +68,7 @@ private:
 	std::queue<uint8> CharBuffer;
 
 	bool RepeatEnabled = true;
+	bool CursorVisibility = true;
 public:
 	int DeltaCarry = 0;
 };
