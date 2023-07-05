@@ -150,6 +150,30 @@ std::string MouseLeaveEvent::GetEventInfo() const
 	return MouseLeaveEvent::GetName();
 }
 
+MouseRawInputEvent::MouseRawInputEvent(uint32_t x, uint32_t y)
+	: X(x), Y(y)
+{}
+
+EventType MouseRawInputEvent::GetEventTypeStatic()
+{
+	return EventType::MouseRaw;
+}
+
+EventType MouseRawInputEvent::GetEventType() const
+{
+	return EventType::MouseRaw;
+}
+
+constexpr const char* MouseRawInputEvent::GetName() const
+{
+	return "MouseRawInputEvent";
+}
+
+std::string MouseRawInputEvent::GetEventInfo() const
+{
+	return MouseRawInputEvent::GetName();
+}
+
 UniquePtr<Event> MouseEventFactory::Make(Event* e) const
 {
 	const auto& typeID = typeid(*e);
@@ -165,6 +189,8 @@ UniquePtr<Event> MouseEventFactory::Make(Event* e) const
 		return std::unique_ptr<MouseEnterEvent>(dynamic_cast<MouseEnterEvent*>(e));
 	else if (typeID == typeid(MouseLeaveEvent))
 		return std::unique_ptr<MouseLeaveEvent>(dynamic_cast<MouseLeaveEvent*>(e));
+	else if (typeID == typeid(MouseRawInputEvent))
+		return std::unique_ptr<MouseRawInputEvent>(dynamic_cast<MouseRawInputEvent*>(e));
 	else
 		return nullptr;
 

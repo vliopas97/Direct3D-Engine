@@ -99,6 +99,23 @@ public:
 	virtual std::string GetEventInfo() const override;
 };
 
+class MouseRawInputEvent : public MouseEvent
+{
+public:
+	MouseRawInputEvent(uint32_t x, uint32_t y);
+
+	static EventType GetEventTypeStatic();
+	virtual EventType GetEventType() const override;
+	virtual constexpr const char* GetName() const override;
+	virtual std::string GetEventInfo() const override;
+
+	inline uint32_t GetX() const { return X; }
+	inline uint32_t GetY() const { return Y; }
+
+private:
+	uint32_t X, Y;
+};
+
 struct MouseEventFactory : public EventFactoryBase
 {
 	virtual UniquePtr<Event> Make(Event* e) const override;

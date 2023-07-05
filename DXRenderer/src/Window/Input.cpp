@@ -53,6 +53,21 @@ std::optional<UniquePtr<Event>> InputManager::FetchMouseEvent() noexcept
 		return std::nullopt;
 }
 
+std::optional<InputManager::RawInputCoords> InputManager::FetchRawInputCoords() noexcept
+{
+	if (RawInputBuffer.empty())
+		return std::nullopt;
+
+	auto rawInputCoords = RawInputBuffer.front();
+	RawInputBuffer.pop();
+	return rawInputCoords;
+}
+
+void InputManager::FlushRawInputBuffer() noexcept
+{
+	RawInputBuffer = std::queue<RawInputCoords>();
+}
+
 void InputManager::FlushCharBuffer() noexcept
 {
 	CharBuffer = std::queue<uint8>();
@@ -79,6 +94,7 @@ void InputManager::FlushAll() noexcept
 {
 	FlushKeyEventBuffer();
 	FlushCharBuffer();
+	FlushRawInputBuffer();
 }
 
 void InputManager::SetAutoRepeat(bool autoRepeat) noexcept
@@ -86,9 +102,15 @@ void InputManager::SetAutoRepeat(bool autoRepeat) noexcept
 	RepeatEnabled = autoRepeat;
 }
 
-bool InputManager::IsKeyPressed(uint8 keycode) const noexcept
+bool InputManager::IsKeyPressed(uint8 keycode) noexcept
 {
-	return KeyStates[keycode];
+	while (const auto& event = FetchKeyEvent())
+	{
+		auto ptr = dynamic_cast<KeyPressedEvent*>(event.value().get());
+		if (ptr && ptr->GetKeycode() == keycode)
+			return true;
+	}
+	return false;
 }
 
 bool InputManager::IsKeyBufferEmpty() const noexcept
@@ -116,21 +138,14 @@ bool InputManager::IsCharBufferEmpty() noexcept
 	return CharBuffer.empty();
 }
 
-void InputManager::HideCursor()
+void InputManager::SetRawInput(bool flag)
 {
-	CursorVisibility = false;
-	while (::ShowCursor(FALSE) >= 0);
+	RawInputEnabled = flag;
 }
 
-void InputManager::ShowCursor()
+bool InputManager::IsRawInputEnabled() const
 {
-	CursorVisibility = true;
-	while (::ShowCursor(TRUE) < 0);
-}
-
-bool InputManager::IsCursorVisible() const
-{
-	return CursorVisibility;
+	return RawInputEnabled;
 }
 
 void InputManager::OnEvent(Event& event)
@@ -147,6 +162,7 @@ void InputManager::OnEvent(Event& event)
 	dispatcher.Dispatch<MouseScrolledEvent>(BIND_EVENT_FN(OnMouseScrolled));
 	dispatcher.Dispatch<MouseEnterEvent>(BIND_EVENT_FN(OnMouseEnter));
 	dispatcher.Dispatch<MouseLeaveEvent>(BIND_EVENT_FN(OnMouseLeave));
+	dispatcher.Dispatch<MouseRawInputEvent>(BIND_EVENT_FN(OnMouseRawInput));
 }
 
 bool InputManager::OnKeyPressed(KeyPressedEvent& event) noexcept
@@ -228,6 +244,16 @@ bool InputManager::OnMouseLeave(MouseLeaveEvent& event) noexcept
 	MouseInWindow = false;
 	MouseEventBuffer.emplace(MakeUnique<MouseLeaveEvent>());
 	PreventBufferOverflow(MouseEventBuffer);
+	return true;
+}
+
+bool InputManager::OnMouseRawInput(MouseRawInputEvent& event) noexcept
+{
+	if (!RawInputEnabled)
+		return false;
+
+	RawInputBuffer.push({ event.GetX(), event.GetY() });
+	PreventBufferOverflow(RawInputBuffer);
 	return true;
 }
 

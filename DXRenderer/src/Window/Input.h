@@ -9,6 +9,7 @@
 
 class InputManager
 {
+	using RawInputCoords = std::pair<uint32_t, uint32_t>;
 public:
 	InputManager() = default;
 	InputManager(const InputManager&) = delete;
@@ -17,6 +18,9 @@ public:
 	void FlushKeyEventBuffer() noexcept;
 	std::optional<UniquePtr<Event>> FetchKeyEvent() noexcept;
 	std::optional<UniquePtr<Event>> FetchMouseEvent() noexcept;
+	std::optional<RawInputCoords> FetchRawInputCoords() noexcept;
+
+	void FlushRawInputBuffer() noexcept;
 
 	void FlushCharBuffer() noexcept;
 	uint8 FetchKeyTyped() noexcept;
@@ -26,16 +30,15 @@ public:
 
 	void SetAutoRepeat(bool autoRepeat) noexcept;
 
-	bool IsKeyPressed(uint8 keycode) const noexcept;
+	bool IsKeyPressed(uint8 keycode) noexcept;
 	bool IsKeyBufferEmpty() const noexcept;
 	bool IsMouseBufferEmpty() const noexcept;
 	bool IsAutoRepeatEnabled() const noexcept;
 	bool IsMouseInWindow() const noexcept;
 	bool IsCharBufferEmpty() noexcept;
 
-	void HideCursor();
-	void ShowCursor();
-	bool IsCursorVisible() const;
+	void SetRawInput(bool flag);
+	bool IsRawInputEnabled() const;
 
 	void OnEvent(Event& event);
 private:
@@ -49,12 +52,14 @@ private:
 	bool OnMouseScrolled(MouseScrolledEvent& event) noexcept;
 	bool OnMouseEnter(MouseEnterEvent& event) noexcept;
 	bool OnMouseLeave(MouseLeaveEvent& event) noexcept;
+	bool OnMouseRawInput(MouseRawInputEvent& event) noexcept;
 
 	template<typename T>
 	static void PreventBufferOverflow(std::queue<T>& buffer) noexcept;
 
 public:
 	bool MouseInWindow = false;
+	int DeltaCarry = 0;
 
 private:
 	static constexpr uint32_t NumberOfKeys = 256u;
@@ -66,9 +71,8 @@ private:
 	std::queue<UniquePtr<Event>> KeyEventBuffer;
 	std::queue<UniquePtr<Event>> MouseEventBuffer;
 	std::queue<uint8> CharBuffer;
+	std::queue<RawInputCoords> RawInputBuffer;
 
 	bool RepeatEnabled = true;
-	bool CursorVisibility = true;
-public:
-	int DeltaCarry = 0;
+	bool RawInputEnabled = true;
 };

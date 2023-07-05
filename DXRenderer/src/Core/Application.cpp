@@ -95,6 +95,31 @@ void Application::Tick()
 	Light.Draw();
 	Light.GUI();
 	ImGui->Render();
+
+	if (MainWindow->Input.IsKeyPressed(VK_INSERT))
+	{
+		if (MainWindow->IsCursorVisible())
+		{
+			MainWindow->HideCursor();
+			MainWindow->Input.SetRawInput(true);
+		}
+		else
+		{
+			MainWindow->ShowCursor();
+			MainWindow->Input.SetRawInput(false);
+		}
+	}
+
+	while (auto coords = MainWindow->Input.FetchRawInputCoords())
+	{
+		const auto [x, y] = coords.value();
+		X += x;
+		Y += y;
+	}
+	ImGui::Begin("Raw Input");
+	ImGui::Text("Tally: (%d,%d)", X, Y);
+	ImGui::Text("Visible: %s", MainWindow->IsCursorVisible() ? "true" : "false");
+	ImGui::End();
 	ImGui->End();
 	MainWindow->GetGraphicsContext().EndTick();
 }

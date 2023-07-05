@@ -33,6 +33,7 @@ public:
 
 	void ShowCursor();
 	void HideCursor();
+	bool IsCursorVisible() const { return CursorVisibility; }
 
 private:
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
@@ -42,6 +43,8 @@ private:
 	bool OnWindowLostFocus(WindowLostFocusEvent& event) noexcept;
 	bool OnWindowClose(WindowCloseEvent& event) noexcept;
 
+	void ShowCursorImpl();
+	void HideCursorImpl();
 	void TrapCursor();
 	void FreeCursor();
 
@@ -55,6 +58,8 @@ private:
 	RECT Rect;
 	uint32_t Width, Height;
 	UniquePtr<Graphics> GraphicsContext;
+
+	bool CursorVisibility = true;
 	
 	DEFINE_WINDOW_CLASS(WindowClass);
 };

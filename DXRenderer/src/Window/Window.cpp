@@ -41,6 +41,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 									MouseLeaveEvent event;\
 									EventCallback(event);}
 
+#define GEN_MOUSERAW_EVENT(x, y) {MouseRawInputEvent event(x, y);\
+								  EventCallback(event);}
+
 Window::Window(uint32_t width, uint32_t height, const std::string& name)
 	: Name(name), Width(width), Height(height)
 {
@@ -57,12 +60,20 @@ Window::Window(uint32_t width, uint32_t height, const std::string& name)
 						  WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 						  200, 200, Width, Height,
 						  nullptr, nullptr, WindowClass::GetInstance(), this);
-	if(!Handle)
+	if (!Handle)
 		throw WIN_EXCEPTION_LAST_ERROR;
 
 	Show(true);
 
 	GraphicsContext = MakeUnique<Graphics>(Handle);
+
+	RAWINPUTDEVICE rawInput{};
+	rawInput.usUsagePage = 0x01;
+	rawInput.usUsage = 0x02;
+	rawInput.dwFlags = 0;
+	rawInput.hwndTarget = nullptr;
+	if(RegisterRawInputDevices(&rawInput, 1, sizeof(RAWINPUTDEVICE)) == FALSE)
+		WIN_EXCEPTION_LAST_ERROR;
 }
 
 Window::~Window()
@@ -136,8 +147,8 @@ void Window::SetEventCallbackFunction(const EventCallbackFn& fn)
 
 void Window::ShowCursor()
 {
-	Input.ShowCursor();
-	if(ImGui::GetCurrentContext())
+	ShowCursorImpl();
+	if (ImGui::GetCurrentContext())
 		ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 
 	FreeCursor();
@@ -145,8 +156,8 @@ void Window::ShowCursor()
 
 void Window::HideCursor()
 {
-	Input.HideCursor();
-	if(ImGui::GetCurrentContext())
+	HideCursorImpl();
+	if (ImGui::GetCurrentContext())
 		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 
 	TrapCursor();
@@ -187,133 +198,159 @@ LRESULT Window::WindProcImpl(HWND windowHandle, UINT message, WPARAM wParam, LPA
 	switch (message)
 	{
 		// Window Events
-		case WM_CLOSE:
-			GEN_WINDOWCLOSE_EVENT();
-		case WM_KILLFOCUS:
-			GEN_WINDOWLOSTFOCUS_EVENT();
-		case WM_ACTIVATE:
+	case WM_CLOSE:
+		GEN_WINDOWCLOSE_EVENT();
+	case WM_KILLFOCUS:
+		GEN_WINDOWLOSTFOCUS_EVENT();
+	case WM_ACTIVATE:
+	{
+		if (!IsCursorVisible())
+		{
+			if (wParam & WA_ACTIVE)
 			{
-				if (!Input.IsCursorVisible())
-				{
-					if (wParam & WA_ACTIVE)
-					{
-						TrapCursor();
-						HideCursor();
-					}
-					else
-					{
-						FreeCursor();
-						ShowCursor();
-					}
-				}
-				break;
+				TrapCursor();
+				HideCursor();
 			}
-		// Keyboard Events
-		case WM_KEYDOWN:
-		case WM_SYSKEYDOWN:
+			else
 			{
-				if (IO.WantCaptureKeyboard)
-					break;
-				GEN_KEYPRESSED_EVENT();
+				FreeCursor();
+				ShowCursor();
 			}
-		case WM_CHAR:
-			{
-				if (IO.WantCaptureKeyboard)
-					break;
-				GEN_KEYTYPED_EVENT();
-			}
-		case WM_KEYUP:
-		case WM_SYSKEYUP:
-			if (IO.WantCaptureKeyboard)
-				break;
-			GEN_KEYRELEASED_EVENT();
+		}
+		break;
+	}
+
+	// Keyboard Events
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+	{
+		if (IO.WantCaptureKeyboard)
+			break;
+		GEN_KEYPRESSED_EVENT();
+	}
+	case WM_CHAR:
+	{
+		if (IO.WantCaptureKeyboard)
+			break;
+		GEN_KEYTYPED_EVENT();
+	}
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		if (IO.WantCaptureKeyboard)
+			break;
+		GEN_KEYRELEASED_EVENT();
 
 		// Mouse Events
-		case WM_MOUSEMOVE:
+	case WM_MOUSEMOVE:
+	{
+		if (!IsCursorVisible())
+		{
+			if (Input.IsMouseInWindow())
 			{
-				if(!Input.IsCursorVisible())
-				{
-					if (Input.IsMouseInWindow())
-					{
-						SetCapture(Handle);
-						GEN_MOUSEENTER_EVENT();
-						HideCursor();
-					}
-				}
+				SetCapture(Handle);
+				GEN_MOUSEENTER_EVENT();
+				HideCursor();
+			}
+		}
 
-				if (IO.WantCaptureMouse)
-					break;
+		if (IO.WantCaptureMouse)
+			break;
 
-				const POINTS points = MAKEPOINTS(lParam);
-			
-				if ((points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
-				{
-					MouseMovedEvent event(points.x, points.y);
-					EventCallback(event);
-					if (Input.IsMouseInWindow())
-						GEN_MOUSEENTER_EVENT();
-				}
-				else
-				{
-					if (wParam & (MK_LBUTTON | MK_RBUTTON))
-					{
-						MouseMovedEvent event(points.x, points.y);
-						EventCallback(event);
-					}
-					else
-						GEN_MOUSELEAVE_EVENT();
-				}
-			}
-			break;
-		case WM_LBUTTONDOWN:
+		const POINTS points = MAKEPOINTS(lParam);
+
+		if ((points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
+		{
+			MouseMovedEvent event(points.x, points.y);
+			EventCallback(event);
+			if (Input.IsMouseInWindow())
+				GEN_MOUSEENTER_EVENT();
+		}
+		else
+		{
+			if (wParam & (MK_LBUTTON | MK_RBUTTON))
 			{
-				SetForegroundWindow(Handle);
-				if (IO.WantCaptureMouse)
-					break;
-				GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonLeft);
-			}
-		case WM_RBUTTONDOWN:
-			{
-				if (IO.WantCaptureMouse)
-					break;
-				GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonRight);
-			}
-		case WM_LBUTTONUP:
-			{
-				if (!Input.IsCursorVisible())
-				{
-					TrapCursor();
-					ShowCursor();
-				}
-				if (IO.WantCaptureMouse)
-					break;
-				const POINTS points = MAKEPOINTS(lParam);
-				MouseButtonReleasedEvent event(MouseButtonCode::ButtonLeft);
-				if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
-					GEN_MOUSELEAVE_EVENT();
-			}
-			break;
-		case WM_RBUTTONUP:
-			{
-				if (IO.WantCaptureMouse)
-					break;
-				const POINTS points = MAKEPOINTS(lParam);
-				MouseButtonReleasedEvent event(MouseButtonCode::ButtonRight);
-				if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
-					GEN_MOUSELEAVE_EVENT();
-			}
-			break;
-		case WM_MOUSEWHEEL:
-			{
-				if (IO.WantCaptureMouse)
-					break;
-				POINTS point = MAKEPOINTS(lParam); 
-				MouseScrolledEvent event(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam)); 
+				MouseMovedEvent event(points.x, points.y);
 				EventCallback(event);
 			}
+			else
+				GEN_MOUSELEAVE_EVENT();
+		}
+	}
+	break;
+	case WM_LBUTTONDOWN:
+	{
+		SetForegroundWindow(Handle);
+		if (IO.WantCaptureMouse)
 			break;
-		default:
+		GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonLeft);
+	}
+	case WM_RBUTTONDOWN:
+	{
+		if (IO.WantCaptureMouse)
 			break;
+		GEN_MOUSEBUTTONPRESSED_EVENT(MouseButtonCode::ButtonRight);
+	}
+	case WM_LBUTTONUP:
+	{
+		if (!IsCursorVisible())
+		{
+			TrapCursor();
+			ShowCursor();
+		}
+		if (IO.WantCaptureMouse)
+			break;
+		const POINTS points = MAKEPOINTS(lParam);
+		MouseButtonReleasedEvent event(MouseButtonCode::ButtonLeft);
+		if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
+			GEN_MOUSELEAVE_EVENT();
+	}
+	break;
+	case WM_RBUTTONUP:
+	{
+		if (IO.WantCaptureMouse)
+			break;
+		const POINTS points = MAKEPOINTS(lParam);
+		MouseButtonReleasedEvent event(MouseButtonCode::ButtonRight);
+		if (!(points.x >= 0 || points.x < Width || points.y >= 0 || points.y < Height))
+			GEN_MOUSELEAVE_EVENT();
+	}
+	break;
+	case WM_MOUSEWHEEL:
+	{
+		if (IO.WantCaptureMouse)
+			break;
+		POINTS point = MAKEPOINTS(lParam);
+		MouseScrolledEvent event(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam));
+		EventCallback(event);
+	}
+	break;
+
+	// Raw Mouse
+	case WM_INPUT:
+		{
+			if (!Input.IsRawInputEnabled())
+				break;
+			
+			UINT size{ 0 };
+			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, 
+								sizeof(RAWINPUTHEADER)) == -1)
+				break;
+
+			std::vector<BYTE> buffer{};
+			buffer.resize(size);
+
+			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
+								RID_INPUT, buffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
+				break;
+
+			auto& rawInput = reinterpret_cast<const RAWINPUT&>(*buffer.data());
+			if (rawInput.header.dwType == RIM_TYPEMOUSE && 
+				(rawInput.data.mouse.lLastX != 0 || rawInput.data.mouse.lLastY != 0))
+				GEN_MOUSERAW_EVENT(rawInput.data.mouse.lLastX, rawInput.data.mouse.lLastY);
+			break;
+		}
+	default:
+		break;
 	}
 
 	return DefWindowProc(windowHandle, message, wParam, lParam);
@@ -329,6 +366,18 @@ bool Window::OnWindowClose(WindowCloseEvent& event) noexcept
 {
 	PostQuitMessage(WM_CLOSE);
 	return true;
+}
+
+inline void Window::ShowCursorImpl()
+{
+	CursorVisibility = true;
+	while (::ShowCursor(TRUE) < 0);
+}
+
+inline void Window::HideCursorImpl()
+{
+	CursorVisibility = false;
+	while (::ShowCursor(FALSE) >= 0);
 }
 
 void Window::TrapCursor()
