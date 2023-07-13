@@ -163,6 +163,12 @@ void Window::HideCursor()
 	TrapCursor();
 }
 
+void Window::Tick(float delta)
+{
+	GraphicsContext->Tick(delta);
+	Input.FlushRawInputBuffer();
+}
+
 LRESULT Window::InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == WM_CREATE)

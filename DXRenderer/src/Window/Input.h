@@ -9,7 +9,7 @@
 
 class InputManager
 {
-	using RawInputCoords = std::pair<uint32_t, uint32_t>;
+	using RawInputCoords = std::pair<int, int>;
 public:
 	InputManager() = default;
 	InputManager(const InputManager&) = delete;
@@ -35,7 +35,7 @@ public:
 	bool IsMouseBufferEmpty() const noexcept;
 	bool IsAutoRepeatEnabled() const noexcept;
 	bool IsMouseInWindow() const noexcept;
-	bool IsCharBufferEmpty() noexcept;
+	bool IsCharBufferEmpty() const noexcept;
 
 	void SetRawInput(bool flag);
 	bool IsRawInputEnabled() const;
@@ -57,6 +57,9 @@ private:
 	template<typename T>
 	static void PreventBufferOverflow(std::queue<T>& buffer) noexcept;
 
+	template<typename T>
+	static void PreventBufferOverflow(std::list<T>& buffer) noexcept;
+
 public:
 	bool MouseInWindow = false;
 	int DeltaCarry = 0;
@@ -68,7 +71,7 @@ private:
 	std::bitset<NumberOfKeys> KeyStates;
 	std::bitset<8> MouseStates;
 
-	std::queue<UniquePtr<Event>> KeyEventBuffer;
+	std::list<UniquePtr<Event>> KeyEventBuffer;
 	std::queue<UniquePtr<Event>> MouseEventBuffer;
 	std::queue<uint8> CharBuffer;
 	std::queue<RawInputCoords> RawInputBuffer;

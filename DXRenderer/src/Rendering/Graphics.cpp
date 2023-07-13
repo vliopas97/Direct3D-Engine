@@ -91,8 +91,9 @@ void Graphics::SwapBuffers()
 	}
 }
 
-void Graphics::EndTick()
+void Graphics::Tick(float delta)
 {
+	GraphicsCamera.Tick(delta);
 	SwapBuffers();
 	ClearColor(1.0f, 0.5f, 0.0f);
 	ClearDepth();

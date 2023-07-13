@@ -35,6 +35,7 @@ public:
 	void HideCursor();
 	bool IsCursorVisible() const { return CursorVisibility; }
 
+	void Tick(float delta);
 private:
 	static LRESULT CALLBACK InitializeWindow(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WindProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);

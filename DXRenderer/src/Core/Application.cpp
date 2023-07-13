@@ -78,6 +78,8 @@ Application::Application()
 
 void Application::Tick()
 {
+	float delta = Benchmarker.GetAndReset();
+
 	ImGui->Begin();
 	Light.Bind();
 	for (auto& c : Cubes)
@@ -110,16 +112,7 @@ void Application::Tick()
 		}
 	}
 
-	while (auto coords = MainWindow->Input.FetchRawInputCoords())
-	{
-		const auto [x, y] = coords.value();
-		X += x;
-		Y += y;
-	}
-	ImGui::Begin("Raw Input");
-	ImGui::Text("Tally: (%d,%d)", X, Y);
-	ImGui::Text("Visible: %s", MainWindow->IsCursorVisible() ? "true" : "false");
-	ImGui::End();
 	ImGui->End();
-	MainWindow->GetGraphicsContext().EndTick();
+
+	MainWindow->Tick(delta);
 }

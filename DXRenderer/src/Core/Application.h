@@ -23,7 +23,6 @@ private:
 
 	void Tick();
 private:
-	uint32_t X = 0, Y = 0;
 	UniquePtr<Window> MainWindow;
 	UniquePtr<class ImGuiLayer> ImGui;
 	Timer Benchmarker;

@@ -24,7 +24,7 @@ public:
 
 void InputManager::FlushKeyEventBuffer() noexcept
 {
-	KeyEventBuffer = std::queue<UniquePtr<Event>>();
+	KeyEventBuffer = std::list<UniquePtr<Event>>();
 }
 
 std::optional<UniquePtr<Event>> InputManager::FetchKeyEvent() noexcept
@@ -32,7 +32,7 @@ std::optional<UniquePtr<Event>> InputManager::FetchKeyEvent() noexcept
 	if (KeyEventBuffer.size() > 0)
 	{
 		auto eventPtr = KeyEventBuffer.front().release();
-		KeyEventBuffer.pop();
+		KeyEventBuffer.pop_front();
 		EventFactory eventGenerator;
 		return std::optional<UniquePtr<Event>>(eventGenerator.Make(eventPtr));
 	}
@@ -104,11 +104,14 @@ void InputManager::SetAutoRepeat(bool autoRepeat) noexcept
 
 bool InputManager::IsKeyPressed(uint8 keycode) noexcept
 {
-	while (const auto& event = FetchKeyEvent())
+	for (auto it = KeyEventBuffer.begin(); it != KeyEventBuffer.end(); it++)
 	{
-		auto ptr = dynamic_cast<KeyPressedEvent*>(event.value().get());
+		auto ptr = dynamic_cast<KeyPressedEvent*>(it->get());
 		if (ptr && ptr->GetKeycode() == keycode)
+		{
+			KeyEventBuffer.erase(it);
 			return true;
+		}
 	}
 	return false;
 }
@@ -133,7 +136,7 @@ bool InputManager::IsMouseInWindow() const noexcept
 	return MouseInWindow;
 }
 
-bool InputManager::IsCharBufferEmpty() noexcept
+bool InputManager::IsCharBufferEmpty() const noexcept
 {
 	return CharBuffer.empty();
 }
@@ -171,7 +174,7 @@ bool InputManager::OnKeyPressed(KeyPressedEvent& event) noexcept
 		return true;
 
 	KeyStates[event.GetKeycode()] = true;
-	KeyEventBuffer.emplace(MakeUnique<KeyPressedEvent>(event.GetKeycode(), event.IsRepeated()));
+	KeyEventBuffer.emplace_back(MakeUnique<KeyPressedEvent>(event.GetKeycode(), event.IsRepeated()));
 	PreventBufferOverflow(KeyEventBuffer);
 	return true;
 }
@@ -179,7 +182,7 @@ bool InputManager::OnKeyPressed(KeyPressedEvent& event) noexcept
 bool InputManager::OnKeyReleased(KeyReleasedEvent& event) noexcept
 {
 	KeyStates[event.GetKeycode()] = false;
-	KeyEventBuffer.emplace(MakeUnique<KeyReleasedEvent>(event.GetKeycode()));
+	KeyEventBuffer.emplace_back(MakeUnique<KeyReleasedEvent>(event.GetKeycode()));
 	PreventBufferOverflow(KeyEventBuffer);
 	return true;
 }
@@ -264,7 +267,14 @@ template<typename T>
 void InputManager::PreventBufferOverflow(std::queue<T>& buffer) noexcept
 {
 	while (buffer.size() > BufferSize)
-	{
 		buffer.pop();
-	}
+}
+
+template void InputManager::PreventBufferOverflow<UniquePtr<Event>>(std::list<UniquePtr<Event>>&) noexcept;
+
+template<typename T>
+void InputManager::PreventBufferOverflow(std::list<T>& buffer) noexcept
+{
+	while (buffer.size() > BufferSize)
+		buffer.pop_front();
 }

@@ -17,7 +17,7 @@ public:
 	Graphics& operator=(const Graphics&) = delete;
 	~Graphics() = default;
 
-	void EndTick();
+	void Tick(float delta);
 	void DrawScene();
 	
 	const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetContext() const;
