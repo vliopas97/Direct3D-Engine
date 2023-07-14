@@ -58,19 +58,12 @@ Application::Application()
 
 	// TEST
 	TransformationIntrinsics trInt;
-	trInt.Pitch = trInt.Roll = 40.0f;
-	trInt.Z = 4.0f;
-	Cubes.emplace_back(MakeUnique<Cube>(trInt));
-
-	trInt.Z = 3.0f;
+	trInt.Yaw = 180.0f;
+	trInt.Roll = 180.0f;
+	trInt.Z = 15.0f;
 	trInt.X = 2.0f;
-	Cubes.emplace_back(MakeUnique<Leon>(trInt));
-
-	TransformationIntrinsics trInt2;
-	trInt2.Yaw = 45.0f;
-	trInt2.X = 2.0f;
-	trInt2.Z = 6.0f;
-	Cubes.emplace_back(MakeUnique<Cube>(trInt2));
+	trInt.Y = -10.0f;
+	Cubes.emplace_back(MakeUnique<Model>(trInt));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
@@ -84,10 +77,9 @@ void Application::Tick()
 	Light.Bind();
 	for (auto& c : Cubes)
 	{
-		c->Pitch += 0.1f;
 		c->Update();
 		c->Draw();
-		if (auto ptr = dynamic_cast<Leon*>(c.get()))
+		if (auto ptr = dynamic_cast<Model*>(c.get()))
 		{
 			ptr->GUI();
 			continue;

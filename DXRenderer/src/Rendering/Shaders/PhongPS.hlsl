@@ -24,7 +24,7 @@ cbuffer constBuffer : register(b2)
 float4 main(float3 posWorld : Position, float3 n : Normal) : SV_Target
 {
     n = normalize(n);
-    float3 lightWorld = (float3) mul(float4(lightPos, 1.0f), view);
+    float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
     const float distance = length(lightWorld - posWorld);
     const float3 direction = normalize(lightWorld - posWorld);
 

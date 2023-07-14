@@ -29,10 +29,10 @@ public:
 	{
 		DirectX::XMStoreFloat4x4(&RelativeTransform, transform);
 
-		if (Parent)
-			SetTransform(Parent->GetTransform() * GetRelativeTransform());
-		else
-			SetTransform(GetRelativeTransform());
+		//if (Parent)
+		//	SetTransform(Parent->GetTransform() * GetRelativeTransform());
+		//else
+		//	SetTransform(GetRelativeTransform());
 	}
 
 	DirectX::XMMATRIX GetRelativeTransform() const
@@ -70,7 +70,7 @@ public:
 		Children.emplace_back(std::move(child));
 	}
 
-	void NodeBase::GUITransform() override
+	void GUITransform() override
 	{
 		glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
 
@@ -103,8 +103,8 @@ public:
 		ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
 		ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
 
-		DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
-			DirectX::XMMatrixTranslation(-x, -y, z);
+		DirectX::XMMATRIX newTransform =
+			DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) * DirectX::XMMatrixTranslation(-x, -y, z);
 		SetRelativeTransform(newTransform);
 	}
 
@@ -151,7 +151,7 @@ inline Mesh::Mesh(const aiMesh& mesh)
 	VertexBufferBuilder builder{
 		BufferLayout{
 			{ LayoutElement::ElementType::Position3 },
-		{ LayoutElement::ElementType::Normal }
+			{ LayoutElement::ElementType::Normal }
 	},
 		vertexShader->GetBlob()
 	};
@@ -241,25 +241,6 @@ inline DirectX::XMMATRIX Node::GetTransform() const
 
 void Node::Update()
 {
-	//glm::mat tran = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
-
-	//glm::vec3 translate(tran[3]);
-	//translate.x *= -1;
-	//translate.y *= -1;
-
-	//tran = glm::transpose(tran);
-	//glm::quat quaternion = glm::quat_cast(tran);
-	//glm::vec3 angles = glm::eulerAngles(quaternion);
-	//angles.z *= -1;
-
-	//Owner.Roll = angles.z;
-	//Owner.Pitch = angles.x;
-	//Owner.Yaw = angles.y;
-
-	//Owner.X = translate.x;
-	//Owner.Y = translate.y;
-	//Owner.Z = translate.z;
-
 	auto& transform = Owner.Transform.GetMatrix();
 	for (auto* mesh : Meshes)
 	{
@@ -281,44 +262,6 @@ void Node::Draw()
 	for (auto& child : Children)
 		child->Draw();
 }
-
-//void Node::GUITransform()
-//{
-//	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&RelativeTransform);
-//
-//	glm::vec3 translate(transform[3]);
-//	translate.x *= -1;
-//	translate.y *= -1;
-//
-//	transform = glm::transpose(transform);
-//	glm::quat quaternion = glm::quat_cast(transform);
-//	glm::vec3 angles = glm::eulerAngles(quaternion);
-//	angles.z *= -1;
-//
-//	// Convert the quaternion to Euler angles
-//	float& roll = angles.z;
-//	float& pitch = angles.x;
-//	float& yaw = angles.y;
-//
-//	float& x = translate.x;
-//	float& y = translate.y;
-//	float& z = translate.z;
-//
-//	ImGui::NextColumn();
-//	ImGui::Text("Orientation (Relative)");
-//	ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
-//	ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
-//	ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
-//
-//	ImGui::Text("Position (Relative)");
-//	ImGui::SliderFloat("X", &x, -20.0f, 20.0f);
-//	ImGui::SliderFloat("Y", &y, -20.0f, 20.0f);
-//	ImGui::SliderFloat("Z", &z, -20.0f, 20.0f);
-//
-//	DirectX::XMMATRIX newTransform = DirectX::XMMatrixRotationRollPitchYaw(-pitch, -yaw, roll) *
-//		DirectX::XMMatrixTranslation(-x, -y, z);
-//	SetRelativeTransform(newTransform);
-//}
 
 void Node::ShowTree()
 {
@@ -366,25 +309,14 @@ void Node::SetupChild(UniquePtr<NodeInternal> child)
 
 inline void Node::GUITransform()
 {
-	auto& ownerTransform = Owner.Transform.GetMatrix();
-	glm::mat transform = *reinterpret_cast<const glm::mat4x4*>(&ownerTransform);
+	float roll = DirectX::XMConvertToRadians(Owner.Roll);
+	float pitch = DirectX::XMConvertToRadians(Owner.Pitch);
+	float yaw =   DirectX::XMConvertToRadians(Owner.Yaw);
 
-	glm::vec3 translate(transform[3]);
-	translate.x *= -1;
-	translate.y *= -1;
 
-	transform = glm::transpose(transform);
-	glm::quat quaternion = glm::quat_cast(transform);
-	glm::vec3 angles = glm::eulerAngles(quaternion);
-	angles.z *= -1;
-
-	float& roll = angles.z;
-	float& pitch = angles.x;
-	float& yaw = angles.y;
-
-	float& x = translate.x;
-	float& y = translate.y;
-	float& z = translate.z;
+	float& x = Owner.X;
+	float& y = Owner.Y;
+	float& z = Owner.Z;
 
 	ImGui::NextColumn();
 	ImGui::Text("Orientation");
@@ -401,7 +333,10 @@ inline void Node::GUITransform()
 	Owner.Y = y;
 	Owner.Z = z;
 
-	angles = glm::degrees(angles);
+	roll =  DirectX::XMConvertToDegrees(roll);
+	pitch = DirectX::XMConvertToDegrees(pitch);
+	yaw =   DirectX::XMConvertToDegrees(yaw);
+	
 	Owner.Roll = roll;
 	Owner.Pitch = pitch;
 	Owner.Yaw = yaw;

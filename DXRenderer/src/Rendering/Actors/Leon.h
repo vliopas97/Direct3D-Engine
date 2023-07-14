@@ -3,10 +3,10 @@
 #include "Actor.h"
 #include "Rendering/Mesh.h"
 
-class Leon : public ActorBase<Leon> {
+class Model : public ActorBase<Model> {
 public:
-	Leon();
-	Leon(const TransformationIntrinsics& intrinsics);
+	Model();
+	Model(const TransformationIntrinsics& intrinsics);
 
 	virtual void Draw() override;
 	virtual void Update() override;
