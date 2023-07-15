@@ -5,8 +5,10 @@
 
 #include <wrl.h>
 #include <source_location>
+#include <filesystem>
 
-inline Sampler::Sampler()
+inline Sampler::Sampler(uint32_t slot)
+	:Slot(slot)
 {
 	D3D11_SAMPLER_DESC samplerDesc{};
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -17,20 +19,19 @@ inline Sampler::Sampler()
 	CurrentGraphicsContext::Device()->CreateSamplerState(&samplerDesc, &SamplerID);
 }
 
-inline void Sampler::Bind(uint32_t slot) const
+inline void Sampler::Bind() const
 {
-	CurrentGraphicsContext::Context()->PSSetSamplers(slot, 1, SamplerID.GetAddressOf());
+	CurrentGraphicsContext::Context()->PSSetSamplers(Slot, 1, SamplerID.GetAddressOf());
 }
 
-Texture::Texture(const std::string& filename)
-:TextureSampler{}
+Texture::Texture(const std::string& filename, uint32_t slot)
+:Slot(slot), TextureSampler{Slot}
 {
 	int width, height, channels;
 	int desiredChannels = 4;
 	stbi_uc* data;
 
-	auto filepath = std::string(std::source_location::current().file_name());
-	filepath = filepath.substr(0, filepath.find_last_of("\\/")) + "\\Img\\" + filename;
+	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\Model\\NanoSuit\\" + filename;
 
 	data = stbi_load(filepath.c_str(), &width, &height, &channels, desiredChannels);
 
@@ -66,6 +67,6 @@ Texture::Texture(const std::string& filename)
 
 inline void Texture::Bind() const
 {
-	CurrentGraphicsContext::Context()->PSSetShaderResources(0, 1, TextureView.GetAddressOf());
+	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, TextureView.GetAddressOf());
 	TextureSampler.Bind();
 }

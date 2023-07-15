@@ -2,6 +2,7 @@
 #include "Utilities.h"
 
 #include "Actors/Actor.h"
+#include "Rendering/Material.h"
 
 
 
@@ -44,12 +45,12 @@ public:
 	{
 		for (auto* mesh : Meshes)
 		{
-			mesh->SetTransform(DirectX::XMLoadFloat4x4(&Transform));
+			mesh->SetTransform(GetTransform());
 		}
 
 		for (auto& child : Children)
 		{
-			child->SetTransform(DirectX::XMLoadFloat4x4(&Transform) * child->GetRelativeTransform());
+			child->SetTransform(GetTransform() * child->GetRelativeTransform());
 			child->Update();
 		}
 	}
@@ -145,25 +146,69 @@ inline void PrimitiveComponent::Add(UniquePtr<Buffer> buffer)
 
 inline Mesh::Mesh(const aiMesh& mesh)
 {
-	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("PhongVS");
-	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("PhongPS");
+	Init(mesh);
+}
 
-	VertexBufferBuilder builder{
-		BufferLayout{
-			{ LayoutElement::ElementType::Position3 },
-			{ LayoutElement::ElementType::Normal }
-	},
-		vertexShader->GetBlob()
+Mesh::Mesh(const aiMesh& mesh, const aiMaterial* const* materials)
+{
+	LoadMaterial(mesh, materials);
+	Init(mesh);
+}
+
+inline void Mesh::Bind() const
+{
+	Shaders.Bind();
+	Buffers.Bind();
+	Components.Bind();
+}
+
+inline void Mesh::Draw()
+{
+	Bind();
+	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
+	ASSERT(ptr);
+	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
+}
+
+void Mesh::Init(const aiMesh& mesh)
+{
+	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>(HasMaterial? "PhongLoadTextureVS" : "PhongVS");
+
+	const char* PSPath = "PhongPS";
+	if (HasMaterial && HasSpecular)
+		PSPath = "PhongLoadTextureWSpecularPS";
+	else if(HasMaterial)
+		PSPath = "PhongLoadTexturePS";
+
+	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>(PSPath);
+
+	BufferLayout layout{
+	{ LayoutElement::ElementType::Position3 },
+	{ LayoutElement::ElementType::Normal }
 	};
+
+	if (HasMaterial) layout.AddElement(LayoutElement::ElementType::TexCoords);
+
+	VertexBufferBuilder builder{std::move(layout), vertexShader->GetBlob()};
 
 	std::vector<unsigned short> indices;
 	indices.reserve(mesh.mNumFaces * 3);
 
-	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-	{
-		builder.EmplaceBack(DirectX::XMFLOAT3{ mesh.mVertices[i].x, mesh.mVertices[i].y, mesh.mVertices[i].z },
-			* reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]));
-	}
+	if(HasMaterial)
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+								//DirectX::XMFLOAT2(1.0f, 1.0f)
+			);
+		}
+	else
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]));
+		}
 
 	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
 	{
@@ -190,20 +235,35 @@ inline Mesh::Mesh(const aiMesh& mesh)
 	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
 		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
 		*reinterpret_cast<const DirectX::XMMATRIX*>(&Transform)));
+
+	if (!HasMaterial && !HasSpecular)
+	{
+		auto material = MakeUnique<Material>(1);
+		material->Properties.Shininess = Shininess;
+		Components.Add(std::move(material));
+	}
 }
 
-inline void Mesh::Bind() const
+void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials)
 {
-	Shaders.Bind();
-	Buffers.Bind();
-}
+	ASSERT(materials);
+	
+	HasMaterial = mesh.mMaterialIndex >= 0;
+	if (!HasMaterial)
+		return;
 
-inline void Mesh::Draw()
-{
-	Bind();
-	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
-	ASSERT(ptr);
-	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
+	auto& material = materials[mesh.mMaterialIndex];
+	aiString filename;
+	material->GetTexture(aiTextureType_DIFFUSE, 0, &filename);
+	Components.Add(MakeUnique<Texture>(filename.C_Str()));
+
+	if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
+	{
+		HasSpecular = true;
+		Components.Add(MakeUnique<Texture>(filename.C_Str(), 1));
+	}
+	else
+		material->Get(AI_MATKEY_SHININESS, Shininess);
 }
 
 Node::Node(const Actor& actor, const std::string& name)
@@ -241,15 +301,14 @@ inline DirectX::XMMATRIX Node::GetTransform() const
 
 void Node::Update()
 {
-	auto& transform = Owner.Transform.GetMatrix();
 	for (auto* mesh : Meshes)
 	{
-		mesh->SetTransform(transform);
+		mesh->SetTransform(GetTransform());
 	}
 
 	for (auto& child : Children)
 	{
-		child->SetTransform(transform * child->GetRelativeTransform());
+		child->SetTransform(GetTransform() * child->GetRelativeTransform());
 		child->Update();
 	}
 }
@@ -282,6 +341,8 @@ UniquePtr<Node> Node::Build(const Actor& actor, const std::string& filename)
 		aiProcess_JoinIdenticalVertices
 	);
 
+	auto* materials = scene->HasMaterials() ? scene->mMaterials : nullptr;
+
 	auto& node = *scene->mRootNode;
 	UniquePtr<Node> customNode = MakeUnique<Node>(actor, node.mName.C_Str());
 
@@ -290,12 +351,13 @@ UniquePtr<Node> Node::Build(const Actor& actor, const std::string& filename)
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		meshes.emplace_back(new Mesh(*scene->mMeshes[index]));
+		materials ? meshes.emplace_back(new Mesh(*scene->mMeshes[index], materials)) :
+			meshes.emplace_back(new Mesh(*scene->mMeshes[index]));
 	}
 
 	customNode->Meshes = std::move(meshes);
 	for (size_t i = 0; i < node.mNumChildren; i++)
-		customNode->SetupChild(BuildImpl(*scene, *node.mChildren[i]));
+		customNode->SetupChild(BuildImpl(*scene, *node.mChildren[i], materials));
 
 	return std::move(customNode);
 }
@@ -342,7 +404,7 @@ inline void Node::GUITransform()
 	Owner.Yaw = yaw;
 }
 
-inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNode& node)
+inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials)
 {
 	const auto relativeTransform = DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&node.mTransformation));
 	std::vector<Mesh*> meshes;
@@ -350,7 +412,8 @@ inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNod
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
+		materials ? meshes.emplace_back(new Mesh(*scene.mMeshes[index], materials)) :
+			meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
 	}
 
 	UniquePtr<NodeInternal> customNode = MakeUnique<NodeInternal>(node.mName.C_Str());
@@ -358,7 +421,7 @@ inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNod
 	customNode->Meshes = std::move(meshes);
 
 	for (size_t i = 0; i < node.mNumChildren; i++)
-		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i]));
+		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i], materials));
 
 	return std::move(customNode);
 }

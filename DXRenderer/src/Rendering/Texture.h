@@ -9,17 +9,18 @@
 class Sampler
 {
 public:
-	Sampler();
+	Sampler(uint32_t slot = 0);
 
-	void Bind(uint32_t slot = 0) const;
+	void Bind() const;
 private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> SamplerID;
+	uint32_t Slot;
 };
 
 class Texture : public Component
 {
 public:
-	Texture(const std::string& filename);
+	Texture(const std::string& filename, uint32_t slot = 0);
 	
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
@@ -28,6 +29,7 @@ public:
 
 private:
 	uint32_t Width, Height;
+	uint32_t Slot;
 	Sampler TextureSampler;
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureID;

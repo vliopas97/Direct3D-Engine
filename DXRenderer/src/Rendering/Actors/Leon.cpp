@@ -58,5 +58,5 @@ void Model::InitializeType()
 void Model::Init()
 {
 	InitializeType();
-	Components.Add(MakeUnique<Material>(1));
+	//Components.Add(MakeUnique<Material>(1));
 }

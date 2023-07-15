@@ -21,7 +21,10 @@ cbuffer constBuffer : register(b2)
     row_major matrix view;
 }
 
-float4 main(float3 posWorld : Position, float3 n : Normal) : SV_Target
+Texture2D tex;
+SamplerState samplerState;
+
+float4 main(float3 posWorld : Position, float3 n : Normal, float2 texCoords : TexCoords) : SV_Target
 {
     n = normalize(n);
     float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
@@ -37,5 +40,5 @@ float4 main(float3 posWorld : Position, float3 n : Normal) : SV_Target
     const float3 r = 2.0f * w - (lightWorld - posWorld);
     const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(viewDir))), Shininess);
 
-    return float4(saturate((diffuse + ambient + specular) * materialColor), 1.0f);
+    return float4(saturate((diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular), 1.0f);
 }

@@ -44,10 +44,22 @@ class Mesh : public PrimitiveComponent
 {
 public:
 	Mesh(const aiMesh& mesh);
+	Mesh(const aiMesh& mesh, const aiMaterial* const* materials);
 
 	void Bind() const override;
 
 	void Draw();
+
+private:
+	void Init(const aiMesh& mesh);
+	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials);
+private:
+	ComponentGroup Components;
+
+	bool HasMaterial = false;
+	bool HasSpecular = false;
+
+	float Shininess = 25.0f;
 };
 
 class NodeBase
@@ -97,7 +109,7 @@ private:
 	void SetupChild(UniquePtr<class NodeInternal> child);
 	void GUITransform() override;
 
-	static UniquePtr<class NodeInternal> BuildImpl(const aiScene& scene, const aiNode& node);
+	static UniquePtr<class NodeInternal> BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials);
 
 private:
 	std::optional<int> SelectedIndex;

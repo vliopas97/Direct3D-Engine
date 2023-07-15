@@ -57,7 +57,7 @@ LayoutElement::DataType LayoutElement::ResolveDataType(ElementType type)
 	case ElementType::Color3: return DataType::Float3;
 	case ElementType::Color4: return DataType::Float4;
 	case ElementType::Normal: return DataType::Float3;
-	case ElementType::TexCoords: return DataType::Int2;
+	case ElementType::TexCoords: return DataType::Float2;
 	}
 }
 
@@ -89,7 +89,7 @@ uint32_t LayoutElement::CalcSize(ElementType type)
 	case ElementType::Color3: return sizeof(float) * 3;
 	case ElementType::Color4: return sizeof(float) * 4;
 	case ElementType::Normal: return sizeof(float) * 3;
-	case ElementType::TexCoords: return sizeof(float) * 4;
+	case ElementType::TexCoords: return sizeof(float) * 2;
 	}
 }
 
