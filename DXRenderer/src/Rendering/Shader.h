@@ -24,16 +24,19 @@ struct IShader
 
 struct Shader : public IShader
 {
+	Shader(const std::string& shaderName);
 	virtual ~Shader() = default;
 
 	const Microsoft::WRL::ComPtr<ID3DBlob>& GetBlob() const;
 	virtual const ShaderType& GetType() const = 0;
+	virtual std::string GetID() const = 0;
 
 protected:
 	static std::wstring SetUpPath(const std::string& shaderName);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3DBlob> Blob;
+	std::string Name;
 private:
 	static const std::wstring Path;
 };
@@ -45,6 +48,7 @@ struct VertexShader : public Shader
 	virtual void Bind() const override;
 	virtual void Unbind() const override;
 	virtual const ShaderType& GetType() const override;
+	virtual std::string GetID() const override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> ShaderID;
@@ -58,6 +62,7 @@ struct PixelShader : public Shader
 	virtual void Bind() const override;
 	virtual void Unbind() const override;
 	virtual const ShaderType& GetType() const override;
+	virtual std::string GetID() const override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ShaderID;
@@ -66,7 +71,7 @@ private:
 
 struct ShaderGroup : public IShader
 {
-	void Add(UniquePtr<Shader> shader);
+	void Add(SharedPtr<Shader> shader);
 
 	virtual void Bind() const override;
 	virtual void Unbind() const override;
@@ -75,5 +80,14 @@ struct ShaderGroup : public IShader
 	inline size_t Size() const { return Shaders.size(); }
 
 private:
-	std::array<UniquePtr<Shader>, ShaderType::Size> Shaders;
+	std::array<SharedPtr<Shader>, ShaderType::Size> Shaders;
+};
+
+struct ShaderPool
+{
+	void Add(SharedPtr<Shader> shader);
+	SharedPtr<Shader> Get(const std::string& id);
+
+private:
+	std::unordered_map<std::string, SharedPtr<Shader>> Shaders;
 };

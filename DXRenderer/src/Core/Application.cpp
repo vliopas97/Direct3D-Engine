@@ -3,6 +3,8 @@
 #include "Rendering\Actors\Cube.h"
 #include "Rendering\Actors\Leon.h"
 
+#include "Rendering/ResourcePool.h"
+
 Application* Application::Instance = nullptr;
 
 Application& Application::GetApp()

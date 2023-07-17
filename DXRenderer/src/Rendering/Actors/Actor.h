@@ -5,6 +5,7 @@
 #include "Rendering\Buffer.h"
 #include "Rendering\Shader.h"
 #include "Rendering\Utilities.h"
+#include "Rendering/ResourcePool.h"
 #include "Rendering\Texture.h"
 
 #include <d3d11.h>
@@ -21,17 +22,17 @@ public:
 	Actor& operator=(const Actor&) = delete;
 
 	virtual void Draw();
-
 	DirectX::XMMATRIX GetTransform() const;
-
 	virtual void Update();
+
+	void Add(SharedPtr<Shader> shader);
 
 protected:
 	virtual const BufferGroup& GetTypeBuffers() const = 0;
-	virtual const ShaderGroup& GetTypeShaders() const = 0;
 
 private:
 	virtual const IndexBuffer* GetIndexBuffer() const;
+
 public:
 	union
 	{
@@ -51,6 +52,7 @@ public:
 	};
 
 protected:
+	ShaderGroup Shaders;
 	BufferGroup InstanceBuffers;
 	ComponentGroup Components;
 };
@@ -65,14 +67,9 @@ public:
 		return Shaders.Size() && Buffers.Size();
 	}
 
-	void AddBuffer(UniquePtr<Buffer> buffer)
+	void Add(UniquePtr<Buffer> buffer)
 	{
 		Buffers.Add(std::move(buffer));
-	}
-
-	void AddShader(UniquePtr<Shader> shader)
-	{
-		Shaders.Add(std::move(shader));
 	}
 
 protected:
@@ -83,18 +80,9 @@ protected:
 		return Buffers;
 	}
 
-	const ShaderGroup& GetTypeShaders() const override
-	{
-		return Shaders;
-	}
-
 private:
 	static BufferGroup Buffers;
-	static ShaderGroup Shaders;
 };
 
 template<typename T>
 BufferGroup ActorBase<T>::Buffers;
-
-template<typename T>
-ShaderGroup ActorBase<T>::Shaders;

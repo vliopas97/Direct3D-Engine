@@ -29,11 +29,6 @@ public:
 	virtual void SetRelativeTransform(DirectX::XMMATRIX transform)
 	{
 		DirectX::XMStoreFloat4x4(&RelativeTransform, transform);
-
-		//if (Parent)
-		//	SetTransform(Parent->GetTransform() * GetRelativeTransform());
-		//else
-		//	SetTransform(GetRelativeTransform());
 	}
 
 	DirectX::XMMATRIX GetRelativeTransform() const
@@ -134,9 +129,12 @@ inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
 }
 
-inline void PrimitiveComponent::Add(UniquePtr<Shader> shader)
+inline void PrimitiveComponent::Add(SharedPtr<Shader> shader)
 {
-	Shaders.Add(std::move(shader));
+	auto id = shader->GetID();
+
+	Pool::Add(shader);
+	Shaders.Add(Pool::GetShader(id));
 }
 
 inline void PrimitiveComponent::Add(UniquePtr<Buffer> buffer)
@@ -172,7 +170,7 @@ inline void Mesh::Draw()
 
 void Mesh::Init(const aiMesh& mesh)
 {
-	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>(HasMaterial? "PhongLoadTextureVS" : "PhongVS");
+	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial? "PhongLoadTextureVS" : "PhongVS");
 
 	const char* PSPath = "PhongPS";
 	if (HasMaterial && HasSpecular)
@@ -180,7 +178,7 @@ void Mesh::Init(const aiMesh& mesh)
 	else if(HasMaterial)
 		PSPath = "PhongLoadTexturePS";
 
-	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>(PSPath);
+	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(PSPath);
 
 	BufferLayout layout{
 	{ LayoutElement::ElementType::Position3 },
@@ -200,7 +198,6 @@ void Mesh::Init(const aiMesh& mesh)
 			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
 								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
 								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-								//DirectX::XMFLOAT2(1.0f, 1.0f)
 			);
 		}
 	else

@@ -23,11 +23,8 @@ inline void Cube::InitializeType()
 	if (IsInitialized())
 		return;
 
-	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("PhongVS");
-	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("PhongPS");
-
-	AddShader(std::move(vertexShader));
-	AddShader(std::move(pixelShader));
+	Actor::Add(MakeShared<VertexShader>("PhongVS"));
+	Actor::Add(MakeShared<PixelShader>("PhongPS"));
 
 	struct VertexElementNormal : public Primitives::VertexElement
 	{
@@ -41,17 +38,17 @@ inline void Cube::InitializeType()
 			{ "Position", LayoutElement::DataType::Float3 },
 			{ "Normal", LayoutElement::DataType::Float3 }
 		},
-		GetTypeShaders().GetBlob(ShaderType::VertexS));
+		Shaders.GetBlob(ShaderType::VertexS));
 
-	AddBuffer(std::move(vertexBuffer));
-	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
+	Add(std::move(vertexBuffer));
+	Add(MakeUnique<IndexBuffer>(data.Indices));
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(view), view));
-	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<PSConstantBuffer<DirectX::XMMATRIX>>(view, 2), view));
+	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(view), view));
+	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<PSConstantBuffer<DirectX::XMMATRIX>>(view, 2), view));
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
+	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
 
 }
 

@@ -30,20 +30,20 @@ void Sphere::InitializeType()
 	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("defaultVS");
 	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("defaultPS");
 
-	AddShader(std::move(vertexShader));
-	AddShader(std::move(pixelShader));
-
+	Actor::Add(MakeShared<VertexShader>("defaultVS"));
+	Actor::Add(MakeShared<PixelShader>("defaultPS"));
+	
 	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
 	data.Transform(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f));
 
 	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,
 		BufferLayout{ {"Position", LayoutElement::DataType::Float3} },
-		GetTypeShaders().GetBlob(ShaderType::VertexS));
-	AddBuffer(std::move(vertexBuffer));
-	AddBuffer(MakeUnique<IndexBuffer>(data.Indices));
+		Shaders.GetBlob(ShaderType::VertexS));
+	Add(std::move(vertexBuffer));
+	Add(MakeUnique<IndexBuffer>(data.Indices));
 
 	const DirectX::XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	AddBuffer(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(viewProjection), viewProjection));
+	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(viewProjection), viewProjection));
 }
 
 void Sphere::Init()

@@ -26,9 +26,8 @@ public:
 	DirectX::XMMATRIX GetTransform() const;
 
 protected:
+	void Add(SharedPtr<Shader> shader);
 	void Add(UniquePtr<Buffer> buffer);
-
-	void Add(UniquePtr<Shader> shader);
 
 protected:
 	DirectX::XMFLOAT4X4 Transform;

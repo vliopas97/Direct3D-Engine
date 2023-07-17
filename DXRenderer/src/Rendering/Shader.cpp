@@ -18,6 +18,10 @@ namespace
 
 const std::wstring Shader::Path = GetCurrentPath();
 
+inline Shader::Shader(const std::string& shaderName)
+	:Name(shaderName)
+{}
+
 const Microsoft::WRL::ComPtr<ID3DBlob>& Shader::GetBlob() const
 {
 		return Blob;
@@ -29,6 +33,7 @@ std::wstring Shader::SetUpPath(const std::string& shaderName)
 }
 
 VertexShader::VertexShader(const std::string& shaderName)
+	:Shader(shaderName)
 {
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
 	CurrentGraphicsContext::Device()->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
@@ -49,7 +54,13 @@ const ShaderType& VertexShader::GetType() const
 	return Type;
 }
 
+inline std::string VertexShader::GetID() const
+{
+	return std::string(typeid(VertexShader).name()) + "#" + Name;
+}
+
 PixelShader::PixelShader(const std::string& shaderName)
+	:Shader(shaderName)
 {
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
 	CurrentGraphicsContext::Device()->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
@@ -70,9 +81,14 @@ const ShaderType& PixelShader::GetType() const
 	return Type;
 }
 
-void ShaderGroup::Add(UniquePtr<Shader> shader)
+inline std::string PixelShader::GetID() const
 {
-	Shaders[shader->GetType()] = std::move(shader);
+	return std::string(typeid(PixelShader).name()) + "#" + Name;
+}
+
+void ShaderGroup::Add(SharedPtr<Shader> shader)
+{
+	Shaders[shader->GetType()] = shader;
 }
 
 void ShaderGroup::Bind() const
@@ -90,4 +106,21 @@ void ShaderGroup::Unbind() const
 const Microsoft::WRL::ComPtr<ID3DBlob>& ShaderGroup::GetBlob(ShaderType type) const
 {
 	return Shaders[type]->GetBlob();
+}
+
+void ShaderPool::Add(SharedPtr<Shader> shader)
+{
+	if (Get(shader->GetID()))
+		return;
+
+	Shaders[shader->GetID()] = std::move(shader);
+}
+
+SharedPtr<Shader> ShaderPool::Get(const std::string& id)
+{
+	auto it = Shaders.find(id);
+	if (it == Shaders.end())
+		return {};
+	else
+		return it->second;
 }
