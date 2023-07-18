@@ -11,54 +11,45 @@ Cube::Cube()
 }
 
 Cube::Cube(const TransformationIntrinsics& intrinsics)
-	:ActorBase(intrinsics)
+	:Actor(intrinsics)
 {
 	Init();
 }
 
-inline void Cube::InitializeType()
-{	
-	namespace WRL = Microsoft::WRL;
-
-	if (IsInitialized())
-		return;
-
+void Cube::Init()
+{
+	using namespace DirectX;
 	Actor::Add(MakeShared<VertexShader>("PhongVS"));
 	Actor::Add(MakeShared<PixelShader>("PhongPS"));
 
 	struct VertexElementNormal : public Primitives::VertexElement
 	{
-		DirectX::XMFLOAT3 Normal;
+		XMFLOAT3 Normal;
 	};
 
 	auto data = Primitives::Cube::CreateWNormals<VertexElementNormal>();
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,
-		BufferLayout{
-			{ "Position", LayoutElement::DataType::Float3 },
-			{ "Normal", LayoutElement::DataType::Float3 }
-		},
-		Shaders.GetBlob(ShaderType::VertexS));
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
+																	data.Vertices,
+																	BufferLayout{
+																		{ "Position", LayoutElement::DataType::Float3 },
+																		{ "Normal", LayoutElement::DataType::Float3 }
+																	},
+																	Shaders.GetBlob(ShaderType::VertexS));
 
 	Add(std::move(vertexBuffer));
-	Add(MakeUnique<IndexBuffer>(data.Indices));
+	Add(MakeUnique<IndexBuffer>("Cube", data.Indices));
 
-	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(view), view));
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<PSConstantBuffer<DirectX::XMMATRIX>>(view, 2), view));
+	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("View", view), view));
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<PSConstantBuffer<XMMATRIX>>("View", view, 2), view));
 
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
+	const XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Projection", projection, 1),
+									  projection));
 
-}
-
-void Cube::Init()
-{
-	InitializeType();
-
-	InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
-		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
-		this->Transform.GetMatrix()));
+	Buffers.Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 2),
+											  this->Transform.GetMatrix()));
 
 	Components.Add(MakeUnique < Material>(1));
 }

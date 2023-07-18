@@ -170,6 +170,8 @@ inline void Mesh::Draw()
 
 void Mesh::Init(const aiMesh& mesh)
 {
+	using namespace DirectX;
+
 	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial? "PhongLoadTextureVS" : "PhongVS");
 
 	const char* PSPath = "PhongPS";
@@ -187,7 +189,7 @@ void Mesh::Init(const aiMesh& mesh)
 
 	if (HasMaterial) layout.AddElement(LayoutElement::ElementType::TexCoords);
 
-	VertexBufferBuilder builder{std::move(layout), vertexShader->GetBlob()};
+	VertexBufferBuilder builder{"VertexBufferModel", std::move(layout), vertexShader->GetBlob()};
 
 	std::vector<unsigned short> indices;
 	indices.reserve(mesh.mNumFaces * 3);
@@ -220,18 +222,18 @@ void Mesh::Init(const aiMesh& mesh)
 	Add(std::move(pixelShader));
 
 	Add(builder.Release());
-	Add(MakeUnique<IndexBuffer>(indices));
+	Add(MakeUnique<IndexBuffer>("IndexBufferModel", indices));
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(view), view));
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<PSConstantBuffer<DirectX::XMMATRIX>>(view, 2), view));
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("View", view), view));
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<PSConstantBuffer<XMMATRIX>>("View", view, 2), view));
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(projection, 1), projection));
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Proj", projection, 1),
+									  projection));
 
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
-		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 2),
-		*reinterpret_cast<const DirectX::XMMATRIX*>(&Transform)));
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 2),
+									  *reinterpret_cast<const XMMATRIX*>(&Transform)));
 
 	if (!HasMaterial && !HasSpecular)
 	{

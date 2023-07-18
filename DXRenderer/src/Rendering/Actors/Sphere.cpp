@@ -10,7 +10,7 @@ Sphere::Sphere()
 }
 
 Sphere::Sphere(const TransformationIntrinsics& intrinsics)
-	:ActorBase(intrinsics)
+	:Actor(intrinsics)
 {
 	Init();
 }
@@ -20,12 +20,9 @@ void Sphere::Update()
 	Transform.Update();
 }
 
-void Sphere::InitializeType()
+void Sphere::Init()
 {
-	namespace WRL = Microsoft::WRL;
-
-	if (IsInitialized())
-		return;
+	using namespace DirectX;
 
 	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("defaultVS");
 	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("defaultPS");
@@ -34,27 +31,21 @@ void Sphere::InitializeType()
 	Actor::Add(MakeShared<PixelShader>("defaultPS"));
 	
 	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
-	data.Transform(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f));
+	data.Transform(XMMatrixScaling(0.1f, 0.1f, 0.1f));
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(data.Vertices,
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Sphere", data.Vertices,
 		BufferLayout{ {"Position", LayoutElement::DataType::Float3} },
 		Shaders.GetBlob(ShaderType::VertexS));
 	Add(std::move(vertexBuffer));
-	Add(MakeUnique<IndexBuffer>(data.Indices));
+	Add(MakeUnique<IndexBuffer>("Sphere", data.Indices));
 
-	const DirectX::XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(viewProjection), viewProjection));
-}
+	const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
+	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("ViewProj", viewProjection),
+											   viewProjection));
 
-void Sphere::Init()
-{
-	InitializeType();
+	Buffers.Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 1),
+											  this->Transform.GetMatrix()));
 
-	InstanceBuffers.Add(MakeUnique<Uniform<DirectX::XMMATRIX>>(
-		MakeUnique<VSConstantBuffer<DirectX::XMMATRIX>>(GetTransform(), 1),
-		this->Transform.GetMatrix()));
-
-	InstanceBuffers.Add(MakeUnique<PSConstantBuffer<DirectX::XMVECTOR>>(
-		DirectX::XMVECTOR(DirectX::XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f))
+	Buffers.Add(MakeUnique<PSConstantBuffer<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f))
 	));
 }

@@ -6,7 +6,7 @@
 
 PointLight::PointLight()
 	: Mesh(), Properties(),
-	Model(MakeUnique<PSConstantBuffer<LightProperties>>(Properties), Properties)
+	Model(MakeUnique<PSConstantBuffer<LightProperties>>(std::string(typeid(this).name()) + "properties",Properties),Properties)
 {
 }
 

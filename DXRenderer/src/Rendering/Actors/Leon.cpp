@@ -15,7 +15,7 @@ Model::Model()
 }
 
 Model::Model(const TransformationIntrinsics& intrinsics)
-	:ActorBase(intrinsics)
+	:Actor(intrinsics)
 {
 	Init();
 }
@@ -28,7 +28,7 @@ void Model::Draw()
 
 void Model::Update()
 {
-	ActorBase<Model>::Update();
+	Actor::Update();
 	Root->SetTransform(Transform.GetMatrix());
 	Root->Update();
 }
@@ -45,18 +45,8 @@ void Model::GUI()
 	ImGui::End();
 }
 
-void Model::InitializeType()
-{
-	namespace WRL = Microsoft::WRL;
-
-	if (IsInitialized())
-		return;
-
-	Root = Node::Build(*this, "Nanosuit\\nanosuit.obj");
-}
-
 void Model::Init()
 {
-	InitializeType();
+	Root = Node::Build(*this, "Nanosuit\\nanosuit.obj");
 	//Components.Add(MakeUnique<Material>(1));
 }

@@ -25,10 +25,8 @@ public:
 	DirectX::XMMATRIX GetTransform() const;
 	virtual void Update();
 
+	void Add(SharedPtr<Buffer> buffer);
 	void Add(SharedPtr<Shader> shader);
-
-protected:
-	virtual const BufferGroup& GetTypeBuffers() const = 0;
 
 private:
 	virtual const IndexBuffer* GetIndexBuffer() const;
@@ -53,36 +51,6 @@ public:
 
 protected:
 	ShaderGroup Shaders;
-	BufferGroup InstanceBuffers;
+	BufferGroup Buffers;
 	ComponentGroup Components;
 };
-
-template<typename T>
-class ActorBase : public Actor
-{
-	using Actor::Actor;
-public:
-	bool IsInitialized() const
-	{
-		return Shaders.Size() && Buffers.Size();
-	}
-
-	void Add(UniquePtr<Buffer> buffer)
-	{
-		Buffers.Add(std::move(buffer));
-	}
-
-protected:
-	virtual void InitializeType() {};
-
-	const BufferGroup& GetTypeBuffers() const override
-	{
-		return Buffers;
-	}
-
-private:
-	static BufferGroup Buffers;
-};
-
-template<typename T>
-BufferGroup ActorBase<T>::Buffers;

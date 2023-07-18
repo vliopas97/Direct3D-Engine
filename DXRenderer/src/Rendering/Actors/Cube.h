@@ -2,14 +2,11 @@
 
 #include "Actor.h"
 
-class Cube : public ActorBase<Cube>
+class Cube : public Actor
 {
 public:
 	Cube();
 	Cube(const TransformationIntrinsics& intrinsics);
-
-protected:
-	void InitializeType() override;
 
 private:
 	void Init();

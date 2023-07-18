@@ -3,7 +3,7 @@
 #include "Actor.h"
 #include "Rendering/Mesh.h"
 
-class Model : public ActorBase<Model> {
+class Model : public Actor {
 public:
 	Model();
 	Model(const TransformationIntrinsics& intrinsics);
@@ -13,7 +13,6 @@ public:
 
 	void GUI();
 protected:
-	void InitializeType() override;
 
 private:
 	void Init();

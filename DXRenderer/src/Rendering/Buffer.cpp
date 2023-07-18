@@ -129,9 +129,11 @@ const LayoutElement& BufferLayout::operator[](size_t i) const
 	return Elements[i];
 }
 
-inline VertexBuffer::VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-	:Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
-{}
+inline VertexBuffer::VertexBuffer(const std::string& tag,
+								  BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+	:Buffer(tag), Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+{
+}
 
 void VertexBuffer::Bind() const
 {
@@ -147,13 +149,19 @@ void VertexBuffer::Unbind() const
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
+std::string VertexBuffer::GetID()
+{
+	return std::string(typeid(VertexBuffer).name()) + "#" + Tag;
+}
+
 BufferType VertexBuffer::GetType() const
 {
 	return Type;
 }
 
-VertexBufferBuilder::VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-	: Object(std::move(layout), blob)
+VertexBufferBuilder::VertexBufferBuilder(const std::string& tag,
+										 BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+	: Object(tag, std::move(layout), blob)
 {
 	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
 	desc.reserve(Object.Layout.GetElementsSize());
@@ -199,8 +207,8 @@ Vertex VertexBufferBuilder::Front()
 	return Vertex{ Vertices.data(), Object.Layout };
 }
 
-IndexBuffer::IndexBuffer(const std::vector<unsigned short>& indices)
-	:Count(static_cast<UINT>(indices.size()))
+IndexBuffer::IndexBuffer(const std::string& tag, const std::vector<unsigned short>& indices)
+	:Buffer(tag), Count(static_cast<UINT>(indices.size()))
 {
 	D3D11_BUFFER_DESC indexBufferDesc{};
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -233,6 +241,11 @@ BufferType IndexBuffer::GetType() const
 UINT IndexBuffer::GetCount() const
 {
 	return Count;
+}
+
+std::string IndexBuffer::GetID()
+{
+	return std::string(typeid(IndexBuffer).name()) + "#" + Tag;
 }
 
 DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)
@@ -288,9 +301,9 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
 }
 
-void BufferGroup::Add(UniquePtr<Buffer> buffer)
+void BufferGroup::Add(SharedPtr<Buffer> buffer)
 {
-	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const UniquePtr<Buffer>& element)
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const SharedPtr<Buffer>& element)
 		{
 			return typeid(*element) == typeid(buffer);
 		});
@@ -302,7 +315,7 @@ void BufferGroup::Add(UniquePtr<Buffer> buffer)
 
 const IndexBuffer* BufferGroup::GetIndexBuffer() const
 {
-	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const UniquePtr<Buffer>& element)
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const SharedPtr<Buffer>& element)
 		{
 			return dynamic_cast<IndexBuffer*>(element.get());
 		});
@@ -329,4 +342,25 @@ inline Vertex::Vertex(char* ptr, const BufferLayout& layout)
 	: Ptr(ptr), Layout(layout)
 {
 	ASSERT(ptr);
+}
+
+inline Buffer::Buffer(const std::string& tag)
+	: Tag(tag)
+{}
+
+void BufferPool::Add(SharedPtr<Buffer> buffer)
+{
+	if (Get(buffer->GetID()))
+		return;
+
+	Buffers[buffer->GetID()] = std::move(buffer);
+}
+
+SharedPtr<Buffer> BufferPool::Get(const std::string& id)
+{
+	auto it = Buffers.find(id);
+	if (it == Buffers.end())
+		return {};
+	else
+		return it->second;
 }

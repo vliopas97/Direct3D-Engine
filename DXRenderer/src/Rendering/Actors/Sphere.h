@@ -2,7 +2,7 @@
 
 #include "Actor.h"
 
-class Sphere : public ActorBase<Sphere>
+class Sphere : public Actor
 {
 public:
 	Sphere();
@@ -10,8 +10,6 @@ public:
 
 	virtual void Update() override;
 
-protected:
-	void InitializeType() override;
 private:
 	void Init();
 };

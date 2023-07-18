@@ -17,8 +17,7 @@ Actor::Actor(const TransformationIntrinsics& intrinsics)
 
 void Actor::Draw()
 {
-	GetTypeBuffers().Bind();
-	InstanceBuffers.Bind();
+	Buffers.Bind();
 	Shaders.Bind();
 	Components.Bind();
 	CurrentGraphicsContext::Context()->DrawIndexed(GetIndexBuffer()->GetCount(), 0, 0);
@@ -34,6 +33,14 @@ void Actor::Update()
 	Transform.Update();
 }
 
+void Actor::Add(SharedPtr<Buffer> buffer)
+{
+	auto id = buffer->GetID();
+
+	Pool::Add(buffer);
+	Buffers.Add(Pool::GetBuffer(id));
+}
+
 void Actor::Add(SharedPtr<Shader> shader)
 {
 	auto id = shader->GetID();
@@ -44,7 +51,7 @@ void Actor::Add(SharedPtr<Shader> shader)
 
 inline const IndexBuffer* Actor::GetIndexBuffer() const
 {
-	const IndexBuffer* ptr = GetTypeBuffers().GetIndexBuffer();
+	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
 	ASSERT(ptr);
 	return ptr;
 }

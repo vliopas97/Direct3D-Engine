@@ -83,11 +83,12 @@ private:
 	std::array<SharedPtr<Shader>, ShaderType::Size> Shaders;
 };
 
-struct ShaderPool
+class ShaderPool
 {
 	void Add(SharedPtr<Shader> shader);
 	SharedPtr<Shader> Get(const std::string& id);
 
-private:
 	std::unordered_map<std::string, SharedPtr<Shader>> Shaders;
+
+	friend class Pool;
 };

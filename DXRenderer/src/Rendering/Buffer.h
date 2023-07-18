@@ -93,23 +93,26 @@ public:
 	template<typename T>
 	void SetAttributeIndex(size_t i, T&& attr)
 	{
+		using namespace DirectX;
+		using namespace DirectX::PackedVector;
+
 		const auto& element = Layout[i];
 		auto attributePtr = Ptr + element.GetOffset();
 
 		switch (element.GetType())
 		{
-		case LayoutElement::DataType::UChar2Norm: SetAttribute<DirectX::PackedVector::XMUBYTEN2>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::UChar4Norm: SetAttribute<DirectX::PackedVector::XMUBYTEN4>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::UChar2: SetAttribute<DirectX::PackedVector::XMUBYTE2>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::UChar4: SetAttribute<DirectX::PackedVector::XMUBYTE4>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Float: SetAttribute<float>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Float2: SetAttribute<DirectX::XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Float3: SetAttribute<DirectX::XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Float4: SetAttribute<DirectX::XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Int: SetAttribute<int>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Int2: SetAttribute<DirectX::XMINT2>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Int3: SetAttribute<DirectX::XMINT3>(attributePtr, std::forward<T>(attr)); break;
-		case LayoutElement::DataType::Int4: SetAttribute<DirectX::XMINT4>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::UChar2Norm: SetAttribute<XMUBYTEN2>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::UChar4Norm: SetAttribute<XMUBYTEN4>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::UChar2: SetAttribute<XMUBYTE2>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::UChar4: SetAttribute<XMUBYTE4>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Float: SetAttribute<float>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Float2: SetAttribute<XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Float3: SetAttribute<XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Float4: SetAttribute<XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Int: SetAttribute<int>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Int2: SetAttribute<XMINT2>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Int3: SetAttribute<XMINT3>(attributePtr, std::forward<T>(attr)); break;
+			case LayoutElement::DataType::Int4: SetAttribute<XMINT4>(attributePtr, std::forward<T>(attr)); break;
 		}
 	}
 
@@ -145,23 +148,33 @@ enum BufferType
 	ConstantB
 };
 
-class Buffer
+class BufferBase
 {
 public:
 	virtual void Bind() const = 0;
 	virtual void Unbind() const = 0;
-	virtual ~Buffer() = default;
+	virtual ~BufferBase() = default;
+};
+
+class Buffer : public BufferBase
+{
+public:
+	virtual std::string GetID() = 0;
 
 protected:
+	Buffer(const std::string& tag);
+protected:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> BufferID;
+	std::string Tag;
 };
 
 class VertexBuffer : public Buffer
 {
 public:
 	template<typename Vertex>
-	VertexBuffer(const std::vector<Vertex>& vertices, BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-		:Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	VertexBuffer(const std::string& tag, const std::vector<Vertex>& vertices, 
+				 BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+		:Buffer(tag), Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
 		D3D11_BUFFER_DESC vertexBufferDesc;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -189,10 +202,11 @@ public:
 			Blob->GetBufferSize(), &InputLayout);
 	}
 
-	VertexBuffer(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+	VertexBuffer(const std::string& tag, BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
 
 	void Bind() const override;
 	void Unbind() const override;
+	std::string GetID() override;
 
 	BufferType GetType() const;
 
@@ -212,7 +226,7 @@ private:
 class VertexBufferBuilder
 {
 public:
-	VertexBufferBuilder(BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+	VertexBufferBuilder(const std::string& tag, BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
 
 	template<typename ...Attributes>
 	void EmplaceBack(Attributes&&... attributes)
@@ -236,13 +250,15 @@ private:
 class IndexBuffer : public Buffer
 {
 public:
-	IndexBuffer(const std::vector<unsigned short>& indices);
+	IndexBuffer(const std::string& tag, const std::vector<unsigned short>& indices);
 
 	void Bind() const override;
 	void Unbind() const override;
 
 	BufferType GetType() const;
 	UINT GetCount() const;
+	std::string GetID() override;
+
 private:
 	static const BufferType Type = BufferType::IndexB;
 	UINT Count;
@@ -253,8 +269,8 @@ class ConstantBuffer : public Buffer
 {
 public:
 	virtual ~ConstantBuffer() = default;
-	ConstantBuffer(const T& resource, uint32_t slot = 0)
-		:Resource(resource), Slot(slot)
+	ConstantBuffer(const std::string& tag, const T& resource, uint32_t slot = 0)
+		:Buffer(tag), Resource(resource), Slot(slot)
 	{
 		DXGIInfoManager InfoManager;
 
@@ -293,6 +309,7 @@ public:
 	using ConstantBuffer<T>::ConstantBuffer;
 	using ConstantBuffer<T>::BufferID;
 	using ConstantBuffer<T>::Slot;
+	using ConstantBuffer<T>::Tag;
 
 	void Bind() const override
 	{
@@ -301,6 +318,11 @@ public:
 	void Unbind() const override
 	{
 		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, nullptr);
+	}
+
+	std::string GetID() override
+	{
+		return std::string(typeid(VSConstantBuffer).name()) + "#" + Tag;
 	}
 };
 
@@ -311,6 +333,7 @@ public:
 	using ConstantBuffer<T>::ConstantBuffer;
 	using ConstantBuffer<T>::BufferID;
 	using ConstantBuffer<T>::Slot;
+	using ConstantBuffer<T>::Tag;
 
 	void Bind() const override
 	{
@@ -321,20 +344,19 @@ public:
 	{
 		CurrentGraphicsContext::Context()->PSSetConstantBuffers(Slot, 1, nullptr);
 	}
+
+	std::string GetID() override
+	{
+		return std::string(typeid(PSConstantBuffer).name()) + "#" + Tag;
+	}
 };
 
 template<typename T>
 class Uniform : public Buffer
 {
 public:
-	//Uniform(const UniquePtr<ConstantBuffer<T>>& constantBuffer, const T& resource)
-	//	:ConstantBufferRef(const_cast<UniquePtr<ConstantBuffer<T>>&>(constantBuffer).release()), Resource(resource)
-	//{
-	//	BufferID = ConstantBufferRef->BufferID;
-	//}
-
 	Uniform(UniquePtr < ConstantBuffer<T>> constantBuffer, const T& resource)
-		:ConstantBufferRef(std::move(constantBuffer)), Resource(resource)
+		:Buffer(constantBuffer->Tag), ConstantBufferRef(std::move(constantBuffer)), Resource(resource)
 	{
 		BufferID = ConstantBufferRef->BufferID;
 	}
@@ -348,6 +370,12 @@ public:
 	void Unbind() const override
 	{
 		ConstantBufferRef->Unbind();
+	}
+
+	std::string GetID() override
+	{
+		return std::string(typeid(Uniform).name()) + "#" + std::string(typeid(ConstantBufferRef).name()) + "#" + Tag
+			+ std::to_string(ConstantBufferRef->Slot);
 	}
 
 private:
@@ -381,10 +409,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
 };
 
-class BufferGroup : public Buffer
+class BufferGroup : public BufferBase
 {
 public:
-	void Add(UniquePtr<Buffer> buffer);
+	void Add(SharedPtr<Buffer> buffer);
 	const IndexBuffer* GetIndexBuffer() const;
 
 	virtual void Bind() const override;
@@ -392,5 +420,15 @@ public:
 
 	inline size_t Size() const { return Buffers.size(); }
 private:
-	std::vector<UniquePtr<Buffer>> Buffers;
+	std::vector<SharedPtr<Buffer>> Buffers;
+};
+
+class BufferPool
+{
+	void Add(SharedPtr<Buffer> buffer);
+	SharedPtr<Buffer> Get(const std::string& id);
+
+	std::unordered_map<std::string, SharedPtr<Buffer>> Buffers;
+
+	friend class Pool;
 };
