@@ -16,6 +16,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <imgui.h>
 
+class Model;
+
 class PrimitiveComponent : public Component
 {
 public:
@@ -43,7 +45,7 @@ class Mesh : public PrimitiveComponent
 {
 public:
 	Mesh(const aiMesh& mesh);
-	Mesh(const aiMesh& mesh, const aiMaterial* const* materials);
+	Mesh(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
 
 	void Bind() const override;
 
@@ -51,7 +53,7 @@ public:
 
 private:
 	void Init(const aiMesh& mesh);
-	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials);
+	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
 private:
 	ComponentGroup Components;
 
@@ -65,7 +67,7 @@ class NodeBase
 {
 public:
 
-	NodeBase(const std::string& name);
+	NodeBase(Model& owner, const std::string& name);
 	virtual ~NodeBase() = default;
 
 	virtual void SetTransform(DirectX::XMMATRIX transform) = 0;
@@ -82,15 +84,14 @@ protected:
 	std::vector<UniquePtr<class NodeInternal>> Children;
 
 	std::string Name;
+	Model& Owner;
 };
-
-class Actor;
 
 class Node : public NodeBase
 {
 public:
 
-	Node(const Actor& actor, const std::string& name = "Unknown");
+	Node(Model& actor, const std::string& name = "Unknown");
 
 	void SetTransform(DirectX::XMMATRIX transform) override;
 
@@ -102,16 +103,16 @@ public:
 
 	void ShowTree();
 
-	static UniquePtr<Node> Build(const Actor& actor, const std::string& filename);
+	static UniquePtr<Node> Build(Model& actor, const std::string& filename);
 
 private:
 	void SetupChild(UniquePtr<class NodeInternal> child);
 	void GUITransform() override;
 
-	static UniquePtr<class NodeInternal> BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials);
+	static UniquePtr<class NodeInternal> BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials,
+												   Model& owner);
 
 private:
 	std::optional<int> SelectedIndex;
 	mutable NodeBase* SelectedNode = nullptr;
-	Actor& Owner;
 };

@@ -1,4 +1,4 @@
-#include "Leon.h"
+#include "Model.h"
 #include "Rendering/CurrentGraphicsContext.h"
 #include "Rendering\Material.h"
 
@@ -9,15 +9,15 @@
 #include <imgui.h>
 
 
-Model::Model()
+Model::Model(const std::string& filename)
 {
-	Init();
+	Init(filename);
 }
 
-Model::Model(const TransformationIntrinsics& intrinsics)
+Model::Model(const std::string& filename, const TransformationIntrinsics& intrinsics)
 	:Actor(intrinsics)
 {
-	Init();
+	Init(filename);
 }
 
 void Model::Draw()
@@ -45,8 +45,10 @@ void Model::GUI()
 	ImGui::End();
 }
 
-void Model::Init()
+void Model::Init(const std::string& filename)
 {
-	Root = Node::Build(*this, "Nanosuit\\nanosuit.obj");
-	//Components.Add(MakeUnique<Material>(1));
+	Path = "\\Model\\" + filename;
+	Path = Path.substr(0, Path.find_last_of("\\/") + 1);
+	Root = Node::Build(*this, filename);
+
 }

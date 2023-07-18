@@ -31,7 +31,7 @@ Texture::Texture(const std::string& filename, uint32_t slot)
 	int desiredChannels = 4;
 	stbi_uc* data;
 
-	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\Model\\NanoSuit\\" + filename;
+	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\" + filename;
 
 	data = stbi_load(filepath.c_str(), &width, &height, &channels, desiredChannels);
 

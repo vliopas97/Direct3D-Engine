@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "Layer.h"
 #include "Rendering\Actors\Cube.h"
-#include "Rendering\Actors\Leon.h"
+#include "Rendering\Actors\Model.h"
 
 #include "Rendering/ResourcePool.h"
 
@@ -65,7 +65,7 @@ Application::Application()
 	trInt.Z = 15.0f;
 	trInt.X = 2.0f;
 	trInt.Y = -10.0f;
-	Cubes.emplace_back(MakeUnique<Model>(trInt));
+	Cubes.emplace_back(MakeUnique<Model>("Nanosuit\\nanosuit.obj", trInt));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();

@@ -1,7 +1,7 @@
 #include "Mesh.h"
 #include "Utilities.h"
 
-#include "Actors/Actor.h"
+#include "Actors/Model.h"
 #include "Rendering/Material.h"
 
 
@@ -9,8 +9,8 @@
 class NodeInternal : public NodeBase
 {
 public:
-	NodeInternal(const std::string& name = "Unknown")
-		:NodeBase(name)
+	NodeInternal(Model& actor, const std::string& name = "Unknown")
+		:NodeBase(actor, name)
 	{
 		DirectX::XMStoreFloat4x4(&Transform, DirectX::XMMatrixIdentity());
 		DirectX::XMStoreFloat4x4(&RelativeTransform, DirectX::XMMatrixIdentity());
@@ -147,9 +147,9 @@ inline Mesh::Mesh(const aiMesh& mesh)
 	Init(mesh);
 }
 
-Mesh::Mesh(const aiMesh& mesh, const aiMaterial* const* materials)
+Mesh::Mesh(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)
 {
-	LoadMaterial(mesh, materials);
+	LoadMaterial(mesh, materials, path);
 	Init(mesh);
 }
 
@@ -243,7 +243,7 @@ void Mesh::Init(const aiMesh& mesh)
 	}
 }
 
-void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials)
+void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)
 {
 	ASSERT(materials);
 	
@@ -254,19 +254,19 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials)
 	auto& material = materials[mesh.mMaterialIndex];
 	aiString filename;
 	material->GetTexture(aiTextureType_DIFFUSE, 0, &filename);
-	Components.Add(MakeUnique<Texture>(filename.C_Str()));
+	Components.Add(MakeUnique<Texture>(path + filename.C_Str()));
 
 	if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasSpecular = true;
-		Components.Add(MakeUnique<Texture>(filename.C_Str(), 1));
+		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
 	}
 	else
 		material->Get(AI_MATKEY_SHININESS, Shininess);
 }
 
-Node::Node(const Actor& actor, const std::string& name)
-	:Owner(const_cast<Actor&>(actor)), NodeBase(name)
+Node::Node(Model& actor, const std::string& name)
+	:NodeBase(actor, name)
 {
 }
 
@@ -330,7 +330,7 @@ void Node::ShowTree()
 		SelectedNode->GUITransform();
 }
 
-UniquePtr<Node> Node::Build(const Actor& actor, const std::string& filename)
+UniquePtr<Node> Node::Build(Model& actor, const std::string& filename)
 {
 	Assimp::Importer imp;
 	std::filesystem::path solutionPath = std::filesystem::current_path().parent_path();
@@ -350,13 +350,13 @@ UniquePtr<Node> Node::Build(const Actor& actor, const std::string& filename)
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		materials ? meshes.emplace_back(new Mesh(*scene->mMeshes[index], materials)) :
+		materials ? meshes.emplace_back(new Mesh(*scene->mMeshes[index], materials, customNode->Owner.GetPath())) :
 			meshes.emplace_back(new Mesh(*scene->mMeshes[index]));
 	}
 
 	customNode->Meshes = std::move(meshes);
 	for (size_t i = 0; i < node.mNumChildren; i++)
-		customNode->SetupChild(BuildImpl(*scene, *node.mChildren[i], materials));
+		customNode->SetupChild(BuildImpl(*scene, *node.mChildren[i], materials, customNode->Owner));
 
 	return std::move(customNode);
 }
@@ -403,7 +403,7 @@ inline void Node::GUITransform()
 	Owner.Yaw = yaw;
 }
 
-inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials)
+inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNode& node, const aiMaterial* const* materials, Model& owner)
 {
 	const auto relativeTransform = DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&node.mTransformation));
 	std::vector<Mesh*> meshes;
@@ -411,22 +411,22 @@ inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNod
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		materials ? meshes.emplace_back(new Mesh(*scene.mMeshes[index], materials)) :
+		materials ? meshes.emplace_back(new Mesh(*scene.mMeshes[index], materials, owner.GetPath())) :
 			meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
 	}
 
-	UniquePtr<NodeInternal> customNode = MakeUnique<NodeInternal>(node.mName.C_Str());
+	UniquePtr<NodeInternal> customNode = MakeUnique<NodeInternal>(owner, node.mName.C_Str());
 	customNode->SetRelativeTransform(relativeTransform);
 	customNode->Meshes = std::move(meshes);
 
 	for (size_t i = 0; i < node.mNumChildren; i++)
-		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i], materials));
+			customNode->SetupChild(BuildImpl(scene, *node.mChildren[i], materials, owner));
 
 	return std::move(customNode);
 }
 
-NodeBase::NodeBase(const std::string& name)
-	:Name(name), Children{}, Meshes{}
+NodeBase::NodeBase(Model& owner, const std::string& name)
+	:Name(name), Owner(owner), Children{}, Meshes{}
 {
 }
 
