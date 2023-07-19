@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Layer.h"
 #include "Rendering\Actors\Cube.h"
+#include "Rendering\Actors\Plane.h"
 #include "Rendering\Actors\Model.h"
 
 #include "Rendering/ResourcePool.h"
@@ -60,17 +61,23 @@ Application::Application()
 
 	// TEST
 	TransformationIntrinsics trInt;
-	trInt.Yaw = 180.0f;
-	trInt.Roll = 180.0f;
 	trInt.Z = 15.0f;
 	trInt.X = 2.0f;
+	trInt.Yaw = 180.0f;
+	trInt.Roll = 180.0f;
 	trInt.Y = -10.0f;
-	Cubes.emplace_back(MakeUnique<Model>("Nanosuit\\nanosuit.obj", trInt));
+	//Actors.emplace_back(MakeUnique<Model>("Nanosuit\\nanosuit.obj", trInt));
+
+	TransformationIntrinsics trInt2;
+	trInt2.Y = 2.0f;
+	trInt2.Z = 7.0f;
+	trInt2.Sx = trInt2.Sy = trInt2.Sz = 5.0f;
+	Actors.emplace_back(MakeUnique<Plane>(trInt2));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
 
-	Light.Position = { 0.0f, 5.0f, 12.0f };
+	Light.Position = { 0.0f, 2.5f, 2.5f };
 }
 
 void Application::Tick()
@@ -79,16 +86,13 @@ void Application::Tick()
 
 	ImGui->Begin();
 	Light.Bind();
-	for (auto& c : Cubes)
+	for (auto& c : Actors)
 	{
 		c->Update();
 		c->Draw();
-		if (auto ptr = dynamic_cast<Model*>(c.get()))
-		{
-			ptr->GUI();
-			continue;
-		}
+		c->GUI();
 	}
+
 	Light.Update();
 	Light.Draw();
 	Light.GUI();

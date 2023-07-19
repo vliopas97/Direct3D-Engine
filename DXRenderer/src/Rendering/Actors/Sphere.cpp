@@ -24,9 +24,6 @@ void Sphere::Init()
 {
 	using namespace DirectX;
 
-	UniquePtr<VertexShader> vertexShader = MakeUnique<VertexShader>("defaultVS");
-	UniquePtr<PixelShader>pixelShader = MakeUnique<PixelShader>("defaultPS");
-
 	Actor::Add(MakeShared<VertexShader>("defaultVS"));
 	Actor::Add(MakeShared<PixelShader>("defaultPS"));
 	

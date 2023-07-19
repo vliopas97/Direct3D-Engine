@@ -131,7 +131,7 @@ inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 
 inline void PrimitiveComponent::Add(SharedPtr<Shader> shader)
 {
-	auto id = shader->GetID();
+	const auto id = shader->GetID();
 
 	Pool::Add(shader);
 	Shaders.Add(Pool::GetShader(id));
@@ -279,24 +279,6 @@ inline DirectX::XMMATRIX Node::GetTransform() const
 {
 	return Owner.GetTransform();
 }
-
-//inline void Node::SetupAttachment(Node* parent)
-//{
-//	if (parent && parent != Parent && parent != this)
-//	{
-//		auto* oldParent = Parent;
-//		Parent = parent;
-//
-//		auto it = std::find_if(oldParent->Children.begin(), oldParent->Children.end(), [this](auto& uniquePtr)
-//			{
-//				return uniquePtr.get() == this;
-//			});
-//
-//		ASSERT(it != oldParent->Children.end());
-//		Parent->Children.emplace_back(std::unique_ptr<Node>(it->release()));
-//		oldParent->Children.erase(it);
-//	}
-//}
 
 void Node::Update()
 {

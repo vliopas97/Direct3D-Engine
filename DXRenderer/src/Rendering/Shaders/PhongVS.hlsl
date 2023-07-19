@@ -23,6 +23,7 @@ struct Output
 Output main( float3 pos : Position, float3 n : Normal )
 {
     Output output;
+    
     matrix modelView = mul(model, view);
     output.posWorld = (float3) mul(float4(pos, 1.0f), modelView);
     output.normal = mul(n, (float3x3) modelView);

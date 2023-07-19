@@ -20,6 +20,7 @@ public:
 		alignas(16) DirectX::XMFLOAT3 Color{1.0f, 1.0f, 1.0f};
 		float specularIntensity{ 1.0f };
 		float Shininess{ 12.0f };
+		BOOL NormalMapEnabled = TRUE;
 	};
 	
 	union

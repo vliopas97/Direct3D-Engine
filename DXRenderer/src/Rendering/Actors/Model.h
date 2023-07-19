@@ -11,7 +11,7 @@ public:
 	virtual void Draw() override;
 	virtual void Update() override;
 
-	void GUI();
+	virtual void GUI() override;
 	const std::string& GetPath() const { return Path; }
 protected:
 

@@ -121,10 +121,6 @@ void Camera::Tick(float delta)
 						   (float)(0.995f * std::numbers::pi) / 2.0f);
 	}
 
-	//pitch = XMConvertToRadians(pitch);
-	//yaw =   XMConvertToRadians(yaw);
-	//roll =  XMConvertToRadians(roll);
-
 	SetRotation({ pitch, yaw, roll });
 }
 

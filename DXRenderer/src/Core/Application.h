@@ -27,7 +27,7 @@ private:
 	UniquePtr<class ImGuiLayer> ImGui;
 	Timer Benchmarker;
 	
-	std::vector <UniquePtr< class Actor >> Cubes;
+	std::vector <UniquePtr< class Actor >> Actors;
 	PointLight Light;
 	static Application* Instance;
 };

@@ -245,6 +245,67 @@ namespace Primitives
 		{
 			return CreateTesselated<Vertex>(1, 1);
 		}
+
+		template<IsVertexElement Vertex>
+		static IndexedVertices<Vertex> CreateWTextureCoords(int divisionsX = 1, int divisionsY = 1)
+		{
+			ASSERT(divisionsX >= 1);
+			ASSERT(divisionsY >= 1);
+
+			constexpr float width = 2.0f;
+			constexpr float height = 2.0f;
+
+			const int numOfVerticesX = divisionsX + 1;
+			const int numOfVerticesY = divisionsY + 1;
+
+			std::vector<Vertex> vertices(numOfVerticesX * numOfVerticesY);
+
+			const float sideX = width / 2.0f;
+			const float sideY = height / 2.0f;
+			const float stepX = width / (float)(divisionsX);
+			const float stepY = width / (float)(divisionsY);
+
+			for (int y = 0, i = 0; y < numOfVerticesY; y++)
+			{
+				const float posY = float(y) * stepY - 1.0f;
+				const float coordY = 1.0f - float(y) * stepY / divisionsY;
+				for (int x = 0; x < numOfVerticesX; x++, i++)
+				{
+					const float posX = float(x) * stepX - 1.0f;
+					const float coordX = float(x) / divisionsX;
+					DirectX::XMStoreFloat3(&vertices[i].Position, DirectX::XMVECTOR{posX, posY, 0.0f, 0.0f});
+					DirectX::XMStoreFloat3(&vertices[i].Normal, DirectX::XMVECTOR{0.0f, 0.0f, -1.0f, 0.0f});
+					DirectX::XMStoreFloat2(&vertices[i].TexCoords, DirectX::XMVECTOR{coordX, coordY, 0.0f, 0.0f});
+				}
+			}
+
+			std::vector<unsigned short> indices;
+			indices.reserve(std::pow(divisionsX * divisionsY, 2) * 6);
+
+			const auto coordsToIndices = [numOfVerticesX](size_t x, size_t y)
+			{
+				return (unsigned short)(y * numOfVerticesX + x);
+			};
+
+			for (size_t y = 0; y < divisionsY; y++)
+			{
+				for (size_t x = 0; x < divisionsX; x++)
+				{
+					const std::array<unsigned short, 4> indexArray = {
+						coordsToIndices(x, y), coordsToIndices(x + 1 ,y), coordsToIndices(x, y + 1), coordsToIndices(x + 1, y + 1)
+					};
+					indices.push_back(indexArray[0]);
+					indices.push_back(indexArray[2]);
+					indices.push_back(indexArray[1]);
+					indices.push_back(indexArray[1]);
+					indices.push_back(indexArray[2]);
+					indices.push_back(indexArray[3]);
+				}
+			}
+
+			return { std::move(vertices), std::move(indices) };
+		}
+
 	};
 
 	class Prism

@@ -28,6 +28,7 @@ public:
 	void Add(SharedPtr<Buffer> buffer);
 	void Add(SharedPtr<Shader> shader);
 
+	virtual void GUI() {}
 private:
 	virtual const IndexBuffer* GetIndexBuffer() const;
 

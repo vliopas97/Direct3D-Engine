@@ -35,7 +35,7 @@ void Actor::Update()
 
 void Actor::Add(SharedPtr<Buffer> buffer)
 {
-	auto id = buffer->GetID();
+	const auto id = buffer->GetID();
 
 	Pool::Add(buffer);
 	Buffers.Add(Pool::GetBuffer(id));
