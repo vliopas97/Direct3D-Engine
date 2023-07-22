@@ -26,7 +26,7 @@ struct LayoutElement
 	{
 		Position2, Position3,
 		Color3, Color4,
-		Normal,
+		Normal, Tangent, Bitangent,
 		TexCoords,
 	};
 

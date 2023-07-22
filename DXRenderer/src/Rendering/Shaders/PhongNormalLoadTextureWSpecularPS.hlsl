@@ -15,13 +15,27 @@ cbuffer constBuffer : register(b2)
 }
 
 Texture2D tex : register(t0);
-Texture2D spec : register(t1);
+Texture2D normalMap : register(t1);
+Texture2D spec : register(t2);
 SamplerState samplerState : register(s0);
-SamplerState samplerStateSpec : register(s1);
+SamplerState samplerStateNormal : register(s1);
+SamplerState samplerStateSpec : register(s2);
 
-float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : TexCoords) : SV_Target
+float3 normalPreprocessing(float3 n, float3 t, float3 b, float2 texCoords)
 {
-    n = normalize(n);
+    float3x3 TBN = float3x3(normalize(t), normalize(b), normalize(n));
+    const float3 normalSample = normalMap.Sample(samplerStateNormal, texCoords).xyz;
+    n.x = normalSample.x * 2.0f - 1.0f;
+    n.y = normalSample.y * 2.0f - 1.0f;
+    n.z = normalSample.z * 2.0f - 1.0f;
+    n = mul(n, TBN);
+    return n;
+}
+
+float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, float3 b : Bitangent, float2 texCoords : TexCoords) : SV_Target
+{
+    n = normalPreprocessing(n, t, b, texCoords);
+    
     float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
     float3 lightDir = lightWorld - posCamera;
     const float distance = length(lightDir);

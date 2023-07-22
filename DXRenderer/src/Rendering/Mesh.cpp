@@ -4,8 +4,6 @@
 #include "Actors/Model.h"
 #include "Rendering/Material.h"
 
-
-
 class NodeInternal : public NodeBase
 {
 public:
@@ -172,33 +170,37 @@ void Mesh::Init(const aiMesh& mesh)
 {
 	using namespace DirectX;
 
-	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial? "PhongLoadTextureVS" : "PhongVS");
+	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial ? "PhongNormalLoadTextureVS" : "PhongVS");
 
-	const char* PSPath = "PhongPS";
+	const char* PSPath = "PhongNormalPS";
 	if (HasMaterial && HasSpecular)
-		PSPath = "PhongLoadTextureWSpecularPS";
-	else if(HasMaterial)
-		PSPath = "PhongLoadTexturePS";
+		PSPath = "PhongNormalLoadTextureWSpecularPS";
+	else if (HasMaterial)
+		PSPath = "PhongNormalLoadTexturePS";
 
 	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(PSPath);
 
 	BufferLayout layout{
-	{ LayoutElement::ElementType::Position3 },
-	{ LayoutElement::ElementType::Normal }
+		{ LayoutElement::ElementType::Position3 },
+		{ LayoutElement::ElementType::Normal },
+		{ LayoutElement::ElementType::Tangent}, 
+		{ LayoutElement::ElementType::Bitangent}
 	};
 
 	if (HasMaterial) layout.AddElement(LayoutElement::ElementType::TexCoords);
 
-	VertexBufferBuilder builder{"VertexBufferModel", std::move(layout), vertexShader->GetBlob()};
+	VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), vertexShader->GetBlob() };
 
 	std::vector<unsigned short> indices;
 	indices.reserve(mesh.mNumFaces * 3);
 
-	if(HasMaterial)
+	if (HasMaterial)
 		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 		{
 			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
 								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mTangents[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mBitangents[i]),
 								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
 			);
 		}
@@ -206,7 +208,9 @@ void Mesh::Init(const aiMesh& mesh)
 		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 		{
 			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]));
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mTangents[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mBitangents[i]));
 		}
 
 	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
@@ -235,7 +239,7 @@ void Mesh::Init(const aiMesh& mesh)
 	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 2),
 									  *reinterpret_cast<const XMMATRIX*>(&Transform)));
 
-	if (!HasMaterial && !HasSpecular)
+	if (!HasSpecular)
 	{
 		auto material = MakeUnique<Material>(1);
 		material->Properties.Shininess = Shininess;
@@ -246,7 +250,7 @@ void Mesh::Init(const aiMesh& mesh)
 void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)
 {
 	ASSERT(materials);
-	
+
 	HasMaterial = mesh.mMaterialIndex >= 0;
 	if (!HasMaterial)
 		return;
@@ -256,10 +260,13 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 	material->GetTexture(aiTextureType_DIFFUSE, 0, &filename);
 	Components.Add(MakeUnique<Texture>(path + filename.C_Str()));
 
+	material->GetTexture(aiTextureType_NORMALS, 0, &filename);
+	Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
+
 	if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasSpecular = true;
-		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
+		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 2));
 	}
 	else
 		material->Get(AI_MATKEY_SHININESS, Shininess);
@@ -267,8 +274,7 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 
 Node::Node(Model& actor, const std::string& name)
 	:NodeBase(actor, name)
-{
-}
+{}
 
 inline void Node::SetTransform(DirectX::XMMATRIX transform)
 {
@@ -318,8 +324,11 @@ UniquePtr<Node> Node::Build(Model& actor, const std::string& filename)
 	std::filesystem::path solutionPath = std::filesystem::current_path().parent_path();
 
 	const auto scene = imp.ReadFile(solutionPath.string() + "\\Content\\Model\\" + filename,
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
+									aiProcess_Triangulate |
+									aiProcess_JoinIdenticalVertices |
+									aiProcess_ConvertToLeftHanded |
+									aiProcess_GenNormals |
+									aiProcess_CalcTangentSpace
 	);
 
 	auto* materials = scene->HasMaterials() ? scene->mMaterials : nullptr;
@@ -354,8 +363,7 @@ inline void Node::GUITransform()
 {
 	float roll = DirectX::XMConvertToRadians(Owner.Roll);
 	float pitch = DirectX::XMConvertToRadians(Owner.Pitch);
-	float yaw =   DirectX::XMConvertToRadians(Owner.Yaw);
-
+	float yaw = DirectX::XMConvertToRadians(Owner.Yaw);
 
 	float& x = Owner.X;
 	float& y = Owner.Y;
@@ -376,10 +384,10 @@ inline void Node::GUITransform()
 	Owner.Y = y;
 	Owner.Z = z;
 
-	roll =  DirectX::XMConvertToDegrees(roll);
+	roll = DirectX::XMConvertToDegrees(roll);
 	pitch = DirectX::XMConvertToDegrees(pitch);
-	yaw =   DirectX::XMConvertToDegrees(yaw);
-	
+	yaw = DirectX::XMConvertToDegrees(yaw);
+
 	Owner.Roll = roll;
 	Owner.Pitch = pitch;
 	Owner.Yaw = yaw;
@@ -402,15 +410,14 @@ inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNod
 	customNode->Meshes = std::move(meshes);
 
 	for (size_t i = 0; i < node.mNumChildren; i++)
-			customNode->SetupChild(BuildImpl(scene, *node.mChildren[i], materials, owner));
+		customNode->SetupChild(BuildImpl(scene, *node.mChildren[i], materials, owner));
 
 	return std::move(customNode);
 }
 
 NodeBase::NodeBase(Model& owner, const std::string& name)
 	:Name(name), Owner(owner), Children{}, Meshes{}
-{
-}
+{}
 
 inline void NodeBase::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, NodeBase*& selectedNode) const
 {

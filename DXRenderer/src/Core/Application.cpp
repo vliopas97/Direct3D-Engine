@@ -72,7 +72,8 @@ Application::Application()
 	trInt2.Y = 2.0f;
 	trInt2.Z = 7.0f;
 	trInt2.Sx = trInt2.Sy = trInt2.Sz = 5.0f;
-	Actors.emplace_back(MakeUnique<Plane>(trInt2));
+	//Actors.emplace_back(MakeUnique<Plane>(trInt2));
+	Actors.emplace_back(MakeUnique<Model>("Brickwall\\brickwall.obj", trInt2));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();

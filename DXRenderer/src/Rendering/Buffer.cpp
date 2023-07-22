@@ -25,6 +25,8 @@ const char* LayoutElement::ResolveNameFromType(ElementType type)
 	case ElementType::Color3:
 	case ElementType::Color4: return "Color";
 	case ElementType::Normal: return "Normal";
+	case ElementType::Tangent: return "Tangent";
+	case ElementType::Bitangent: return "Bitangent";
 	case ElementType::TexCoords: return "TexCoords";
 	}
 }
@@ -57,6 +59,8 @@ LayoutElement::DataType LayoutElement::ResolveDataType(ElementType type)
 	case ElementType::Color3: return DataType::Float3;
 	case ElementType::Color4: return DataType::Float4;
 	case ElementType::Normal: return DataType::Float3;
+	case ElementType::Tangent: return DataType::Float3;
+	case ElementType::Bitangent: return DataType::Float3;
 	case ElementType::TexCoords: return DataType::Float2;
 	}
 }
@@ -89,6 +93,8 @@ uint32_t LayoutElement::CalcSize(ElementType type)
 	case ElementType::Color3: return sizeof(float) * 3;
 	case ElementType::Color4: return sizeof(float) * 4;
 	case ElementType::Normal: return sizeof(float) * 3;
+	case ElementType::Tangent: return sizeof(float) * 3;
+	case ElementType::Bitangent: return sizeof(float) * 3;
 	case ElementType::TexCoords: return sizeof(float) * 2;
 	}
 }
