@@ -7,10 +7,13 @@
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <wrl.h>
 
 #include "Core\Exception.h"
+
+#pragma warning(disable : 26800)
 
 struct LayoutElement
 {
@@ -298,7 +301,7 @@ private:
 
 	static const BufferType Type = BufferType::ConstantB;
 
-	template<typename T>
+	template<typename T, typename>
 	friend class Uniform;
 };
 
@@ -351,13 +354,29 @@ public:
 	}
 };
 
+
 template<typename T>
+using VS = VSConstantBuffer<T>;
+
+template<typename T>
+using PS = PSConstantBuffer<T>;
+
+template<typename T, 
+	typename = typename std::enable_if_t<is_base_of_template<ConstantBuffer, T>::value>>
 class Uniform : public Buffer
 {
+	using ResourceType = decltype(std::declval<T>().Resource);
 public:
-	Uniform(UniquePtr < ConstantBuffer<T>> constantBuffer, const T& resource)
-		:Buffer(constantBuffer->Tag), ConstantBufferRef(std::move(constantBuffer)), Resource(resource)
+
+	template<typename... Args>
+	Uniform(Args&&... args)
+		:Buffer(std::get<0>(std::forward_as_tuple(std::forward<Args>(args)...)))
 	{
+		ASSERT(sizeof...(Args) >= 2);
+
+		Resource = &(std::get<1>(std::forward_as_tuple(std::forward<Args>(args)...)));
+		ConstantBufferRef = MakeUnique<T>(std::forward<Args>(args)...);
+		Tag = ConstantBufferRef->Tag;
 		BufferID = ConstantBufferRef->BufferID;
 	}
 
@@ -383,14 +402,20 @@ private:
 	{
 		D3D11_MAPPED_SUBRESOURCE subResource;
 		CurrentGraphicsContext::Context()->Map(BufferID.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &subResource);
-		memcpy(subResource.pData, &Resource, sizeof(Resource));
+		memcpy(subResource.pData, Resource, sizeof(ResourceType));
 		CurrentGraphicsContext::Context()->Unmap(BufferID.Get(), 0);
 	}
 
 private:
-	UniquePtr<ConstantBuffer<T>> ConstantBufferRef;
-	const T& Resource;
+	UniquePtr<T> ConstantBufferRef;
+	const ResourceType* Resource;
 };
+
+template<typename T>
+using UniformVS = Uniform<VS<T>>;
+
+template<typename T>
+using UniformPS = Uniform<PS<T>>;
 
 class DepthBuffer
 {

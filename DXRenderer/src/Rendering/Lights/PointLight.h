@@ -42,5 +42,5 @@ public:
 
 private:
 	Sphere Mesh;
-	Uniform<LightProperties> Model;
+	UniformPS<LightProperties> Model;
 };

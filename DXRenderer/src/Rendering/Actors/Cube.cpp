@@ -41,15 +41,14 @@ void Cube::Init()
 	Add(MakeUnique<IndexBuffer>("Cube", data.Indices));
 
 	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("View", view), view));
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<PSConstantBuffer<XMMATRIX>>("View", view, 2), view));
+	Add(MakeUnique<UniformVS<XMMATRIX>>("View", view));
+	Add(MakeUnique<UniformPS<XMMATRIX>>("View", view, 2));
 
-	const XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Projection", projection, 1),
-									  projection));
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	Add(MakeUnique<UniformVS<XMMATRIX>>("Proj", projection, 1));
 
-	Buffers.Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 2),
-											  this->Transform.GetMatrix()));
+	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
+	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 2));
 
 	Components.Add(MakeUnique < Material>(1));
 }

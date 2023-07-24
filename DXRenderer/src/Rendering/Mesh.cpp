@@ -229,15 +229,14 @@ void Mesh::Init(const aiMesh& mesh)
 	Add(MakeUnique<IndexBuffer>("IndexBufferModel", indices));
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("View", view), view));
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<PSConstantBuffer<XMMATRIX>>("View", view, 2), view));
+	Add(MakeUnique<UniformVS<XMMATRIX>>("View", view));
+	Add(MakeUnique<UniformPS<XMMATRIX>>("View", view, 2));
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Proj", projection, 1),
-									  projection));
+	Add(MakeUnique<UniformVS<XMMATRIX>>("Proj", projection, 1));
 
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 2),
-									  *reinterpret_cast<const XMMATRIX*>(&Transform)));
+	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform);
+	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 2));
 
 	if (!HasSpecular)
 	{

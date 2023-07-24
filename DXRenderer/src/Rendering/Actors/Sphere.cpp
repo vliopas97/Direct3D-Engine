@@ -37,12 +37,11 @@ void Sphere::Init()
 	Add(MakeUnique<IndexBuffer>("Sphere", data.Indices));
 
 	const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("ViewProj", viewProjection),
-											   viewProjection));
+	Add(MakeUnique<UniformVS<XMMATRIX>>("ViewProj", viewProjection));
 
-	Buffers.Add(MakeUnique<Uniform<XMMATRIX>>(MakeUnique<VSConstantBuffer<XMMATRIX>>("Transform", GetTransform(), 1),
-											  this->Transform.GetMatrix()));
+	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
+	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 1));
 
-	Buffers.Add(MakeUnique<PSConstantBuffer<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f))
+	Add(MakeUnique<PSConstantBuffer<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f))
 	));
 }

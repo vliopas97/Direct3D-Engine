@@ -32,5 +32,5 @@ public:
 		};
 	};
 private:
-	Uniform<MaterialProperties> PropertiesUniform;
+	UniformPS<MaterialProperties> PropertiesUniform;
 };
