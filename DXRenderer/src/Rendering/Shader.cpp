@@ -29,7 +29,7 @@ const Microsoft::WRL::ComPtr<ID3DBlob>& Shader::GetBlob() const
 
 std::wstring Shader::SetUpPath(const std::string& shaderName)
 {
-	return Path + std::wstring(shaderName.begin(), shaderName.end()) + L".cso";
+	return Path + std::wstring(shaderName.begin(), shaderName.end()) + GetTypeImpl() + L".cso";
 }
 
 VertexShader::VertexShader(const std::string& shaderName)

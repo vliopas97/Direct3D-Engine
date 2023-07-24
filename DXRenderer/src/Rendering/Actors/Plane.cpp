@@ -46,8 +46,8 @@ void Plane::Init()
 {
 	using namespace DirectX;
 
-	Add(MakeShared<VertexShader>("PhongLoadTextureVS"));
-	Add(MakeShared<PixelShader>("PhongNormalPS"));
+	Add(MakeShared<VertexShader>("PhongLoadTexture"));
+	Add(MakeShared<PixelShader>("PhongNormal"));
 
 	struct VertexElementNormalTex : public Primitives::VertexElement
 	{

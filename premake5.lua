@@ -67,16 +67,17 @@ project "DXRenderer"
     filter "files:**.hlsl"
         shadermodel "5.0"
         buildmessage 'Compiling HLSL shader %{file.relpath}'
-        shaderobjectfileoutput 'src/Rendering/Shaders/build/%%(Filename).cso'
-
-    filter { "files:**/**VS.hlsl" }
+       
+    filter { "files:**/VertexShaders/*.hlsl" }
         removeflags "ExcludeFromBuild"
         shadertype "Vertex"
+        shaderobjectfileoutput 'src/Rendering/Shaders/build/%%(Filename)VS.cso'
 
-    filter { "files:**/**PS.hlsl" }
+    filter { "files:**/PixelShaders/*.hlsl" }
         removeflags "ExcludeFromBuild"
         shadertype "Pixel"
-    
+        shaderobjectfileoutput 'src/Rendering/Shaders/build/%%(Filename)PS.cso'
+
     filter "configurations:Debug"
         runtime "Debug"
         symbols "on"

@@ -156,13 +156,13 @@ void Mesh::Init(const aiMesh& mesh)
 {
 	using namespace DirectX;
 
-	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial ? "PhongNormalLoadTextureVS" : "PhongVS");
+	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial ? "PhongNormalLoadTexture" : "Phong");
 
-	const char* PSPath = "PhongNormalPS";
+	const char* PSPath = "PhongNormal";
 	if (HasMaterial && HasSpecular)
-		PSPath = "PhongNormalLoadTextureWSpecularPS";
+		PSPath = "PhongNormalLoadTextureWSpecular";
 	else if (HasMaterial)
-		PSPath = "PhongNormalLoadTexturePS";
+		PSPath = "PhongNormalLoadTexture";
 
 	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(PSPath);
 

@@ -19,8 +19,8 @@ Cube::Cube(const TransformationIntrinsics& intrinsics)
 void Cube::Init()
 {
 	using namespace DirectX;
-	Add(MakeShared<VertexShader>("PhongVS"));
-	Add(MakeShared<PixelShader>("PhongPS"));
+	Add(MakeShared<VertexShader>("Phong"));
+	Add(MakeShared<PixelShader>("Phong"));
 
 	struct VertexElementNormal : public Primitives::VertexElement
 	{

@@ -32,8 +32,9 @@ struct Shader : public IShader
 	virtual std::string GetID() const = 0;
 
 protected:
-	static std::wstring SetUpPath(const std::string& shaderName);
+	std::wstring SetUpPath(const std::string& shaderName);
 
+	virtual std::wstring GetTypeImpl() = 0;
 protected:
 	Microsoft::WRL::ComPtr<ID3DBlob> Blob;
 	std::string Name;
@@ -49,6 +50,8 @@ struct VertexShader : public Shader
 	virtual void Unbind() const override;
 	virtual const ShaderType& GetType() const override;
 	virtual std::string GetID() const override;
+protected:
+	std::wstring GetTypeImpl() override { return L"VS"; }
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> ShaderID;
@@ -63,6 +66,9 @@ struct PixelShader : public Shader
 	virtual void Unbind() const override;
 	virtual const ShaderType& GetType() const override;
 	virtual std::string GetID() const override;
+
+protected:
+	std::wstring GetTypeImpl() override { return L"PS"; }
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ShaderID;
