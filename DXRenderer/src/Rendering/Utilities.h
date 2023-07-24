@@ -1,6 +1,10 @@
 #pragma once
 
 #include "Core\Core.h"
+#include "Rendering\Buffer.h"
+#include "Rendering\Component.h"
+#include "Rendering\ResourcePool.h"
+#include "Rendering\Shader.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -111,4 +115,27 @@ struct IndexedVertices
 public:
 	std::vector<Vertex> Vertices;
 	std::vector<unsigned short> Indices;
+};
+
+class GPUObject
+{
+protected:
+	GPUObject() = default;
+
+	void Add(SharedPtr<Shader> shader);
+	void Add(SharedPtr<Buffer> buffer);
+
+	template <class T, typename... Args>
+	void Add(Args&&... args)
+	{
+		if constexpr (std::is_base_of_v<Buffer, T>)
+			Add(MakeShared<T>(std::forward<Args>(args)...));
+		else if constexpr (std::is_base_of_v<Shader, T>)
+			Add(MakeShared<T>(std::forward<Args>(args)...));
+	}
+
+protected:
+	BufferGroup Buffers;
+	ShaderGroup Shaders;
+	ComponentGroup Components;
 };

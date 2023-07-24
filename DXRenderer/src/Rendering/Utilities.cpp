@@ -29,3 +29,19 @@ void TransformationMatrix::Update()
 											  DirectX::XMConvertToRadians(Roll)) *
 		DirectX::XMMatrixTranslation(-X, -Y, Z);
 }
+
+void GPUObject::Add(SharedPtr<Shader> shader)
+{
+	const auto id = shader->GetID();
+
+	Pool::Add(shader);
+	Shaders.Add(Pool::GetShader(id));
+}
+
+void GPUObject::Add(SharedPtr<Buffer> buffer)
+{
+	const auto id = buffer->GetID();
+
+	Pool::Add(buffer);
+	Buffers.Add(Pool::GetBuffer(id));
+}

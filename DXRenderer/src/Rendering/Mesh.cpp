@@ -112,7 +112,6 @@ private:
 };
 
 inline PrimitiveComponent::PrimitiveComponent()
-	:Buffers{}, Shaders{}
 {
 	DirectX::XMStoreFloat4x4(&Transform, DirectX::XMMatrixIdentity());
 }
@@ -125,19 +124,6 @@ inline void PrimitiveComponent::SetTransform(DirectX::XMMATRIX transform)
 inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 {
 	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
-}
-
-inline void PrimitiveComponent::Add(SharedPtr<Shader> shader)
-{
-	const auto id = shader->GetID();
-
-	Pool::Add(shader);
-	Shaders.Add(Pool::GetShader(id));
-}
-
-inline void PrimitiveComponent::Add(UniquePtr<Buffer> buffer)
-{
-	Buffers.Add(std::move(buffer));
 }
 
 inline Mesh::Mesh(const aiMesh& mesh)
@@ -226,17 +212,17 @@ void Mesh::Init(const aiMesh& mesh)
 	Add(std::move(pixelShader));
 
 	Add(builder.Release());
-	Add(MakeUnique<IndexBuffer>("IndexBufferModel", indices));
+	Add<IndexBuffer>("IndexBufferModel", indices);
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<UniformVS<XMMATRIX>>("View", view));
-	Add(MakeUnique<UniformPS<XMMATRIX>>("View", view, 2));
+	Add<UniformVS<XMMATRIX>>("View", view);
+	Add<UniformPS<XMMATRIX>>("View", view, 2);
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<UniformVS<XMMATRIX>>("Proj", projection, 1));
+	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
 
 	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform);
-	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 2));
+	Add<UniformVS<XMMATRIX>>("Transform", transform, 2);
 
 	if (!HasSpecular)
 	{

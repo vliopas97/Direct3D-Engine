@@ -38,17 +38,17 @@ void Cube::Init()
 																	Shaders.GetBlob(ShaderType::VertexS));
 
 	Add(std::move(vertexBuffer));
-	Add(MakeUnique<IndexBuffer>("Cube", data.Indices));
+	Add<IndexBuffer>("Cube", data.Indices);
 
 	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add(MakeUnique<UniformVS<XMMATRIX>>("View", view));
-	Add(MakeUnique<UniformPS<XMMATRIX>>("View", view, 2));
+	Add<UniformVS<XMMATRIX>>("View", view);
+	Add<UniformPS<XMMATRIX>>("View", view, 2);
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add(MakeUnique<UniformVS<XMMATRIX>>("Proj", projection, 1));
+	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
 
 	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
-	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 2));
+	Add<UniformVS<XMMATRIX>>("Transform", transform, 2);
 
 	Components.Add(MakeUnique < Material>(1));
 }

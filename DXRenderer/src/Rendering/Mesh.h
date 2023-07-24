@@ -4,6 +4,7 @@
 #include "Rendering/Component.h"
 #include "Rendering/CurrentGraphicsContext.h"
 #include "Rendering/Shader.h"
+#include "Rendering/Utilities.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -18,24 +19,16 @@
 
 class Model;
 
-class PrimitiveComponent : public Component
+class PrimitiveComponent : public Component, public GPUObject
 {
 public:
 	PrimitiveComponent();
 
 	void SetTransform(DirectX::XMMATRIX transform);
-
 	DirectX::XMMATRIX GetTransform() const;
 
 protected:
-	void Add(SharedPtr<Shader> shader);
-	void Add(UniquePtr<Buffer> buffer);
-
-protected:
 	DirectX::XMFLOAT4X4 Transform;
-
-	BufferGroup Buffers;
-	ShaderGroup Shaders;
 
 private:
 	bool IsRootComponent = false;
@@ -48,14 +41,12 @@ public:
 	Mesh(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
 
 	void Bind() const override;
-
 	void Draw();
 
 private:
 	void Init(const aiMesh& mesh);
 	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
 private:
-	ComponentGroup Components;
 
 	bool HasMaterial = false;
 	bool HasSpecular = false;

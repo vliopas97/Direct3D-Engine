@@ -5,13 +5,13 @@
 #include "Rendering\Buffer.h"
 #include "Rendering\Shader.h"
 #include "Rendering\Utilities.h"
-#include "Rendering/ResourcePool.h"
+#include "Rendering\ResourcePool.h"
 #include "Rendering\Texture.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>
 
-class Actor
+class Actor : public GPUObject
 {
 public:
 	Actor();
@@ -25,10 +25,8 @@ public:
 	DirectX::XMMATRIX GetTransform() const;
 	virtual void Update();
 
-	void Add(SharedPtr<Buffer> buffer);
-	void Add(SharedPtr<Shader> shader);
-
 	virtual void GUI() {}
+
 private:
 	virtual const IndexBuffer* GetIndexBuffer() const;
 
@@ -50,8 +48,4 @@ public:
 		};
 	};
 
-protected:
-	ShaderGroup Shaders;
-	BufferGroup Buffers;
-	ComponentGroup Components;
 };

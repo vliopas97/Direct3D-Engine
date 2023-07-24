@@ -33,22 +33,6 @@ void Actor::Update()
 	Transform.Update();
 }
 
-void Actor::Add(SharedPtr<Buffer> buffer)
-{
-	const auto id = buffer->GetID();
-
-	Pool::Add(buffer);
-	Buffers.Add(Pool::GetBuffer(id));
-}
-
-void Actor::Add(SharedPtr<Shader> shader)
-{
-	auto id = shader->GetID();
-
-	Pool::Add(shader);
-	Shaders.Add(Pool::GetShader(id));
-}
-
 inline const IndexBuffer* Actor::GetIndexBuffer() const
 {
 	const IndexBuffer* ptr = Buffers.GetIndexBuffer();

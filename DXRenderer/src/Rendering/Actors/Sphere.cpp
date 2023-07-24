@@ -34,14 +34,13 @@ void Sphere::Init()
 		BufferLayout{ {"Position", LayoutElement::DataType::Float3} },
 		Shaders.GetBlob(ShaderType::VertexS));
 	Add(std::move(vertexBuffer));
-	Add(MakeUnique<IndexBuffer>("Sphere", data.Indices));
+	Add<IndexBuffer>("Sphere", data.Indices);
 
 	const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	Add(MakeUnique<UniformVS<XMMATRIX>>("ViewProj", viewProjection));
+	Add<UniformVS<XMMATRIX>>("ViewProj", viewProjection);
 
 	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
-	Add(MakeUnique<UniformVS<XMMATRIX>>("Transform", transform, 1));
+	Add<UniformVS<XMMATRIX>>("Transform", transform, 1);
 
-	Add(MakeUnique<PSConstantBuffer<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f))
-	));
+	Add<PS<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
 }
