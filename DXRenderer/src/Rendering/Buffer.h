@@ -318,6 +318,7 @@ public:
 	{
 		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, BufferID.GetAddressOf());
 	}
+
 	void Unbind() const override
 	{
 		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, nullptr);

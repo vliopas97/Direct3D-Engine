@@ -1,13 +1,6 @@
-cbuffer constBuffer : register(b0)
-{
-    float3 lightPos;
-    float3 ambient;
-    float3 diffuseColor;
-    float diffuseIntensity;
-    float attConst;
-    float attLin;
-    float attQuad;
-};
+#include "includes\LightSource.hlsli"
+#include "includes\LightVector.hlsli"
+#include "includes\ShaderOps.hlsli"
 
 cbuffer constBuffer : register(b2)
 {
@@ -23,23 +16,16 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : T
 {
     n = normalize(n);
     float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
-    float3 lightDir = lightWorld - posCamera;
-    const float distance = length(lightDir);
-    const float3 direction = normalize(lightDir);
-
-    const float att = 1.0f / (attConst + attLin * distance + attQuad * (distance * distance));
-    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(direction, n));
-
-    float3 viewDir = normalize(posCamera); // Compute view direction
-
-    const float3 w = n * dot(lightDir, n);
-    const float3 r = 2.0f * w - lightDir;
+    LightVector light = LightVectorBuild(lightWorld, posCamera);
+    
+    float att = Attenuation(attConst, attLin, attQuad, light.Distance);
+    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, light.DirectionN, n);
     
     const float4 specSample = spec.Sample(samplerStateSpec, texCoords);
     const float3 specColor = specSample.rgb;
     const float specPower = pow(2.0f, specSample.a * 13.0f);
-
-    const float3 specular = att * diffuseColor * pow(max(0.0f, dot(normalize(-r), normalize(viewDir))), specPower);
+    
+    const float3 specular = Specular(specColor, 1.0f, n, light.Direction, posCamera, att, specPower);
     
     return float4(saturate(diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular * specColor, 1.0f);
 }

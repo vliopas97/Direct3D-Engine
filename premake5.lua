@@ -78,6 +78,9 @@ project "DXRenderer"
         shadertype "Pixel"
         shaderobjectfileoutput 'src/Rendering/Shaders/build/%%(Filename)PS.cso'
 
+    filter {"files:**.hlsli"}
+        flags {"ExcludeFromBuild"}
+
     filter "configurations:Debug"
         runtime "Debug"
         symbols "on"
