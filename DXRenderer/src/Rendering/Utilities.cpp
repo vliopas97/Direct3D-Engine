@@ -40,6 +40,11 @@ void GPUObject::Add(SharedPtr<Shader> shader)
 
 void GPUObject::Add(SharedPtr<Buffer> buffer)
 {
+	AddImpl(std::move(buffer));
+}
+
+void GPUObject::AddImpl(SharedPtr<Buffer> buffer)
+{
 	const auto id = buffer->GetID();
 
 	Pool::Add(buffer);

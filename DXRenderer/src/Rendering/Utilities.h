@@ -123,7 +123,7 @@ protected:
 	GPUObject() = default;
 
 	void Add(SharedPtr<Shader> shader);
-	void Add(SharedPtr<Buffer> buffer);
+	virtual void Add(SharedPtr<Buffer> buffer);
 
 	template <class T, typename... Args>
 	void Add(Args&&... args)
@@ -133,6 +133,9 @@ protected:
 		else if constexpr (std::is_base_of_v<Shader, T>)
 			Add(MakeShared<T>(std::forward<Args>(args)...));
 	}
+
+private:
+	virtual void AddImpl(SharedPtr<Buffer> buffer);
 
 protected:
 	BufferGroup Buffers;

@@ -43,9 +43,11 @@ public:
 	void Bind() const override;
 	void Draw();
 
+
 private:
 	void Init(const aiMesh& mesh);
 	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
+	virtual void AddImpl(SharedPtr<Buffer> buffer) override;
 private:
 
 	bool HasMaterial = false;

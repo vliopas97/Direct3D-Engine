@@ -78,7 +78,6 @@ Application::Application()
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
 
-	Light.Position = { 0.0f, 2.5f, 2.5f };
 }
 
 void Application::Tick()

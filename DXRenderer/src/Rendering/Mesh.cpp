@@ -152,6 +152,11 @@ inline void Mesh::Draw()
 	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
 }
 
+void Mesh::AddImpl(SharedPtr<Buffer> buffer)
+{
+	Buffers.Add(std::move(buffer));
+}
+
 void Mesh::Init(const aiMesh& mesh)
 {
 	using namespace DirectX;

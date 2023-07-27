@@ -5,6 +5,7 @@
 # Ignore bin folders
 bin/
 bin-int/
+!ThirdParty/bin
 
 # Ignore VS files and folder
 .vs/
@@ -24,4 +25,4 @@ bin-int/
 **.cso
 
 # 3D Model files not to be ignored
-!Content/Model/**.obj
+!Content/Model/**/*.obj
