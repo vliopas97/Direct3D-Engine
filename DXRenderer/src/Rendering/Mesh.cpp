@@ -161,63 +161,14 @@ void Mesh::Init(const aiMesh& mesh)
 {
 	using namespace DirectX;
 
-	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(HasMaterial ? "PhongNormalLoadTexture" : "Phong");
-
-	const char* PSPath = "PhongNormal";
-	if (HasMaterial && HasSpecular)
-		PSPath = "PhongNormalLoadTextureWSpecular";
-	else if (HasMaterial)
-		PSPath = "PhongNormalLoadTexture";
-
-	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(PSPath);
-
-	BufferLayout layout{
-		{ LayoutElement::ElementType::Position3 },
-		{ LayoutElement::ElementType::Normal },
-		{ LayoutElement::ElementType::Tangent}, 
-		{ LayoutElement::ElementType::Bitangent}
-	};
-
-	if (HasMaterial) layout.AddElement(LayoutElement::ElementType::TexCoords);
-
-	VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), vertexShader->GetBlob() };
-
-	std::vector<unsigned short> indices;
-	indices.reserve(mesh.mNumFaces * 3);
-
-	if (HasMaterial)
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mTangents[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mBitangents[i]),
-								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-			);
-		}
-	else
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mTangents[i]),
-								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mBitangents[i]));
-		}
-
-	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-	{
-		const auto& face = mesh.mFaces[i];
-		assert(face.mNumIndices == 3);
-		indices.push_back(face.mIndices[0]);
-		indices.push_back(face.mIndices[1]);
-		indices.push_back(face.mIndices[2]);
-	}
+	auto [vertexName, pixelName] = ResolveShaders();
+	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(vertexName);
+	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(pixelName);
 
 	Add(std::move(vertexShader));
 	Add(std::move(pixelShader));
 
-	Add(builder.Release());
-	Add<IndexBuffer>("IndexBufferModel", indices);
+	ResolveVertexIndexBuffers(mesh);
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
 	Add<UniformVS<XMMATRIX>>("View", view);
@@ -241,17 +192,27 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 {
 	ASSERT(materials);
 
+	DirectX::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };
+
 	HasMaterial = mesh.mMaterialIndex >= 0;
 	if (!HasMaterial)
 		return;
 
 	auto& material = materials[mesh.mMaterialIndex];
 	aiString filename;
-	material->GetTexture(aiTextureType_DIFFUSE, 0, &filename);
-	Components.Add(MakeUnique<Texture>(path + filename.C_Str()));
+	if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
+	{
+		HasDiffuse = true;
+		Components.Add(MakeUnique<Texture>(path + filename.C_Str()));
+	}
+	else
+		material->Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));
 
-	material->GetTexture(aiTextureType_NORMALS, 0, &filename);
-	Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
+	if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
+	{
+		HasNormals = true;
+		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
+	}
 
 	if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 	{
@@ -260,6 +221,112 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 	}
 	else
 		material->Get(AI_MATKEY_SHININESS, Shininess);
+}
+
+std::pair<const char*, const char*> Mesh::ResolveShaders() const
+{
+	const char* vertexName, * pixelName;
+
+	// Vertex Shader resolution
+	if (HasDiffuse && HasNormals)
+		vertexName = "PhongNormalLoadTexture";
+	else if (HasDiffuse && !HasNormals)
+		vertexName = "PhongLoadTexture";
+	else
+		vertexName = "Phong";
+
+	// Pixel Shader resolution
+	if (HasDiffuse && HasNormals && HasSpecular)
+		pixelName = "PhongNormalLoadTextureWSpecular";
+	else if (HasDiffuse && HasNormals && !HasSpecular)
+		pixelName = "PhongNormalLoadTexture";
+	else if (HasDiffuse && !HasNormals && HasSpecular)
+		pixelName = "PhongLoadTextureWSpecular";
+	else if (HasDiffuse && !HasNormals && !HasSpecular)
+		pixelName = "PhongLoadTexture";
+	else
+		pixelName = "Phong";
+
+	return { vertexName, pixelName };
+}
+
+void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
+{
+	if (HasDiffuse && HasNormals)
+	{
+		BufferLayout layout{
+		{ LayoutElement::ElementType::Position3 },
+		{ LayoutElement::ElementType::Normal },
+		{ LayoutElement::ElementType::Tangent},
+		{ LayoutElement::ElementType::Bitangent},
+		{ LayoutElement::ElementType::TexCoords}
+		};
+
+		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mTangents[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mBitangents[i]),
+								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+			);
+		}
+
+		Add(builder.Release());
+	}
+	else if (HasDiffuse)
+	{
+		BufferLayout layout{
+		{ LayoutElement::ElementType::Position3 },
+		{ LayoutElement::ElementType::Normal },
+		{ LayoutElement::ElementType::TexCoords}
+		};
+
+		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+			);
+		}
+
+		Add(builder.Release());
+	}
+	else
+	{
+		BufferLayout layout{
+		{ LayoutElement::ElementType::Position3 },
+		{ LayoutElement::ElementType::Normal }
+		};
+
+		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			builder.EmplaceBack(*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
+								*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i])
+			);
+		}
+	
+		Add(builder.Release());
+	}
+
+	std::vector<unsigned short> indices;
+	indices.reserve(mesh.mNumFaces * 3);
+	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	{
+		const auto& face = mesh.mFaces[i];
+		assert(face.mNumIndices == 3);
+		indices.push_back(face.mIndices[0]);
+		indices.push_back(face.mIndices[1]);
+		indices.push_back(face.mIndices[2]);
+	}
+
+	Add<IndexBuffer>("IndexBufferModel", indices);
 }
 
 Node::Node(Model& actor, const std::string& name)

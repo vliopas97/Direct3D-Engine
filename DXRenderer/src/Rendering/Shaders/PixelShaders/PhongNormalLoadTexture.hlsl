@@ -7,6 +7,7 @@ cbuffer constBuffer : register(b1)
     float3 materialColor;
     float specularIntensity;
     float Shininess;
+    bool NormalMapEnabled;
 };
 
 cbuffer constBuffer : register(b2)

@@ -15,6 +15,9 @@ inline Sampler::Sampler(uint32_t slot)
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	CurrentGraphicsContext::Device()->CreateSamplerState(&samplerDesc, &SamplerID);
 }
@@ -41,28 +44,26 @@ Texture::Texture(const std::string& filename, uint32_t slot)
 	D3D11_TEXTURE2D_DESC textureDesc{};
 	textureDesc.Width = Width;
 	textureDesc.Height = Height;
-	textureDesc.MipLevels = 1;
+	textureDesc.MipLevels = 0;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE |D3D11_BIND_RENDER_TARGET;
 	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
+	textureDesc.MiscFlags = D3D10_RESOURCE_MISC_GENERATE_MIPS;
 
-	D3D11_SUBRESOURCE_DATA subresourceData{};
-	subresourceData.pSysMem = data;
-	subresourceData.SysMemPitch = Width * desiredChannels;
-
-	CurrentGraphicsContext::Device()->CreateTexture2D(&textureDesc, &subresourceData, &TextureID);
+	CurrentGraphicsContext::Device()->CreateTexture2D(&textureDesc, nullptr, &TextureID);
+	CurrentGraphicsContext::Context()->UpdateSubresource(TextureID.Get(), 0, nullptr, data, Width * channels * sizeof(char), 0);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC sourceDesc{};
 	sourceDesc.Format = textureDesc.Format;
 	sourceDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	sourceDesc.Texture2D.MostDetailedMip = 0;
-	sourceDesc.Texture2D.MipLevels = 1;
+	sourceDesc.Texture2D.MipLevels = -1;
 	CurrentGraphicsContext::Device()->CreateShaderResourceView(TextureID.Get(), &sourceDesc, &TextureView);
+	CurrentGraphicsContext::Context()->GenerateMips(TextureView.Get());
 }
 
 inline void Texture::Bind() const

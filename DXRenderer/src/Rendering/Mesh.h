@@ -47,13 +47,18 @@ public:
 private:
 	void Init(const aiMesh& mesh);
 	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
+	std::pair<const char*, const char*> ResolveShaders() const;
+	void ResolveVertexIndexBuffers(const aiMesh& mesh);
+
 	virtual void AddImpl(SharedPtr<Buffer> buffer) override;
 private:
 
 	bool HasMaterial = false;
+	bool HasDiffuse = false;
+	bool HasNormals = false;
 	bool HasSpecular = false;
 
-	float Shininess = 25.0f;
+	float Shininess = 2.0f;
 };
 
 class NodeBase
