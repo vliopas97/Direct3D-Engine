@@ -34,6 +34,6 @@ private:
 	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 Rotation = { 0.0f, 0.0f, 0.0f };
 
-	float TranslationSpeed = 2.0f, RotationSpeed = 0.05f;
+	float TranslationSpeed = 10.0f, RotationSpeed = 0.05f;
 
 };

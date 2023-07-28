@@ -61,23 +61,20 @@ Application::Application()
 
 	// TEST
 	TransformationIntrinsics trInt;
-	trInt.Z = 15.0f;
-	trInt.X = 2.0f;
-	trInt.Yaw = 180.0f;
+	trInt.Sx = trInt.Sy = trInt.Sz = 0.05f;
+	trInt.X = -10.0f;
 	trInt.Roll = 180.0f;
-	trInt.Y = -10.0f;
-	//Actors.emplace_back(MakeUnique<Model>("Nanosuit\\nanosuit.obj", trInt));
-
-	TransformationIntrinsics trInt2;
-	trInt2.Y = 2.0f;
-	trInt2.Z = 7.0f;
-	trInt2.Sx = trInt2.Sy = trInt2.Sz = 5.0f;
-	//Actors.emplace_back(MakeUnique<Plane>(trInt2));
-	Actors.emplace_back(MakeUnique<Model>("Brickwall\\brickwall.obj", trInt2));
+	trInt.Yaw = -90.0f;
+	Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
 
+	Light.Properties.Ambient = { 0.05f, 0.05f, 0.05f };
+	Light.Properties.Position = { -12.0f, 12.0f, 15.0f };
+
+	auto& camera = MainWindow->GetGraphicsContext().GetCamera();
+	camera.SetPosition({ -13.5f,6.0f,3.5f });
 }
 
 void Application::Tick()
