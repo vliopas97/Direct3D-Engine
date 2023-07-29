@@ -121,21 +121,26 @@ class GPUObject
 {
 protected:
 	GPUObject() = default;
+	virtual ~GPUObject() = default;
 
 	void Add(SharedPtr<Shader> shader);
-	virtual void Add(SharedPtr<Buffer> buffer);
+	void Add(SharedPtr<Buffer> buffer);
+	void Add(UniquePtr<Component> component);
 
-	template <class T, typename... Args>
+	template <class T,
+		typename = std::enable_if_t<std::is_base_of<Shader, T>::value || std::is_base_of<Buffer, T>::value
+		|| std::is_base_of<Component, T>::value>,
+		typename... Args>
 	void Add(Args&&... args)
 	{
 		if constexpr (std::is_base_of_v<Buffer, T>)
 			Add(MakeShared<T>(std::forward<Args>(args)...));
-		else if constexpr (std::is_base_of_v<Shader, T>)
-			Add(MakeShared<T>(std::forward<Args>(args)...));
+		else
+			if constexpr (std::is_base_of_v<Shader, T>)
+				Add(MakeShared<T>(std::forward<Args>(args)...));
+			else
+				Add(MakeUnique<T>(std::forward<Args>(args)...));
 	}
-
-private:
-	virtual void AddImpl(SharedPtr<Buffer> buffer);
 
 protected:
 	BufferGroup Buffers;

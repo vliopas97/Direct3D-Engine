@@ -126,12 +126,14 @@ inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
 }
 
-inline Mesh::Mesh(const aiMesh& mesh)
+inline Mesh::Mesh(const aiMesh& mesh, const std::string& meshName)
+	:Name(meshName)
 {
 	Init(mesh);
 }
 
-Mesh::Mesh(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)
+Mesh::Mesh(const aiMesh& mesh, const std::string& meshName, const aiMaterial* const* materials, const std::string& path)
+	:Name(meshName)
 {
 	LoadMaterial(mesh, materials, path);
 	Init(mesh);
@@ -152,39 +154,31 @@ inline void Mesh::Draw()
 	CurrentGraphicsContext::Context()->DrawIndexed(ptr->GetCount(), 0, 0);
 }
 
-void Mesh::AddImpl(SharedPtr<Buffer> buffer)
-{
-	Buffers.Add(std::move(buffer));
-}
-
 void Mesh::Init(const aiMesh& mesh)
 {
 	using namespace DirectX;
 
 	auto [vertexName, pixelName] = ResolveShaders();
-	SharedPtr<VertexShader> vertexShader = MakeShared<VertexShader>(vertexName);
-	SharedPtr<PixelShader>pixelShader = MakeShared<PixelShader>(pixelName);
-
-	Add(std::move(vertexShader));
-	Add(std::move(pixelShader));
+	Add<VertexShader>(vertexName);
+	Add<PixelShader>(pixelName);
 
 	ResolveVertexIndexBuffers(mesh);
 
 	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add<UniformVS<XMMATRIX>>("View", view);
-	Add<UniformPS<XMMATRIX>>("View", view, 2);
+	Add<UniformVS<XMMATRIX>>(Name + "View", view);
+	Add<UniformPS<XMMATRIX>>(Name + "View", view, 2);
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
+	Add<UniformVS<XMMATRIX>>(Name + "Proj", projection, 1);
 
 	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform);
-	Add<UniformVS<XMMATRIX>>("Transform", transform, 2);
+	Add<UniformVS<XMMATRIX>>(Name + "Transform", transform, 2);
 
 	if (!HasSpecular)
 	{
 		auto material = MakeUnique<Material>(1);
 		material->Properties.Shininess = Shininess;
-		Components.Add(std::move(material));
+		Add(std::move(material));
 	}
 }
 
@@ -203,7 +197,7 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 	if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasDiffuse = true;
-		Components.Add(MakeUnique<Texture>(path + filename.C_Str()));
+		Add<Texture>(path + filename.C_Str());
 	}
 	else
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));
@@ -211,13 +205,13 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 	if (material->GetTexture(aiTextureType_NORMALS, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasNormals = true;
-		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 1));
+		Add<Texture>(path + filename.C_Str(), 1);
 	}
 
 	if (material->GetTexture(aiTextureType_SPECULAR, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasSpecular = true;
-		Components.Add(MakeUnique<Texture>(path + filename.C_Str(), 2));
+		Add<Texture>(path + filename.C_Str(), 2);
 	}
 	else
 		material->Get(AI_MATKEY_SHININESS, Shininess);
@@ -262,7 +256,7 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 		{ LayoutElement::ElementType::TexCoords}
 		};
 
-		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+		VertexBufferBuilder builder{ Name + "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
 
 		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 		{
@@ -284,7 +278,7 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 		{ LayoutElement::ElementType::TexCoords}
 		};
 
-		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+		VertexBufferBuilder builder{ Name + "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
 
 		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 		{
@@ -303,7 +297,7 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 		{ LayoutElement::ElementType::Normal }
 		};
 
-		VertexBufferBuilder builder{ "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
+		VertexBufferBuilder builder{ Name + "VertexBufferModel", std::move(layout), Shaders.GetBlob(ShaderType::VertexS) };
 
 		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 		{
@@ -326,7 +320,7 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 		indices.push_back(face.mIndices[2]);
 	}
 
-	Add<IndexBuffer>("IndexBufferModel", indices);
+	Add<IndexBuffer>(Name + "IndexBufferModel", indices);
 }
 
 Node::Node(Model& actor, const std::string& name)
@@ -398,8 +392,9 @@ UniquePtr<Node> Node::Build(Model& actor, const std::string& filename)
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		materials ? meshes.emplace_back(new Mesh(*scene->mMeshes[index], materials, customNode->Owner.GetPath())) :
-			meshes.emplace_back(new Mesh(*scene->mMeshes[index]));
+		const auto& mesh = *scene->mMeshes[index];
+		materials ? meshes.emplace_back(new Mesh(mesh, mesh.mName.C_Str(), materials, customNode->Owner.GetPath())) :
+			meshes.emplace_back(new Mesh(mesh, mesh.mName.C_Str()));
 	}
 
 	customNode->Meshes = std::move(meshes);
@@ -458,8 +453,9 @@ inline UniquePtr<NodeInternal> Node::BuildImpl(const aiScene& scene, const aiNod
 	for (size_t i = 0; i < node.mNumMeshes; i++)
 	{
 		const auto index = node.mMeshes[i];
-		materials ? meshes.emplace_back(new Mesh(*scene.mMeshes[index], materials, owner.GetPath())) :
-			meshes.emplace_back(new Mesh(*scene.mMeshes[index]));
+		const auto& mesh = *scene.mMeshes[index];
+		materials ? meshes.emplace_back(new Mesh(mesh, mesh.mName.C_Str(), materials, owner.GetPath())) :
+			meshes.emplace_back(new Mesh(mesh, mesh.mName.C_Str()));
 	}
 
 	UniquePtr<NodeInternal> customNode = MakeUnique<NodeInternal>(owner, node.mName.C_Str());

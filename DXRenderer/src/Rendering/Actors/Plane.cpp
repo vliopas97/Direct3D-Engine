@@ -46,8 +46,8 @@ void Plane::Init()
 {
 	using namespace DirectX;
 
-	Add(MakeShared<VertexShader>("PhongLoadTexture"));
-	Add(MakeShared<PixelShader>("PhongNormal"));
+	Add<VertexShader>("PhongLoadTexture");
+	Add<PixelShader>("PhongNormal");
 
 	struct VertexElementNormalTex : public Primitives::VertexElement
 	{
@@ -82,7 +82,7 @@ void Plane::Init()
 	auto material = MakeUnique<Material>(1);
 	material->Properties.specularIntensity = 0.3f;
 	material->Properties.Shininess = 20.0f;
-	Components.Add(std::move(material));
-	Components.Add(MakeUnique<Texture>("Img\\brickwall.jpg", 0));
-	Components.Add(MakeUnique<Texture>("Img\\brickwall_normal.jpg", 1));
+	Add(std::move(material));
+	Add<Texture>("Img\\brickwall.jpg", 0);
+	Add<Texture>("Img\\brickwall_normal.jpg", 1);
 }

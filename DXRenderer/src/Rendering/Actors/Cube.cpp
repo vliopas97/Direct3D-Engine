@@ -19,8 +19,8 @@ Cube::Cube(const TransformationIntrinsics& intrinsics)
 void Cube::Init()
 {
 	using namespace DirectX;
-	Add(MakeShared<VertexShader>("Phong"));
-	Add(MakeShared<PixelShader>("Phong"));
+	Add<VertexShader>("Phong");
+	Add<PixelShader>("Phong");
 
 	struct VertexElementNormal : public Primitives::VertexElement
 	{
@@ -50,5 +50,5 @@ void Cube::Init()
 	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
 	Add<UniformVS<XMMATRIX>>("Transform", transform, 2);
 
-	Components.Add(MakeUnique < Material>(1));
+	Add<Material>(1);
 }

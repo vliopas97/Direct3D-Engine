@@ -40,13 +40,13 @@ void GPUObject::Add(SharedPtr<Shader> shader)
 
 void GPUObject::Add(SharedPtr<Buffer> buffer)
 {
-	AddImpl(std::move(buffer));
-}
-
-void GPUObject::AddImpl(SharedPtr<Buffer> buffer)
-{
 	const auto id = buffer->GetID();
 
 	Pool::Add(buffer);
 	Buffers.Add(Pool::GetBuffer(id));
+}
+
+void GPUObject::Add(UniquePtr<Component> component)
+{
+	Components.Add(std::move(component));
 }

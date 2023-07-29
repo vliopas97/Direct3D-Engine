@@ -37,8 +37,8 @@ private:
 class Mesh : public PrimitiveComponent
 {
 public:
-	Mesh(const aiMesh& mesh);
-	Mesh(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
+	Mesh(const aiMesh& mesh, const std::string& meshName);
+	Mesh(const aiMesh& mesh, const std::string& meshName, const aiMaterial* const* materials, const std::string& path);
 
 	void Bind() const override;
 	void Draw();
@@ -50,8 +50,8 @@ private:
 	std::pair<const char*, const char*> ResolveShaders() const;
 	void ResolveVertexIndexBuffers(const aiMesh& mesh);
 
-	virtual void AddImpl(SharedPtr<Buffer> buffer) override;
 private:
+	std::string Name;
 
 	bool HasMaterial = false;
 	bool HasDiffuse = false;

@@ -24,8 +24,8 @@ void Sphere::Init()
 {
 	using namespace DirectX;
 
-	Actor::Add(MakeShared<VertexShader>("default"));
-	Actor::Add(MakeShared<PixelShader>("default"));
+	Add<VertexShader>("default");
+	Add<PixelShader>("default");
 	
 	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
 	data.Transform(XMMatrixScaling(0.1f, 0.1f, 0.1f));

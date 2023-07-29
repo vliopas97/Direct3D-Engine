@@ -6,6 +6,7 @@ class Component
 {
 public:
 	virtual void Bind() const {};
+	virtual ~Component() = default;
 };
 
 class ComponentGroup : public Component
