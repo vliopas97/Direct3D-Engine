@@ -98,24 +98,25 @@ public:
 	{
 		using namespace DirectX;
 		using namespace DirectX::PackedVector;
+		using DataType = LayoutElement::DataType;
 
 		const auto& element = Layout[i];
 		auto attributePtr = Ptr + element.GetOffset();
 
 		switch (element.GetType())
 		{
-			case LayoutElement::DataType::UChar2Norm: SetAttribute<XMUBYTEN2>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::UChar4Norm: SetAttribute<XMUBYTEN4>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::UChar2: SetAttribute<XMUBYTE2>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::UChar4: SetAttribute<XMUBYTE4>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Float: SetAttribute<float>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Float2: SetAttribute<XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Float3: SetAttribute<XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Float4: SetAttribute<XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Int: SetAttribute<int>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Int2: SetAttribute<XMINT2>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Int3: SetAttribute<XMINT3>(attributePtr, std::forward<T>(attr)); break;
-			case LayoutElement::DataType::Int4: SetAttribute<XMINT4>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::UChar2Norm: SetAttribute<XMUBYTEN2>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::UChar4Norm: SetAttribute<XMUBYTEN4>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::UChar2: SetAttribute<XMUBYTE2>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::UChar4: SetAttribute<XMUBYTE4>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Float: SetAttribute<float>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Float2: SetAttribute<XMFLOAT2>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Float3: SetAttribute<XMFLOAT3>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Float4: SetAttribute<XMFLOAT4>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Int: SetAttribute<int>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Int2: SetAttribute<XMINT2>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Int3: SetAttribute<XMINT3>(attributePtr, std::forward<T>(attr)); break;
+			case DataType::Int4: SetAttribute<XMINT4>(attributePtr, std::forward<T>(attr)); break;
 		}
 	}
 
@@ -163,6 +164,7 @@ class Buffer : public BufferBase
 {
 public:
 	virtual std::string GetID() = 0;
+	virtual ~Buffer() = default;
 
 protected:
 	Buffer(const std::string& tag);
@@ -370,11 +372,10 @@ class Uniform : public Buffer
 public:
 
 	template<typename... Args>
+	requires std::is_constructible_v<T, Args...>
 	Uniform(Args&&... args)
 		:Buffer(std::get<0>(std::forward_as_tuple(std::forward<Args>(args)...)))
 	{
-		ASSERT(sizeof...(Args) >= 2);
-
 		Resource = &(std::get<1>(std::forward_as_tuple(std::forward<Args>(args)...)));
 		ConstantBufferRef = MakeUnique<T>(std::forward<Args>(args)...);
 		Tag = ConstantBufferRef->Tag;
@@ -438,7 +439,7 @@ private:
 class BufferGroup : public BufferBase
 {
 public:
-	void Add(SharedPtr<Buffer> buffer);
+	void Add(SharedPtr<BufferBase> buffer);
 	const IndexBuffer* GetIndexBuffer() const;
 
 	virtual void Bind() const override;
@@ -446,7 +447,7 @@ public:
 
 	inline size_t Size() const { return Buffers.size(); }
 private:
-	std::vector<SharedPtr<Buffer>> Buffers;
+	std::vector<SharedPtr<BufferBase>> Buffers;
 };
 
 class BufferPool

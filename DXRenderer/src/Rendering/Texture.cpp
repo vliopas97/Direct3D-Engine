@@ -29,16 +29,17 @@ inline void Sampler::Bind() const
 }
 
 Texture::Texture(const std::string& filename, uint32_t slot)
-:Slot(slot), TextureSampler{Slot}
+	:Slot(slot), TextureSampler{ Slot }
 {
 	int width, height, channels;
-	int desiredChannels = 4;
 	stbi_uc* data;
 
 	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\" + filename;
 
+	int desiredChannels = 4;
 	data = stbi_load(filepath.c_str(), &width, &height, &channels, desiredChannels);
 
+	Alpha = channels == 4;
 	Height = height;
 	Width = width;
 
@@ -51,12 +52,12 @@ Texture::Texture(const std::string& filename, uint32_t slot)
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE |D3D11_BIND_RENDER_TARGET;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = D3D10_RESOURCE_MISC_GENERATE_MIPS;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	CurrentGraphicsContext::Device()->CreateTexture2D(&textureDesc, nullptr, &TextureID);
-	CurrentGraphicsContext::Context()->UpdateSubresource(TextureID.Get(), 0, nullptr, data, Width * channels * sizeof(char), 0);
+	CurrentGraphicsContext::Context()->UpdateSubresource(TextureID.Get(), 0, nullptr, data, Width * desiredChannels * sizeof(char), 0);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC sourceDesc{};
 	sourceDesc.Format = textureDesc.Format;

@@ -127,10 +127,8 @@ protected:
 	void Add(SharedPtr<Buffer> buffer);
 	void Add(UniquePtr<Component> component);
 
-	template <class T,
-		typename = std::enable_if_t<std::is_base_of<Shader, T>::value || std::is_base_of<Buffer, T>::value
-		|| std::is_base_of<Component, T>::value>,
-		typename... Args>
+	template <class T, typename... Args>
+	requires std::is_base_of_v<Shader, T> || std::is_base_of_v<Buffer, T> || std::is_base_of_v<Component, T>
 	void Add(Args&&... args)
 	{
 		if constexpr (std::is_base_of_v<Buffer, T>)

@@ -26,10 +26,12 @@ public:
 	inline uint32_t GetHeight() const { return Height; }
 
 	void Bind() const override;
+	inline bool HasAlpha() const { return Alpha; }
 
 private:
 	uint32_t Width, Height;
 	uint32_t Slot;
+	bool Alpha = false;
 	Sampler TextureSampler;
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureID;

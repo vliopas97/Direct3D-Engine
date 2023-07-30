@@ -307,9 +307,9 @@ void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStenc
 	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
 }
 
-void BufferGroup::Add(SharedPtr<Buffer> buffer)
+void BufferGroup::Add(SharedPtr<BufferBase> buffer)
 {
-	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const SharedPtr<Buffer>& element)
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const SharedPtr<BufferBase>& element)
 		{
 			return typeid(*element) == typeid(buffer);
 		});
@@ -321,7 +321,7 @@ void BufferGroup::Add(SharedPtr<Buffer> buffer)
 
 const IndexBuffer* BufferGroup::GetIndexBuffer() const
 {
-	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const SharedPtr<Buffer>& element)
+	auto it = std::find_if(Buffers.begin(), Buffers.end(), [](const SharedPtr<BufferBase>& element)
 		{
 			return dynamic_cast<IndexBuffer*>(element.get());
 		});
