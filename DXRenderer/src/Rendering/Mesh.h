@@ -55,6 +55,7 @@ private:
 
 	bool HasMaterial = false;
 	bool HasDiffuse = false;
+	bool HasAlphaDiffuse = false;
 	bool HasNormals = false;
 	bool HasSpecular = false;
 

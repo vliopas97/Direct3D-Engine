@@ -155,7 +155,7 @@ void VertexBuffer::Unbind() const
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 0, nullptr, 0, 0);
 }
 
-std::string VertexBuffer::GetID()
+std::string VertexBuffer::GetID() const
 {
 	return std::string(typeid(VertexBuffer).name()) + "#" + Tag;
 }
@@ -249,7 +249,7 @@ UINT IndexBuffer::GetCount() const
 	return Count;
 }
 
-std::string IndexBuffer::GetID()
+std::string IndexBuffer::GetID() const
 {
 	return std::string(typeid(IndexBuffer).name()) + "#" + Tag;
 }
@@ -354,7 +354,7 @@ inline Buffer::Buffer(const std::string& tag)
 	: Tag(tag)
 {}
 
-void BufferPool::Add(SharedPtr<Buffer> buffer)
+void BufferPool::Add(SharedPtr<BufferBase> buffer)
 {
 	if (Get(buffer->GetID()))
 		return;
@@ -362,7 +362,7 @@ void BufferPool::Add(SharedPtr<Buffer> buffer)
 	Buffers[buffer->GetID()] = std::move(buffer);
 }
 
-SharedPtr<Buffer> BufferPool::Get(const std::string& id)
+SharedPtr<BufferBase> BufferPool::Get(const std::string& id)
 {
 	auto it = Buffers.find(id);
 	if (it == Buffers.end())

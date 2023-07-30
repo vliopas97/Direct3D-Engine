@@ -124,14 +124,14 @@ protected:
 	virtual ~GPUObject() = default;
 
 	void Add(SharedPtr<Shader> shader);
-	void Add(SharedPtr<Buffer> buffer);
+	void Add(SharedPtr<BufferBase> buffer);
 	void Add(UniquePtr<Component> component);
 
 	template <class T, typename... Args>
-	requires std::is_base_of_v<Shader, T> || std::is_base_of_v<Buffer, T> || std::is_base_of_v<Component, T>
+	requires std::is_base_of_v<Shader, T> || std::is_base_of_v<BufferBase, T> || std::is_base_of_v<Component, T>
 	void Add(Args&&... args)
 	{
-		if constexpr (std::is_base_of_v<Buffer, T>)
+		if constexpr (std::is_base_of_v<BufferBase, T>)
 			Add(MakeShared<T>(std::forward<Args>(args)...));
 		else
 			if constexpr (std::is_base_of_v<Shader, T>)

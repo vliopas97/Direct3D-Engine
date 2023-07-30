@@ -155,15 +155,15 @@ enum BufferType
 class BufferBase
 {
 public:
+	virtual ~BufferBase() = default;
 	virtual void Bind() const = 0;
 	virtual void Unbind() const = 0;
-	virtual ~BufferBase() = default;
+	virtual std::string GetID() const = 0;
 };
 
 class Buffer : public BufferBase
 {
 public:
-	virtual std::string GetID() = 0;
 	virtual ~Buffer() = default;
 
 protected:
@@ -211,7 +211,7 @@ public:
 
 	void Bind() const override;
 	void Unbind() const override;
-	std::string GetID() override;
+	std::string GetID() const override;
 
 	BufferType GetType() const;
 
@@ -262,7 +262,7 @@ public:
 
 	BufferType GetType() const;
 	UINT GetCount() const;
-	std::string GetID() override;
+	std::string GetID() const override;
 
 private:
 	static const BufferType Type = BufferType::IndexB;
@@ -326,7 +326,7 @@ public:
 		CurrentGraphicsContext::Context()->VSSetConstantBuffers(Slot, 1, nullptr);
 	}
 
-	std::string GetID() override
+	std::string GetID() const override
 	{
 		return std::string(typeid(VSConstantBuffer).name()) + "#" + Tag;
 	}
@@ -351,7 +351,7 @@ public:
 		CurrentGraphicsContext::Context()->PSSetConstantBuffers(Slot, 1, nullptr);
 	}
 
-	std::string GetID() override
+	std::string GetID() const override
 	{
 		return std::string(typeid(PSConstantBuffer).name()) + "#" + Tag;
 	}
@@ -393,7 +393,7 @@ public:
 		ConstantBufferRef->Unbind();
 	}
 
-	std::string GetID() override
+	std::string GetID() const override
 	{
 		return std::string(typeid(Uniform).name()) + "#" + std::string(typeid(ConstantBufferRef).name()) + "#" + Tag
 			+ std::to_string(ConstantBufferRef->Slot);
@@ -436,14 +436,14 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
 };
 
-class BufferGroup : public BufferBase
+class BufferGroup
 {
 public:
 	void Add(SharedPtr<BufferBase> buffer);
 	const IndexBuffer* GetIndexBuffer() const;
 
-	virtual void Bind() const override;
-	virtual void Unbind() const override;
+	virtual void Bind() const;
+	virtual void Unbind() const;
 
 	inline size_t Size() const { return Buffers.size(); }
 private:
@@ -452,10 +452,10 @@ private:
 
 class BufferPool
 {
-	void Add(SharedPtr<Buffer> buffer);
-	SharedPtr<Buffer> Get(const std::string& id);
+	void Add(SharedPtr<BufferBase> buffer);
+	SharedPtr<BufferBase> Get(const std::string& id);
 
-	std::unordered_map<std::string, SharedPtr<Buffer>> Buffers;
+	std::unordered_map<std::string, SharedPtr<BufferBase>> Buffers;
 
 	friend class Pool;
 };

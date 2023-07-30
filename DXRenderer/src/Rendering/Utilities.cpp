@@ -38,7 +38,7 @@ void GPUObject::Add(SharedPtr<Shader> shader)
 	Shaders.Add(Pool::GetShader(id));
 }
 
-void GPUObject::Add(SharedPtr<Buffer> buffer)
+void GPUObject::Add(SharedPtr<BufferBase> buffer)
 {
 	const auto id = buffer->GetID();
 

@@ -125,9 +125,9 @@ private:
 
 
 #ifndef NDEBUG
-#define GRAPHICS_EXCEPTION(hr) GraphicsException( __LINE__,__FILE__,(hr),InfoManager.GetMessages() )
+#define GRAPHICS_EXCEPTION(hr) throw GraphicsException( __LINE__,__FILE__,(hr),InfoManager.GetMessages() )
 #define GRAPHICS_ASSERT(hrcall)\
-{ \
+{	DXGIInfoManager InfoManager;\
 	InfoManager.Reset();\
     HRESULT hr = (hrcall); \
     if (FAILED(hr)) \

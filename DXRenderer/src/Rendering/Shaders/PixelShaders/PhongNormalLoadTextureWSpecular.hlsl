@@ -17,6 +17,13 @@ SamplerState samplerStateSpec : register(s2);
 
 float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, float3 b : Bitangent, float2 texCoords : TexCoords) : SV_Target
 {
+    float4 texSample = tex.Sample(samplerState, texCoords);
+    
+    clip(texSample.a < 0.1f? -1 : 1);
+    
+    if (dot(n, posCamera) >= 0)
+        n = -n;
+    
     n = normalPreprocessing(n, t, b, texCoords, normalMap, samplerStateNormal);
     
     float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
@@ -31,5 +38,5 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, 
 
     const float3 specular = Specular(specColor, 1.0f, n, light.Direction, posCamera, att, specPower);
     
-    return float4(saturate(diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular, 1.0f);
+    return float4(saturate(diffuse + ambient) * texSample.rgb + specular, texSample.a);
 }

@@ -3,6 +3,7 @@
 
 #include "Actors/Model.h"
 #include "Rendering/Material.h"
+#include "Rendering/State.h"
 
 class NodeInternal : public NodeBase
 {
@@ -180,6 +181,8 @@ void Mesh::Init(const aiMesh& mesh)
 		material->Properties.Shininess = Shininess;
 		Add(std::move(material));
 	}
+
+	Add<RasterizerState>(HasAlphaDiffuse);
 }
 
 void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)
@@ -197,7 +200,9 @@ void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, 
 	if (material->GetTexture(aiTextureType_DIFFUSE, 0, &filename) == aiReturn_SUCCESS)
 	{
 		HasDiffuse = true;
-		Add<Texture>(path + filename.C_Str());
+		auto t = MakeUnique<Texture>(path + filename.C_Str());
+		HasAlphaDiffuse = t->HasAlpha();
+		Add(std::move(t));
 	}
 	else
 		material->Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));
@@ -231,7 +236,7 @@ std::pair<const char*, const char*> Mesh::ResolveShaders() const
 
 	// Pixel Shader resolution
 	if (HasDiffuse && HasNormals && HasSpecular)
-		pixelName = "PhongNormalLoadTextureWSpecular";
+		pixelName = HasAlphaDiffuse ? "PhongNormalLoadTextureWSpecularWTransparency" : "PhongNormalLoadTextureWSpecular";
 	else if (HasDiffuse && HasNormals && !HasSpecular)
 		pixelName = "PhongNormalLoadTexture";
 	else if (HasDiffuse && !HasNormals && HasSpecular)

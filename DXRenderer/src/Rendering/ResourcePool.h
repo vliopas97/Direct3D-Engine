@@ -8,9 +8,9 @@ class Pool
 {
 public:
 	static void Add(SharedPtr<Shader> shader);
-	static void Add(SharedPtr<Buffer> buffer);
+	static void Add(SharedPtr<BufferBase> buffer);
 	static SharedPtr<Shader> GetShader(const std::string& id);
-	static SharedPtr<Buffer> GetBuffer(const std::string& id);
+	static SharedPtr<BufferBase> GetBuffer(const std::string& id);
 private:
 	static Pool& Get();
 

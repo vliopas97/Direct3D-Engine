@@ -15,17 +15,13 @@ enum ShaderType
 	Size
 };
 
-struct IShader
-{
-	virtual ~IShader() = default;
-	virtual void Bind() const = 0;
-	virtual void Unbind() const = 0;
-};
-
-struct Shader : public IShader
+struct Shader
 {
 	Shader(const std::string& shaderName);
 	virtual ~Shader() = default;
+
+	virtual void Bind() const = 0;
+	virtual void Unbind() const = 0;
 
 	const Microsoft::WRL::ComPtr<ID3DBlob>& GetBlob() const;
 	virtual const ShaderType& GetType() const = 0;
@@ -75,12 +71,12 @@ private:
 	static const ShaderType Type = ShaderType::PixelS;
 };
 
-struct ShaderGroup : public IShader
+struct ShaderGroup
 {
 	void Add(SharedPtr<Shader> shader);
 
-	virtual void Bind() const override;
-	virtual void Unbind() const override;
+	virtual void Bind() const;
+	virtual void Unbind() const;
 
 	const Microsoft::WRL::ComPtr<ID3DBlob>& GetBlob(ShaderType type) const;
 	inline size_t Size() const { return Shaders.size(); }
