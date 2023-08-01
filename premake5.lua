@@ -34,9 +34,9 @@ project "DXRenderer"
         "%{prj.name}/src",
         "%{prj.name}/vendor/glm",
         "%{prj.name}/vendor/DXErr",
-        "%{prj.name}/vendor/stb_image",
         "%{prj.name}/vendor/ImGui",
-        "%{prj.name}/vendor/assimp/include"
+        "%{prj.name}/vendor/assimp/include",
+        "%{prj.name}/vendor/DirectXTex/include"
     }
     
     links
@@ -45,7 +45,8 @@ project "DXRenderer"
         "d3dcompiler.lib",
         "dxguid.lib",
         "ImGui",
-        "assimp"
+        "assimp",
+        "DirectXTex.lib"
     }
 
     files
@@ -54,9 +55,7 @@ project "DXRenderer"
         "%{prj.name}/src/**.cpp",
         "%{prj.name}/src/**.hlsl",
         "%{prj.name}/vendor/DXErr/**.h",
-        "%{prj.name}/vendor/DXErr/**.cpp",
-        "%{prj.name}/vendor/stb_image/**.h",
-        "%{prj.name}/vendor/stb_image/**.cpp"
+        "%{prj.name}/vendor/DXErr/**.cpp"
     }
 
     removefiles
@@ -84,12 +83,14 @@ project "DXRenderer"
     filter "configurations:Debug"
         runtime "Debug"
         symbols "on"
+        libdirs {"%{prj.name}/vendor/DirectXTex/bin/debug" }
 
     filter "configurations:Release"
         runtime "Release"
         symbols "on"
         optimize "Full"
         flags {"LinkTimeOptimization"}
+        libdirs {"%{prj.name}/vendor/DirectXTex/bin/release" }
 
         defines{
             "NDEBUG"

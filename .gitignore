@@ -6,6 +6,7 @@
 bin/
 bin-int/
 !ThirdParty/bin
+!DXRenderer/vendor/DirectXTex/bin
 
 # Ignore VS files and folder
 .vs/

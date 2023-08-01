@@ -4,6 +4,7 @@
 #include "Component.h"
 
 #include <d3d11.h>
+#include <DirectXTex.h>
 #include <string>
 
 class Sampler
@@ -22,17 +23,16 @@ class Texture : public Component
 public:
 	Texture(const std::string& filename, uint32_t slot = 0);
 	
-	inline uint32_t GetWidth() const { return Width; }
-	inline uint32_t GetHeight() const { return Height; }
+	inline uint32_t GetWidth() const { return (uint32_t)Image.GetMetadata().width; }
+	inline uint32_t GetHeight() const { return (uint32_t)Image.GetMetadata().height; }
 
 	void Bind() const override;
-	inline bool HasAlpha() const { return Alpha; }
+	inline bool HasAlpha() const { return !Image.IsAlphaAllOpaque(); }
 
 private:
-	uint32_t Width, Height;
 	uint32_t Slot;
-	bool Alpha = false;
 	Sampler TextureSampler;
+	DirectX::ScratchImage Image;
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureID;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;

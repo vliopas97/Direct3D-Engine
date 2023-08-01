@@ -1,6 +1,5 @@
 #include "Core\Exception.h"
 #include "Rendering\CurrentGraphicsContext.h"
-#include "stb_image.h"
 #include "Texture.h"
 
 #include <wrl.h>
@@ -31,24 +30,17 @@ inline void Sampler::Bind() const
 Texture::Texture(const std::string& filename, uint32_t slot)
 	:Slot(slot), TextureSampler{ Slot }
 {
-	int width, height, channels;
-	stbi_uc* data;
-
 	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\" + filename;
-
-	int desiredChannels = 4;
-	data = stbi_load(filepath.c_str(), &width, &height, &channels, desiredChannels);
-
-	Alpha = channels == 4;
-	Height = height;
-	Width = width;
-
+	wchar_t wideName[512];
+	mbstowcs_s(nullptr, wideName, filepath.c_str(), _TRUNCATE);
+	GRAPHICS_ASSERT(DirectX::LoadFromWICFile(wideName, DirectX::WIC_FLAGS_NONE, nullptr, Image));
+	
 	D3D11_TEXTURE2D_DESC textureDesc{};
-	textureDesc.Width = Width;
-	textureDesc.Height = Height;
+	textureDesc.Width = GetWidth();
+	textureDesc.Height = GetHeight();
 	textureDesc.MipLevels = 0;
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.Format = Image.GetMetadata().format;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -57,7 +49,8 @@ Texture::Texture(const std::string& filename, uint32_t slot)
 	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	CurrentGraphicsContext::Device()->CreateTexture2D(&textureDesc, nullptr, &TextureID);
-	CurrentGraphicsContext::Context()->UpdateSubresource(TextureID.Get(), 0, nullptr, data, Width * desiredChannels * sizeof(char), 0);
+	CurrentGraphicsContext::Context()->UpdateSubresource(TextureID.Get(), 0, nullptr, Image.GetPixels(),
+														 Image.GetImage(0,0,0)->rowPitch, 0);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC sourceDesc{};
 	sourceDesc.Format = textureDesc.Format;
