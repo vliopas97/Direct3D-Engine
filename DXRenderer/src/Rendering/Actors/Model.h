@@ -2,14 +2,16 @@
 
 #include "Actor.h"
 #include "Rendering/Mesh.h"
+#include "Rendering/Node.h"
 
-class Model : public Actor {
+class Model : public Actor 
+{
 public:
 	Model(const std::string& filename);
 	Model(const std::string& filename, const TransformationIntrinsics& intrinsics);
 
 	virtual void Draw() override;
-	virtual void Update() override;
+	virtual void Tick(float delta) override;
 
 	virtual void GUI() override;
 	const std::string& GetPath() const { return Path; }

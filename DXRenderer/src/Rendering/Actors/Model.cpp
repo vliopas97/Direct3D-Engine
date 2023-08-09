@@ -1,13 +1,12 @@
 #include "Model.h"
 #include "Rendering/CurrentGraphicsContext.h"
-#include "Rendering\Material.h"
+#include "Rendering/Material.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <filesystem>
 #include <imgui.h>
-
 
 Model::Model(const std::string& filename)
 {
@@ -26,11 +25,11 @@ void Model::Draw()
 	Components.Bind();
 }
 
-void Model::Update()
+void Model::Tick(float delta)
 {
-	Actor::Update();
+	Actor::Tick(delta);
 	Root->SetTransform(Transform.GetMatrix());
-	Root->Update();
+	Root->Tick(delta);
 }
 
 void Model::GUI()
@@ -50,5 +49,4 @@ void Model::Init(const std::string& filename)
 	Path = "\\Model\\" + filename;
 	Path = Path.substr(0, Path.find_last_of("\\/") + 1);
 	Root = Node::Build(*this, filename);
-
 }

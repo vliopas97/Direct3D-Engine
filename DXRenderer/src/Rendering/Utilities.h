@@ -123,6 +123,8 @@ protected:
 	GPUObject() = default;
 	virtual ~GPUObject() = default;
 
+	virtual void Tick(float delta) {}
+
 	void Add(SharedPtr<Shader> shader);
 	void Add(SharedPtr<BufferBase> buffer);
 	void Add(UniquePtr<Component> component);

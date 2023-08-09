@@ -15,7 +15,7 @@ Sphere::Sphere(const TransformationIntrinsics& intrinsics)
 	Init();
 }
 
-void Sphere::Update()
+void Sphere::Tick(float delta)
 {
 	Transform.Update();
 }

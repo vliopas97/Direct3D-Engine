@@ -41,14 +41,13 @@ void Cube::Init()
 	Add<IndexBuffer>("Cube", data.Indices);
 
 	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add<UniformVS<XMMATRIX>>("View", view);
 	Add<UniformPS<XMMATRIX>>("View", view, 2);
 
 	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
 	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
 
-	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
-	Add<UniformVS<XMMATRIX>>("Transform", transform, 2);
+	auto& modelView = ModelView;
+	Add<UniformVS<XMMATRIX>>("Transform", modelView);
 
 	Add<Material>(1);
 }

@@ -8,7 +8,7 @@ public:
 	Sphere();
 	Sphere(const TransformationIntrinsics& intrinsics);
 
-	virtual void Update() override;
+	virtual void Tick(float delta) override;
 
 private:
 	void Init();

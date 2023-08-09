@@ -85,12 +85,12 @@ void Application::Tick()
 	Light.Bind();
 	for (auto& c : Actors)
 	{
-		c->Update();
+		c->Tick(delta);
 		c->Draw();
 		c->GUI();
 	}
 
-	Light.Update();
+	Light.Tick(delta);
 	Light.Draw();
 	Light.GUI();
 	ImGui->Render();

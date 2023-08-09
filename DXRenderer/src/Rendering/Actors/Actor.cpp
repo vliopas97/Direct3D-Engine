@@ -28,9 +28,10 @@ DirectX::XMMATRIX Actor::GetTransform() const
 	return Transform;
 }
 
-void Actor::Update()
+void Actor::Tick(float delta)
 {
 	Transform.Update();
+	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
 }
 
 inline const IndexBuffer* Actor::GetIndexBuffer() const

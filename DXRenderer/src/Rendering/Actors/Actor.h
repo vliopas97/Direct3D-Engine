@@ -23,7 +23,7 @@ public:
 
 	virtual void Draw();
 	DirectX::XMMATRIX GetTransform() const;
-	virtual void Update();
+	virtual void Tick(float delta);
 
 	virtual void GUI() {}
 
@@ -48,4 +48,6 @@ public:
 		};
 	};
 
+protected:
+	DirectX::XMMATRIX ModelView;
 };

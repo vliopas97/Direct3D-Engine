@@ -11,7 +11,7 @@ public:
 	void Bind();
 	void Draw();
 	void GUI();
-	void Update();
+	void Tick(float delta);
 public:
 	struct LightProperties
 	{

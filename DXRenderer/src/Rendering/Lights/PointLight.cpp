@@ -34,8 +34,8 @@ void PointLight::Draw()
 	Mesh.Draw();
 }
 
-void PointLight::Update()
+void PointLight::Tick(float delta)
 {
 	Mesh.Transform.Translation = Position;
-	Mesh.Update();
+	Mesh.Tick(delta);
 }
