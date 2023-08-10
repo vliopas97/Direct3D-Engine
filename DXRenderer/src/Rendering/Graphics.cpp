@@ -57,7 +57,7 @@ Graphics::Graphics(HWND windowHandle)
 
 	// Create Depth Buffer
 	DepthBuffer depthBuffer(DepthStencilView);
-	depthBuffer.Bind();
+	//depthBuffer.Bind();
 
 	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get()););
 
@@ -107,7 +107,7 @@ void Graphics::ClearColor(float red, float green, float blue) noexcept
 
 void Graphics::ClearDepth() noexcept
 {
-	Context->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
+	Context->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0u);
 }
 
 void Graphics::DrawScene()

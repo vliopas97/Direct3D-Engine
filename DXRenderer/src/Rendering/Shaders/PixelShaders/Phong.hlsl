@@ -18,6 +18,7 @@ cbuffer constBuffer : register(b2)
 float4 main(float3 posCamera : Position, float3 normal : Normal) : SV_Target
 {
     float3 n = normalize(normal);
+    n.z *= -1;
     float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
     
     LightVector light = LightVectorBuild(lightWorld, posCamera);

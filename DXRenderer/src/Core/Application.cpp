@@ -63,9 +63,15 @@ Application::Application()
 	TransformationIntrinsics trInt;
 	trInt.Sx = trInt.Sy = trInt.Sz = 0.05f;
 	trInt.X = -10.0f;
+	trInt.Z = 10.0f;
 	trInt.Roll = 180.0f;
 	trInt.Yaw = -90.0f;
 	Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
+	trInt.X = -13.5f;
+	trInt.Y = 6.0f;
+	trInt.Z = 8.0f;
+	trInt.Sx = trInt.Sy = trInt.Sz = 2.f;
+	Actors.emplace_back(MakeUnique<Cube>(trInt));
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();

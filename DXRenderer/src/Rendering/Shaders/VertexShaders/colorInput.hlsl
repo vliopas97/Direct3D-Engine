@@ -1,23 +1,16 @@
-struct Out
+
+cbuffer constBuffer2 : register(b0)
 {
-    float4 pos : SV_Position;
-    float3 color : Color;
+    row_major matrix modelView;
 };
 
-cbuffer constBuffer0 : register(b0)
+cbuffer constBuffer0 : register(b1)
 {
     row_major matrix projection;
 }
 
-cbuffer constBuffer2 : register(b1)
-{
-    row_major matrix model;
-};
 
-Out main(float3 pos : Position, float4 col : Color)
+float4 main(float3 pos : Position) : SV_Position
 {
-    Out output;
-    output.pos = mul(mul(float4(pos, 1.0f), model), projection);
-    output.color = col;
-    return output;
+    return mul(mul(float4(pos, 1.0f), modelView), projection);;
 }

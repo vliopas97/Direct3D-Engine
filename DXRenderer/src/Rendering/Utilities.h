@@ -41,6 +41,11 @@ struct TransformationMatrix
 		return Matrix;
 	}
 
+	inline DirectX::XMMATRIX& GetMatrix() 
+	{
+		return Matrix;
+	}
+
 	void Update();
 
 	struct

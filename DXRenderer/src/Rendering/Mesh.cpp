@@ -81,6 +81,7 @@ void Mesh::Init(const aiMesh& mesh)
 	}
 
 	Add<RasterizerState>(HasAlphaDiffuse);
+	Add<StencilState<>>(Name + "DepthStencilState");
 }
 
 void Mesh::LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path)

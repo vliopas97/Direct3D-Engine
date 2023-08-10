@@ -3,6 +3,7 @@
 #include "Primitives.h"
 #include "Rendering\Graphics.h"
 #include "Rendering\CurrentGraphicsContext.h"
+#include "Rendering\State.h"
 
 Sphere::Sphere()
 {
@@ -43,4 +44,6 @@ void Sphere::Init()
 	Add<UniformVS<XMMATRIX>>("Transform", transform, 1);
 
 	Add<PS<XMVECTOR>>("Color",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
+
+	Add<StencilState<>>("SphereDepthStencil");
 }
