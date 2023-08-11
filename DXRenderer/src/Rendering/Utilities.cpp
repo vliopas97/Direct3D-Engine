@@ -50,3 +50,17 @@ void GPUObject::Add(UniquePtr<Component> component)
 {
 	Components.Add(std::move(component));
 }
+
+void GPUObject::Bind() const
+{
+	Buffers.Bind();
+	Shaders.Bind();
+	Components.Bind();
+}
+
+const IndexBuffer* GPUObject::GetIndexBuffer() const
+{
+	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
+	ASSERT(ptr);
+	return ptr;
+}

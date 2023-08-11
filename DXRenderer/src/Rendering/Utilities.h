@@ -124,7 +124,7 @@ public:
 
 class GPUObject
 {
-protected:
+public:
 	GPUObject() = default;
 	virtual ~GPUObject() = default;
 
@@ -146,6 +146,10 @@ protected:
 			else
 				Add(MakeUnique<T>(std::forward<Args>(args)...));
 	}
+
+	void Bind() const;
+
+	const IndexBuffer* GetIndexBuffer() const;
 
 protected:
 	BufferGroup Buffers;

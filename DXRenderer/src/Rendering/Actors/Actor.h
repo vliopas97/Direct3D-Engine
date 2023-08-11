@@ -27,9 +27,6 @@ public:
 
 	virtual void GUI() {}
 
-private:
-	virtual const IndexBuffer* GetIndexBuffer() const;
-
 public:
 	union
 	{

@@ -54,6 +54,19 @@ private:
 	static const ShaderType Type = ShaderType::VertexS;
 };
 
+struct NullVertexShader : public Shader
+{
+	NullVertexShader();
+
+	virtual void Bind() const override;
+	virtual void Unbind() const override;
+
+	inline  virtual const ShaderType& GetType() const override { return ShaderType::VertexS; }
+	inline  virtual std::string GetID() const override { return std::string(typeid(NullVertexShader).name()); }
+protected:
+	std::wstring GetTypeImpl() override { return {}; }
+};
+
 struct PixelShader : public Shader
 {
 	PixelShader(const std::string& shaderName);
@@ -69,6 +82,20 @@ protected:
 private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ShaderID;
 	static const ShaderType Type = ShaderType::PixelS;
+};
+
+struct NullPixelShader : public Shader
+{
+	NullPixelShader();
+
+	virtual void Bind() const override;
+	virtual void Unbind() const override;
+
+	inline  virtual const ShaderType& GetType() const override { return ShaderType::PixelS; }
+	inline  virtual std::string GetID() const override { return std::string(typeid(NullPixelShader).name()); }
+
+protected:
+	std::wstring GetTypeImpl() override { return {}; }
 };
 
 struct ShaderGroup

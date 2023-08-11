@@ -124,3 +124,31 @@ SharedPtr<Shader> ShaderPool::Get(const std::string& id)
 	else
 		return it->second;
 }
+
+NullVertexShader::NullVertexShader()
+	:Shader("NullVS")
+{}
+
+void NullVertexShader::Bind() const
+{
+	CurrentGraphicsContext::Context()->VSSetShader(nullptr, nullptr, 0);
+}
+
+void NullVertexShader::Unbind() const
+{
+	Bind();
+}
+
+NullPixelShader::NullPixelShader()
+	:Shader("NullPS")
+{}
+
+void NullPixelShader::Bind() const
+{
+	CurrentGraphicsContext::Context()->VSSetShader(nullptr, nullptr, 0);
+}
+
+void NullPixelShader::Unbind() const
+{
+	Bind();
+}
