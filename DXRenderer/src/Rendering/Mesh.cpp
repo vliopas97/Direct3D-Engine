@@ -171,8 +171,9 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 								*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
 			);
 		}
-
-		Add(builder.Release());
+		auto ptr = builder.Release();
+		Add<InputLayout>(Name, ptr->GetLayout(), Shaders.GetBlob(ShaderType::VertexS));
+		Add(std::move(ptr));
 	}
 	else if (HasDiffuse)
 	{
@@ -192,7 +193,9 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 			);
 		}
 
-		Add(builder.Release());
+		auto ptr = builder.Release();
+		Add<InputLayout>(Name, ptr->GetLayout(), Shaders.GetBlob(ShaderType::VertexS));
+		Add(std::move(ptr));
 	}
 	else
 	{
@@ -210,7 +213,9 @@ void Mesh::ResolveVertexIndexBuffers(const aiMesh& mesh)
 			);
 		}
 	
-		Add(builder.Release());
+		auto ptr = builder.Release();
+		Add<InputLayout>(Name, ptr->GetLayout(), Shaders.GetBlob(ShaderType::VertexS));
+		Add(std::move(ptr));
 	}
 
 	std::vector<unsigned short> indices;

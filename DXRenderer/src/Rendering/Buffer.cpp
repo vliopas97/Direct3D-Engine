@@ -136,8 +136,8 @@ const LayoutElement& BufferLayout::operator[](size_t i) const
 }
 
 inline VertexBuffer::VertexBuffer(const std::string& tag,
-								  BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-	:Buffer(tag), Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+								  const BufferLayout& layout)
+	:Buffer(tag), Layout(layout), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 {
 }
 
@@ -147,7 +147,6 @@ void VertexBuffer::Bind() const
 	UINT offset = 0;
 	CurrentGraphicsContext::Context()->IASetVertexBuffers(0, 1, BufferID.GetAddressOf(), &stride, &offset);
 	CurrentGraphicsContext::Context()->IASetPrimitiveTopology(Topology);
-	CurrentGraphicsContext::Context()->IASetInputLayout(InputLayout.Get());
 }
 
 void VertexBuffer::Unbind() const
@@ -165,22 +164,24 @@ BufferType VertexBuffer::GetType() const
 	return Type;
 }
 
+BufferLayout VertexBuffer::GetLayout() const { return Layout; }
+
 VertexBufferBuilder::VertexBufferBuilder(const std::string& tag,
 										 BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-	: Object(tag, std::move(layout), blob)
+	: Object(tag, std::move(layout))
 {
-	std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
-	desc.reserve(Object.Layout.GetElementsSize());
+	//std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
+	//desc.reserve(Object.Layout.GetElementsSize());
 
-	for (size_t i = 0; i < Object.Layout.GetElementsSize(); i++)
-	{
-		const auto& element = Object.Layout[i];
-		desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
-			0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
-	}
+	//for (size_t i = 0; i < Object.Layout.GetElementsSize(); i++)
+	//{
+	//	const auto& element = Object.Layout[i];
+	//	desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
+	//		0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
+	//}
 
-	CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Object.Blob->GetBufferPointer(),
-		Object.Blob->GetBufferSize(), &Object.InputLayout);
+	//CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Object.Blob->GetBufferPointer(),
+	//	Object.Blob->GetBufferSize(), &Object.InputLayout);
 }
 
 UniquePtr<VertexBuffer> VertexBufferBuilder::Release()
@@ -369,4 +370,34 @@ SharedPtr<BufferBase> BufferPool::Get(const std::string& id)
 		return {};
 	else
 		return it->second;
+}
+
+InputLayout::InputLayout(const std::string& tag, const BufferLayout& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
+	:Tag(tag)
+{
+	std::vector<D3D11_INPUT_ELEMENT_DESC> desc{};
+	desc.reserve(layout.GetElementsSize());
+
+	for (auto& element : layout.Elements)
+	{
+		desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
+						  0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
+	}
+
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), blob->GetBufferPointer(), blob->GetBufferSize(), &BufferID));
+}
+
+void InputLayout::Bind() const
+{
+	CurrentGraphicsContext::Context()->IASetInputLayout(BufferID.Get());
+}
+
+void InputLayout::Unbind() const
+{
+	CurrentGraphicsContext::Context()->IASetInputLayout(nullptr);
+}
+
+std::string InputLayout::GetID() const
+{
+	return std::string(typeid(InputLayout).name()) + "#" + Tag;
 }

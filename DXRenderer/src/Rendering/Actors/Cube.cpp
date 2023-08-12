@@ -32,40 +32,40 @@ inline void Cube::Tick(float delta)
 
 void Cube::Init()
 {
-	using namespace DirectX;
-	Add<VertexShader>("Phong");
-	Add<PixelShader>("Phong");
+	//using namespace DirectX;
+	//Add<VertexShader>("Phong");
+	//Add<PixelShader>("Phong");
 
-	struct VertexElementNormal : public Primitives::VertexElement
-	{
-		XMFLOAT3 Normal;
-	};
+	//struct VertexElementNormal : public Primitives::VertexElement
+	//{
+	//	XMFLOAT3 Normal;
+	//};
 
-	auto data = Primitives::Cube::CreateWNormals<VertexElementNormal>();
-	
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
-																	data.Vertices,
-																	BufferLayout{
-																		{ "Position", LayoutElement::DataType::Float3 },
-																		{ "Normal", LayoutElement::DataType::Float3 }
-																	},
-																	Shaders.GetBlob(ShaderType::VertexS));
+	//auto data = Primitives::Cube::CreateWNormals<VertexElementNormal>();
+	//
+	//UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
+	//																data.Vertices,
+	//																BufferLayout{
+	//																	{ "Position", LayoutElement::DataType::Float3 },
+	//																	{ "Normal", LayoutElement::DataType::Float3 }
+	//																},
+	//																Shaders.GetBlob(ShaderType::VertexS));
 
-	Add(std::move(vertexBuffer));
-	Add<IndexBuffer>("Cube", data.Indices);
+	//Add(std::move(vertexBuffer));
+	//Add<IndexBuffer>("Cube", data.Indices);
 
-	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	Add<UniformPS<XMMATRIX>>("CubeView", view, 2);
+	//const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	//Add<UniformPS<XMMATRIX>>("CubeView", view, 2);
 
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add<UniformVS<XMMATRIX>>("CubeProj", projection, 1);
+	//const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	//Add<UniformVS<XMMATRIX>>("CubeProj", projection, 1);
 
-	auto& modelView = ModelView;
-	Add<UniformVS<XMMATRIX>>("CubeTransform", modelView);
+	//auto& modelView = ModelView;
+	//Add<UniformVS<XMMATRIX>>("CubeTransform", modelView);
 
-	Add<Material>(1);
+	//Add<Material>(1);
 
-	Add<StencilState<DepthStencilMode::Write>>("CubeDepthStencil");
+	//Add<StencilState<DepthStencilMode::Write>>("CubeDepthStencil");
 }
 
 void Cube::DrawOutline()
@@ -79,25 +79,25 @@ void Cube::DrawOutline()
 CubeOutline::CubeOutline(const Cube& cube)
 	:CubeRef(cube)
 {
-	using namespace DirectX;
+	//using namespace DirectX;
 
-	Add<VertexShader>("colorInput");
-	Add<PixelShader>("colorInput");
+	//Add<VertexShader>("colorInput");
+	//Add<PixelShader>("colorInput");
 
-	auto data = Primitives::Cube::Create<Primitives::VertexElement>();
+	//auto data = Primitives::Cube::Create<Primitives::VertexElement>();
 
-	Add<VertexBuffer>("CubeOutline", data.Vertices,
-					  BufferLayout{{ "Position", LayoutElement::DataType::Float3 }},
-					  Shaders.GetBlob(ShaderType::VertexS));
+	//Add<VertexBuffer>("CubeOutline", data.Vertices,
+	//				  BufferLayout{{ "Position", LayoutElement::DataType::Float3 }},
+	//				  Shaders.GetBlob(ShaderType::VertexS));
 
-	Add<IndexBuffer>("CubeOutline", data.Indices);
+	//Add<IndexBuffer>("CubeOutline", data.Indices);
 
-	Add<UniformVS<XMMATRIX>>("CubeOutlineTransform", ModelView);
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	Add<UniformVS<XMMATRIX>>("CubeOutlineProj", projection, 1);
+	//Add<UniformVS<XMMATRIX>>("CubeOutlineTransform", ModelView);
+	//const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	//Add<UniformVS<XMMATRIX>>("CubeOutlineProj", projection, 1);
 
-	Add<PS<XMFLOAT4>>("CubeOutlineColor", Color);
-	Add<StencilState<DepthStencilMode::Mask>>("cubeoutlinedepthstencil");
+	//Add<PS<XMFLOAT4>>("CubeOutlineColor", Color);
+	//Add<StencilState<DepthStencilMode::Mask>>("cubeoutlinedepthstencil");
 }
 
 void CubeOutline::Tick(float delta)

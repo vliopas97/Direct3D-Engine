@@ -57,6 +57,7 @@ private:
 	friend class VertexBuffer;
 	friend class VertexBufferBuilder;
 	friend struct BufferLayout;
+	friend class InputLayout;
 };
 
 struct BufferLayout
@@ -88,6 +89,7 @@ private:
 	uint32_t Stride = 0;
 
 	friend class VertexBuffer;
+	friend class InputLayout;
 };
 
 struct Vertex
@@ -173,13 +175,27 @@ protected:
 	std::string Tag;
 };
 
+class InputLayout : public BufferBase
+{
+public:
+	InputLayout(const std::string& tag, const BufferLayout& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+
+	virtual void Bind() const;
+	virtual void Unbind() const;
+	virtual std::string GetID() const;
+
+private:
+	std::string Tag;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> BufferID;
+};
+
 class VertexBuffer : public Buffer
 {
 public:
 	template<typename Vertex>
 	VertexBuffer(const std::string& tag, const std::vector<Vertex>& vertices, 
-				 BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob)
-		:Buffer(tag), Layout(std::move(layout)), Blob(blob), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+				 const BufferLayout& layout)
+		:Buffer(tag), Layout(layout), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
 		D3D11_BUFFER_DESC vertexBufferDesc;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -193,35 +209,22 @@ public:
 		subResourceData.pSysMem = vertices.data();
 
 		CurrentGraphicsContext::Device()->CreateBuffer(&vertexBufferDesc, &subResourceData, &BufferID);
-
-		std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
-		desc.reserve(Layout.GetElementsSize());
-
-		for (auto& element : Layout.Elements)
-		{
-			desc.emplace_back(element.Name.c_str(), 0, LayoutElement::DataTypeToDXGI(element.Type),
-				0, element.Offset, D3D11_INPUT_PER_VERTEX_DATA, 0);
-		}
-
-		CurrentGraphicsContext::Device()->CreateInputLayout(desc.data(), (UINT)std::size(desc), Blob->GetBufferPointer(),
-			Blob->GetBufferSize(), &InputLayout);
 	}
 
-	VertexBuffer(const std::string& tag, BufferLayout&& layout, const Microsoft::WRL::ComPtr<ID3DBlob>& blob);
+	VertexBuffer(const std::string& tag, const BufferLayout& layout);
 
 	void Bind() const override;
 	void Unbind() const override;
 	std::string GetID() const override;
 
 	BufferType GetType() const;
+	BufferLayout GetLayout() const;
 
 public:
 	D3D11_PRIMITIVE_TOPOLOGY Topology;
 
 private:
 	BufferLayout Layout;
-	const Microsoft::WRL::ComPtr<ID3DBlob>& Blob;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> InputLayout;
 
 	static const BufferType Type = BufferType::VertexB;
 

@@ -57,16 +57,16 @@ void Plane::Init()
 
 	auto data = Primitives::Plane::CreateWTextureCoords<VertexElementNormalTex>();
 
-	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
-																	data.Vertices,
-																	BufferLayout{
-																		{ "Position", LayoutElement::DataType::Float3 },
-																		{ "Normal", LayoutElement::DataType::Float3 },
-																		{ "TexCoords", LayoutElement::DataType::Float2 }
-																	},
-																	Shaders.GetBlob(ShaderType::VertexS));
+	//UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
+	//																data.Vertices,
+	//																BufferLayout{
+	//																	{ "Position", LayoutElement::DataType::Float3 },
+	//																	{ "Normal", LayoutElement::DataType::Float3 },
+	//																	{ "TexCoords", LayoutElement::DataType::Float2 }
+	//																},
+	//																Shaders.GetBlob(ShaderType::VertexS));
 
-	Add(std::move(vertexBuffer));
+	//Add(std::move(vertexBuffer));
 	Add<IndexBuffer>("Plane", data.Indices);
 
 	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
