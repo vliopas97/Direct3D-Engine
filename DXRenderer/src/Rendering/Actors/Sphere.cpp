@@ -25,27 +25,35 @@ void Sphere::Init()
 {
 	using namespace DirectX;
 
-	Add<VertexShader>("default");
-	Add<PixelShader>("default");
-	
 	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
 	data.Transform(XMMatrixScaling(0.1f, 0.1f, 0.1f));
 
 	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Sphere", data.Vertices,
-		BufferLayout{ {"Position", LayoutElement::DataType::Float3} });
+																	BufferLayout{ {"Position", LayoutElement::DataType::Float3} });
 
-	Add<InputLayout>("Sphere", vertexBuffer->GetLayout(), Shaders.GetBlob(ShaderType::VertexS));
-	
-	Add(std::move(vertexBuffer));
 	Add<IndexBuffer>("Sphere", data.Indices);
 
-	const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-	Add<UniformVS<XMMATRIX>>("SphereViewProj", viewProjection);
+	Technique standard;
+	{
+		Step first(0);
 
-	auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
-	Add<UniformVS<XMMATRIX>>("SphereTransform", transform, 1);
+		VertexShader vertexShader("default");
+		first.Add<PixelShader>("default");
+		first.Add<InputLayout>("Sphere", vertexBuffer->GetLayout(), vertexShader.GetBlob());
+		Add<VertexShader>(vertexShader);
 
-	Add<PS<XMVECTOR>>("SphereColor",XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
+		const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
+		first.Add<UniformVS<XMMATRIX>>("SphereViewProj", viewProjection);
 
-	Add<StencilState<>>("SphereDepthStencil");
+		auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
+		first.Add<UniformVS<XMMATRIX>>("SphereTransform", transform, 1);
+
+		first.Add<PS<XMVECTOR>>("SphereColor", XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
+		first.Add<BlendState>("Sphere", false);
+		first.Add<RasterizerState>(false);
+		standard.PushBack(std::move(first));
+	}
+
+	Add(std::move(vertexBuffer));
+	Add(std::move(standard));
 }

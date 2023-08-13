@@ -30,16 +30,8 @@ private:
 class Task
 {
 public:
-	Task(const GPUObject* renderObject, const Step* step)
-		:RenderObject(renderObject), TStep(step)
-	{}
-
-	void Execute() const
-	{
-		RenderObject->Bind();
-		TStep->Bind();
-		CurrentGraphicsContext::Context()->DrawIndexed(RenderObject->GetIndexBuffer()->GetCount(), 0, 0);
-	}
+	Task(const GPUObject* renderObject, const Step* step);
+	void Execute() const;
 
 private:
 	const GPUObject* RenderObject;
@@ -54,6 +46,8 @@ public:
 	inline void Activate() { IsActive = true; }
 	inline void Deactivate() { IsActive = false; }
 
+	void PushBack(Step&& step);
+
 private:
 	bool IsActive = true;
 	std::vector<Step> Steps;
@@ -62,11 +56,16 @@ private:
 class RenderQueue
 {
 public:
-	void Add(Task task, size_t target);
-	void Execute();
-	void Reset();
+	static void Add(Task task, size_t target);
+	static void Execute();
+	static void Reset();
 
 	static RenderQueue& Get();
+
+private:
+	void AddImpl(Task task, size_t target);
+	void ExecuteImpl();
+	void ResetImpl();
 
 private:
 	RenderQueue() = default;
@@ -75,5 +74,4 @@ private:
 
 private:
 	std::array<std::vector<Task>, 3> Stages;
-	std::array<GPUObject, 3> Resources;
 };

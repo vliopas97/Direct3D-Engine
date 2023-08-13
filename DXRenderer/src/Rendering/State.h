@@ -47,25 +47,32 @@ template<DepthStencilMode Mode = DepthStencilMode::Off>
 class StencilState : public State
 {
 public:
-	StencilState(const std::string& tag)
-		:Tag(tag)
+	StencilState()
 	{
+		Tag = "Off";
 		D3D11_DEPTH_STENCIL_DESC depthStencilDesc = CD3D11_DEPTH_STENCIL_DESC{ CD3D11_DEFAULT{} };;
 
 		if constexpr (Mode == DepthStencilMode::Write)
 		{
+			depthStencilDesc.DepthEnable = FALSE;
 			depthStencilDesc.StencilEnable = TRUE;
+			depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 			depthStencilDesc.StencilWriteMask = 0xFF;
 			depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 			depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
+
+			Tag = "Write";
 		}
 		else if constexpr (Mode == DepthStencilMode::Mask)
 		{
 			depthStencilDesc.DepthEnable = FALSE;
 			depthStencilDesc.StencilEnable = TRUE;
+			depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 			depthStencilDesc.StencilWriteMask = 0xFF;
 			depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
 			depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+
+			Tag = "Mask";
 		}
 
 		CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthStencilDesc, &StateID);

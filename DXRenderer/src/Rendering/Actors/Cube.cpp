@@ -7,13 +7,12 @@
 #include "Rendering\State.h"
 
 Cube::Cube()
-	:Outline(MakeUnique<CubeOutline>(*this))
 {
 	Init();
 }
 
 Cube::Cube(const TransformationIntrinsics& intrinsics)
-	:Actor(intrinsics), Outline(MakeUnique<CubeOutline>(*this))
+	:Actor(intrinsics)
 {
 	Init();
 }
@@ -21,83 +20,98 @@ Cube::Cube(const TransformationIntrinsics& intrinsics)
 void Cube::Draw()
 {
 	Actor::Draw();
-	DrawOutline();
 }
 
 inline void Cube::Tick(float delta)
 {
 	Actor::Tick(delta);
-	Outline->Tick(delta);
+	ModelViewOutline = DirectX::XMMatrixScaling(1.03f, 1.03f, 1.03f) * ModelView;
 }
 
 void Cube::Init()
 {
-	//using namespace DirectX;
-	//Add<VertexShader>("Phong");
-	//Add<PixelShader>("Phong");
+	using namespace DirectX;
 
-	//struct VertexElementNormal : public Primitives::VertexElement
-	//{
-	//	XMFLOAT3 Normal;
-	//};
+	auto data = Primitives::Cube::Create<Primitives::VertexElement>();
 
-	//auto data = Primitives::Cube::CreateWNormals<VertexElementNormal>();
-	//
-	//UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>("Cube",
-	//																data.Vertices,
-	//																BufferLayout{
-	//																	{ "Position", LayoutElement::DataType::Float3 },
-	//																	{ "Normal", LayoutElement::DataType::Float3 }
-	//																},
-	//																Shaders.GetBlob(ShaderType::VertexS));
+	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(
+		"Cube",
+		data.Vertices,
+		BufferLayout
+		{ { "Position", LayoutElement::DataType::Float3 } }
+	);
+	Add<IndexBuffer>("Cube", data.Indices);
 
-	//Add(std::move(vertexBuffer));
-	//Add<IndexBuffer>("Cube", data.Indices);
 
-	//const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
-	//Add<UniformPS<XMMATRIX>>("CubeView", view, 2);
+	Technique standard;
+	{
+		Step first(0);
+		VertexShader vs("colorInput");
+		first.Add<PixelShader>("colorInput");
+		first.Add<InputLayout>("Cube", vertexBuffer->GetLayout(), vs.GetBlob());
+		first.Add<VertexShader>(vs);
 
-	//const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	//Add<UniformVS<XMMATRIX>>("CubeProj", projection, 1);
+		first.Add<UniformVS<XMMATRIX>>("Cube", ModelView);
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		first.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 
-	//auto& modelView = ModelView;
-	//Add<UniformVS<XMMATRIX>>("CubeTransform", modelView);
+		first.Add<PS<XMFLOAT4>>("CubeColor", DirectX::XMFLOAT4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		standard.PushBack(std::move(first));
+	}
+	Technique outline;
+	{
+		Step mask(1);
+		VertexShader vs("colorInput");
+		mask.Add<InputLayout>("Cube1", vertexBuffer->GetLayout(), vs.GetBlob());
+		mask.Add<VertexShader>(vs);
 
-	//Add<Material>(1);
+		mask.Add<UniformVS<XMMATRIX>>("Cube1", ModelView);
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		mask.Add<UniformVS<XMMATRIX>>("Cube1", projection, 1);
+		outline.PushBack(std::move(mask));
+	}
+	{
+		Step draw(2);
+		VertexShader vs("colorInput");
+		draw.Add<PixelShader>("colorInput");
+		draw.Add<InputLayout>("Cube2", vertexBuffer->GetLayout(), vs.GetBlob());
+		draw.Add<VertexShader>(vs);
 
-	//Add<StencilState<DepthStencilMode::Write>>("CubeDepthStencil");
+		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelViewOutline);
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		draw.Add<UniformVS<XMMATRIX>>("Cube2", projection, 1);
+
+		draw.Add<PS<XMFLOAT4>>("CubeColor2", DirectX::XMFLOAT4{ 1.0f, 0.4f, 0.4f, 1.0f });
+		outline.PushBack(std::move(draw));
+	}
+
+	Add(std::move(standard));
+	Add(std::move(outline));
+	Add(std::move(vertexBuffer));
 }
-
-void Cube::DrawOutline()
-{
-	if (!IsOutlined) return;
-
-	Outline->Draw();
-}
-
 
 CubeOutline::CubeOutline(const Cube& cube)
 	:CubeRef(cube)
 {
-	//using namespace DirectX;
+	using namespace DirectX;
 
-	//Add<VertexShader>("colorInput");
-	//Add<PixelShader>("colorInput");
+	Add<VertexShader>("colorInput");
+	Add<PixelShader>("colorInput");
 
-	//auto data = Primitives::Cube::Create<Primitives::VertexElement>();
+	auto data = Primitives::Cube::Create<Primitives::VertexElement>();
 
-	//Add<VertexBuffer>("CubeOutline", data.Vertices,
-	//				  BufferLayout{{ "Position", LayoutElement::DataType::Float3 }},
-	//				  Shaders.GetBlob(ShaderType::VertexS));
+	auto vertexBuffer = MakeShared<VertexBuffer>("CubeOutline", data.Vertices,
+												 BufferLayout{ { "Position", LayoutElement::DataType::Float3 } });
+	Add<InputLayout>("Cube", vertexBuffer->GetLayout(), Shaders.GetBlob(ShaderType::VertexS));
+	Add(std::move(vertexBuffer));
+	Add<IndexBuffer>("CubeOutline", data.Indices);
 
-	//Add<IndexBuffer>("CubeOutline", data.Indices);
+	Add<UniformVS<XMMATRIX>>("CubeOutlineTransform", ModelView);
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	Add<UniformVS<XMMATRIX>>("CubeOutlineProj", projection, 1);
 
-	//Add<UniformVS<XMMATRIX>>("CubeOutlineTransform", ModelView);
-	//const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
-	//Add<UniformVS<XMMATRIX>>("CubeOutlineProj", projection, 1);
-
-	//Add<PS<XMFLOAT4>>("CubeOutlineColor", Color);
-	//Add<StencilState<DepthStencilMode::Mask>>("cubeoutlinedepthstencil");
+	Add<PS<XMFLOAT4>>("CubeOutlineColor", Color);
+	Add<StencilState<DepthStencilMode::Mask>>();
 }
 
 void CubeOutline::Tick(float delta)

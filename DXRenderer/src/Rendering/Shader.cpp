@@ -35,6 +35,7 @@ std::wstring Shader::SetUpPath(const std::string& shaderName)
 VertexShader::VertexShader(const std::string& shaderName)
 	:Shader(shaderName)
 {
+	if (shaderName == "Null") return;
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
 	CurrentGraphicsContext::Device()->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
 }
@@ -62,6 +63,7 @@ inline std::string VertexShader::GetID() const
 PixelShader::PixelShader(const std::string& shaderName)
 	:Shader(shaderName)
 {
+	if (shaderName == "Null") return;
 	D3DReadFileToBlob(SetUpPath(shaderName).c_str(), &Blob);
 	CurrentGraphicsContext::Device()->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &ShaderID);
 }
@@ -94,7 +96,7 @@ void ShaderGroup::Add(SharedPtr<Shader> shader)
 void ShaderGroup::Bind() const
 {
 	for (auto& shader : Shaders)
-		shader->Bind();
+		if(shader) shader->Bind();
 }
 
 void ShaderGroup::Unbind() const
@@ -126,7 +128,7 @@ SharedPtr<Shader> ShaderPool::Get(const std::string& id)
 }
 
 NullVertexShader::NullVertexShader()
-	:Shader("NullVS")
+	:VertexShader("Null")
 {}
 
 void NullVertexShader::Bind() const
@@ -140,12 +142,12 @@ void NullVertexShader::Unbind() const
 }
 
 NullPixelShader::NullPixelShader()
-	:Shader("NullPS")
+	:PixelShader("Null")
 {}
 
 void NullPixelShader::Bind() const
 {
-	CurrentGraphicsContext::Context()->VSSetShader(nullptr, nullptr, 0);
+	CurrentGraphicsContext::Context()->PSSetShader(nullptr, nullptr, 0);
 }
 
 void NullPixelShader::Unbind() const

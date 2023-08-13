@@ -15,10 +15,9 @@ public:
 	void Tick(float delta) override;
 private:
 	void Init();
-	void DrawOutline();
+
 private:
-	float IsOutlined = true;
-	UniquePtr<CubeOutline> Outline;
+	DirectX::XMMATRIX ModelViewOutline;
 };
 
 class CubeOutline : public Actor

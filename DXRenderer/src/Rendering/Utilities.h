@@ -122,17 +122,21 @@ public:
 	std::vector<unsigned short> Indices;
 };
 
+class Technique;
+
 class GPUObject
 {
 public:
 	GPUObject() = default;
 	virtual ~GPUObject() = default;
+	GPUObject(GPUObject&& other) noexcept;
 
 	virtual void Tick(float delta) {}
 
 	void Add(SharedPtr<Shader> shader);
 	void Add(SharedPtr<BufferBase> buffer);
 	void Add(UniquePtr<Component> component);
+	void Add(class Technique&& technique);
 
 	template <class T, typename... Args>
 	requires std::is_base_of_v<Shader, T> || std::is_base_of_v<BufferBase, T> || std::is_base_of_v<Component, T>
@@ -155,4 +159,5 @@ protected:
 	BufferGroup Buffers;
 	ShaderGroup Shaders;
 	ComponentGroup Components;
+	std::vector<UniquePtr<Technique>> Techniques;
 };

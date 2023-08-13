@@ -1,4 +1,5 @@
 #include "Utilities.h"
+#include "RenderQueue.h"
 
 TransformationMatrix::TransformationMatrix()
 	: Matrix(DirectX::XMMatrixIdentity()), Scale( 1.0f, 1.0f, 1.0f), Rotation(0.0f, 0.0f, 0.0f), 
@@ -30,6 +31,14 @@ void TransformationMatrix::Update()
 		DirectX::XMMatrixTranslation(-X, -Y, Z);
 }
 
+GPUObject::GPUObject(GPUObject&& other) noexcept
+{
+	Buffers = std::move(other.Buffers);
+	Shaders = std::move(other.Shaders);
+	Components = std::move(other.Components);
+	Techniques = std::move(other.Techniques);
+}
+
 void GPUObject::Add(SharedPtr<Shader> shader)
 {
 	const auto id = shader->GetID();
@@ -49,6 +58,11 @@ void GPUObject::Add(SharedPtr<BufferBase> buffer)
 void GPUObject::Add(UniquePtr<Component> component)
 {
 	Components.Add(std::move(component));
+}
+
+void GPUObject::Add(Technique&& technique)
+{
+	Techniques.emplace_back(MakeUnique<Technique>(std::move(technique)));
 }
 
 void GPUObject::Bind() const

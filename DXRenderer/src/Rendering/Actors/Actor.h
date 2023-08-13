@@ -7,6 +7,7 @@
 #include "Rendering\Utilities.h"
 #include "Rendering\ResourcePool.h"
 #include "Rendering\Texture.h"
+#include "Rendering/RenderQueue.h"
 
 #include <d3d11.h>
 #include <DirectXMath.h>

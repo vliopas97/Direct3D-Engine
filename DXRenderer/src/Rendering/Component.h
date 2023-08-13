@@ -15,8 +15,11 @@ public:
 	void Bind() const override;
 
 	void Add(UniquePtr<Component> component);
-
 	void Add(ComponentGroup componentGroup);
+
+	ComponentGroup() = default;
+	ComponentGroup(ComponentGroup&& other) noexcept;
+	ComponentGroup& operator=(ComponentGroup&& other) noexcept;
 
 private:
 	std::vector<UniquePtr<Component>> Components;

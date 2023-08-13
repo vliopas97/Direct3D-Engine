@@ -54,7 +54,7 @@ private:
 	static const ShaderType Type = ShaderType::VertexS;
 };
 
-struct NullVertexShader : public Shader
+struct NullVertexShader : public VertexShader
 {
 	NullVertexShader();
 
@@ -84,7 +84,7 @@ private:
 	static const ShaderType Type = ShaderType::PixelS;
 };
 
-struct NullPixelShader : public Shader
+struct NullPixelShader : public PixelShader
 {
 	NullPixelShader();
 

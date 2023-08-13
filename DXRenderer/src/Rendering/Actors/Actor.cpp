@@ -17,8 +17,8 @@ Actor::Actor(const TransformationIntrinsics& intrinsics)
 
 void Actor::Draw()
 {
-	Bind();
-	CurrentGraphicsContext::Context()->DrawIndexed(GetIndexBuffer()->GetCount(), 0, 0);
+	for (auto& t : Techniques)
+		t->Submit(*this);
 }
 
 DirectX::XMMATRIX Actor::GetTransform() const
