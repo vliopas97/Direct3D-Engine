@@ -255,59 +255,6 @@ std::string IndexBuffer::GetID() const
 	return std::string(typeid(IndexBuffer).name()) + "#" + Tag;
 }
 
-DepthBuffer::DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV)
-{
-	//CreateDepthStencilState();
-	CreateDepthStencilTexture();
-	CreateDepthStencilView(dSV);
-}
-
-void DepthBuffer::Bind() const
-{
-	CurrentGraphicsContext::Context()->OMSetDepthStencilState(depthStencilState.Get(), 1);
-}
-
-void DepthBuffer::Unbind() const
-{
-	CurrentGraphicsContext::Context()->OMSetDepthStencilState(nullptr, 1);
-}
-
-void DepthBuffer::CreateDepthStencilState()
-{
-	D3D11_DEPTH_STENCIL_DESC depthBufferDesc{};
-	depthBufferDesc.DepthEnable = TRUE;
-	depthBufferDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthBufferDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthBufferDesc, &depthStencilState);
-}
-
-void DepthBuffer::CreateDepthStencilTexture()
-{
-	D3D11_TEXTURE2D_DESC descDepth{};
-	descDepth.Width = 1904;
-	descDepth.Height = 1041;
-	descDepth.MipLevels = 1u;
-	descDepth.ArraySize = 1u;
-	descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	descDepth.SampleDesc.Count = 1u;
-	descDepth.SampleDesc.Quality = 0u;
-	descDepth.Usage = D3D11_USAGE_DEFAULT;
-	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-
-	CurrentGraphicsContext::Device()->CreateTexture2D(&descDepth, nullptr, &depthStencil);
-}
-
-void DepthBuffer::CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV) const
-{
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	depthStencilViewDesc.Texture2D.MipSlice = 0u;
-
-	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &dSV);
-}
-
 void BufferGroup::Add(SharedPtr<BufferBase> buffer)
 {
 	auto it = std::find_if(Buffers.begin(), Buffers.end(), [&buffer](const SharedPtr<BufferBase>& element)

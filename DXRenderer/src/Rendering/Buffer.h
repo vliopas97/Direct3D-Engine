@@ -422,23 +422,6 @@ using UniformVS = Uniform<VS<T>>;
 template<typename T>
 using UniformPS = Uniform<PS<T>>;
 
-class DepthBuffer
-{
-public:
-	DepthBuffer(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV);
-
-	void Bind() const;
-	void Unbind() const;
-
-private:
-	void CreateDepthStencilState();
-	void CreateDepthStencilTexture();
-	void CreateDepthStencilView(Microsoft::WRL::ComPtr<ID3D11DepthStencilView>& dSV) const;
-private:
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencil;
-};
-
 class BufferGroup
 {
 public:

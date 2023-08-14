@@ -2,7 +2,9 @@
 
 #include "Buffer.h"
 #include "Core/Core.h"
+#include "Filter.h"
 #include "Graphics.h"
+#include "RenderQueue.h"
 #include "State.h"
 #include "Utilities.h"
 
@@ -68,10 +70,12 @@ private:
 	void ResetImpl();
 
 private:
-	RenderQueue() = default;
+	RenderQueue();
 	RenderQueue(const RenderQueue&) = delete;
 	RenderQueue& operator=(const RenderQueue&) = delete;
 
 private:
 	std::array<std::vector<Task>, 3> Stages;
+	DepthStencil DStencil;
+	Filter FullScreenFilter;
 };

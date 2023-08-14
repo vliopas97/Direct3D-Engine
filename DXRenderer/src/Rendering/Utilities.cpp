@@ -31,15 +31,14 @@ void TransformationMatrix::Update()
 		DirectX::XMMatrixTranslation(-X, -Y, Z);
 }
 
-GPUObject::GPUObject(GPUObject&& other) noexcept
+GPUObjectBase::GPUObjectBase(GPUObjectBase&& other) noexcept
 {
 	Buffers = std::move(other.Buffers);
 	Shaders = std::move(other.Shaders);
 	Components = std::move(other.Components);
-	Techniques = std::move(other.Techniques);
 }
 
-void GPUObject::Add(SharedPtr<Shader> shader)
+void GPUObjectBase::Add(SharedPtr<Shader> shader)
 {
 	const auto id = shader->GetID();
 
@@ -47,7 +46,7 @@ void GPUObject::Add(SharedPtr<Shader> shader)
 	Shaders.Add(Pool::GetShader(id));
 }
 
-void GPUObject::Add(SharedPtr<BufferBase> buffer)
+void GPUObjectBase::Add(SharedPtr<BufferBase> buffer)
 {
 	const auto id = buffer->GetID();
 
@@ -55,26 +54,32 @@ void GPUObject::Add(SharedPtr<BufferBase> buffer)
 	Buffers.Add(Pool::GetBuffer(id));
 }
 
-void GPUObject::Add(UniquePtr<Component> component)
+void GPUObjectBase::Add(UniquePtr<Component> component)
 {
 	Components.Add(std::move(component));
 }
 
-void GPUObject::Add(Technique&& technique)
-{
-	Techniques.emplace_back(MakeUnique<Technique>(std::move(technique)));
-}
-
-void GPUObject::Bind() const
+void GPUObjectBase::Bind() const
 {
 	Buffers.Bind();
 	Shaders.Bind();
 	Components.Bind();
 }
 
-const IndexBuffer* GPUObject::GetIndexBuffer() const
+const IndexBuffer* GPUObjectBase::GetIndexBuffer() const
 {
 	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
 	ASSERT(ptr);
 	return ptr;
+}
+
+GPUObject::GPUObject(GPUObject&& other) noexcept
+	:GPUObjectBase(std::move(other))
+{
+	Techniques = std::move(other.Techniques);
+}
+
+void GPUObject::Add(Technique&& technique)
+{
+	Techniques.emplace_back(MakeUnique<Technique>(std::move(technique)));
 }

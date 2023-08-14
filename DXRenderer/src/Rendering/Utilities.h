@@ -10,6 +10,8 @@
 #include <DirectXMath.h>
 #include <vector>
 
+constexpr float backgroundColor[3] = { 1.0f, 0.5f, 0.0f };
+
 struct TransformationIntrinsics
 {
 	TransformationIntrinsics() = default;
@@ -124,22 +126,23 @@ public:
 
 class Technique;
 
-class GPUObject
+class GPUObjectBase
 {
 public:
-	GPUObject() = default;
-	virtual ~GPUObject() = default;
-	GPUObject(GPUObject&& other) noexcept;
+	GPUObjectBase() = default;
+	virtual ~GPUObjectBase() = default;
+	GPUObjectBase(GPUObjectBase&& other) noexcept;
 
 	virtual void Tick(float delta) {}
+	void Bind() const;
+	const IndexBuffer* GetIndexBuffer() const;
 
 	void Add(SharedPtr<Shader> shader);
 	void Add(SharedPtr<BufferBase> buffer);
 	void Add(UniquePtr<Component> component);
-	void Add(class Technique&& technique);
 
 	template <class T, typename... Args>
-	requires std::is_base_of_v<Shader, T> || std::is_base_of_v<BufferBase, T> || std::is_base_of_v<Component, T>
+		requires std::is_base_of_v<Shader, T> || std::is_base_of_v<BufferBase, T> || std::is_base_of_v<Component, T>
 	void Add(Args&&... args)
 	{
 		if constexpr (std::is_base_of_v<BufferBase, T>)
@@ -151,13 +154,21 @@ public:
 				Add(MakeUnique<T>(std::forward<Args>(args)...));
 	}
 
-	void Bind() const;
-
-	const IndexBuffer* GetIndexBuffer() const;
-
 protected:
 	BufferGroup Buffers;
 	ShaderGroup Shaders;
 	ComponentGroup Components;
+};
+
+class GPUObject : public GPUObjectBase
+{
+public:
+	using GPUObjectBase::Add;
+	GPUObject() = default;
+	virtual ~GPUObject() = default;
+	GPUObject(GPUObject&& other) noexcept;
+	void Add(Technique&& technique);
+
+protected:
 	std::vector<UniquePtr<Technique>> Techniques;
 };

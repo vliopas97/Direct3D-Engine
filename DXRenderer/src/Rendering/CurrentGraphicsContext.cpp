@@ -1,4 +1,5 @@
 #include "CurrentGraphicsContext.h"
+#include "Graphics.h"
 
 Graphics* CurrentGraphicsContext::GraphicsInfo = nullptr;
 

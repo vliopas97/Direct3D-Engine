@@ -28,6 +28,9 @@ void RenderQueue::ExecuteImpl()
 	StencilState<DepthStencilMode::Mask > m3{};
 	NullPixelShader n{};
 
+	DStencil.Clear();
+	FullScreenFilter.Setup(DStencil);
+
 	m1.Bind();
 	for (auto& t : Stages[0])
 		t.Execute();
@@ -40,6 +43,9 @@ void RenderQueue::ExecuteImpl()
 	m3.Bind();
 	for (auto& t : Stages[2])
 		t.Execute();
+
+	CurrentGraphicsContext::GraphicsInfo->SwapBuffers();
+	FullScreenFilter.Draw();
 }
 
 void RenderQueue::Reset() { RenderQueue::Get().ResetImpl(); }
@@ -49,6 +55,11 @@ void RenderQueue::ResetImpl()
 	for (auto& s : Stages)
 		s.clear();
 }
+
+inline RenderQueue::RenderQueue()
+	:DStencil(CurrentGraphicsContext::GraphicsInfo->GetWidth(), CurrentGraphicsContext::GraphicsInfo->GetHeight()),
+	FullScreenFilter(CurrentGraphicsContext::GraphicsInfo->GetWidth(), CurrentGraphicsContext::GraphicsInfo->GetHeight())
+{}
 
 void RenderQueue::Add(Task task, size_t target) { RenderQueue::Get().AddImpl(task, target); }
 

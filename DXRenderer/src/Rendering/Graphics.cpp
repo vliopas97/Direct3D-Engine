@@ -9,14 +9,14 @@
 
 #include "Actors\Actor.h"
 
-Graphics::Graphics(HWND windowHandle)
-	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 400.0f)
+Graphics::Graphics(HWND windowHandle, uint32_t width, uint32_t height)
+	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 400.0f), Width(width), Height(height)
 {
 	CurrentGraphicsContext::GraphicsInfo = this;
 
 	DXGI_SWAP_CHAIN_DESC sd = {};
-	sd.BufferDesc.Width = 0;
-	sd.BufferDesc.Height = 0;
+	sd.BufferDesc.Width = Width;
+	sd.BufferDesc.Height = Height;
 	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 0;
 	sd.BufferDesc.RefreshRate.Denominator = 0;
@@ -32,9 +32,9 @@ Graphics::Graphics(HWND windowHandle)
 	sd.Flags = 0;
 
 	UINT swapCreateFlags = 0u;
-	#ifndef NDEBUG
+#ifndef NDEBUG
 	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
-	#endif
+#endif
 
 	GRAPHICS_ASSERT(D3D11CreateDeviceAndSwapChain(
 		nullptr,
@@ -49,23 +49,17 @@ Graphics::Graphics(HWND windowHandle)
 		&Device,
 		nullptr,
 		&Context
-		));
+	));
 
 	Microsoft::WRL::ComPtr<ID3D11Resource> backBuffer = nullptr;
 	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
 	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, RenderTargetView.GetAddressOf()));
 
-	// Create Depth Buffer
-	DepthBuffer depthBuffer(DepthStencilView);
-	//depthBuffer.Bind();
-
-	EXCEPTION_WRAP(Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), DepthStencilView.Get()););
-
 	D3D11_VIEWPORT viewport{};
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
-	viewport.Width = 1920.0f;
-	viewport.Height = 1080.0f;
+	viewport.Width = (float)Width;
+	viewport.Height = (float)Height;
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);
@@ -73,9 +67,21 @@ Graphics::Graphics(HWND windowHandle)
 
 void Graphics::SwapBuffers()
 {
-	#ifndef NDEBUG
+	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), nullptr);
+}
+
+void Graphics::SwapBuffers(const DepthStencil& depthStencil)
+{
+	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), depthStencil.DepthStencilView.Get());
+}
+
+void Graphics::Tick(float delta)
+{
+	GraphicsCamera.Tick(delta);
+
+#ifndef NDEBUG
 	InfoManager.Reset();
-	#endif // !NDEBUG
+#endif // !NDEBUG
 
 	HRESULT result;
 	if (FAILED(result = SwapChain->Present(1u, 0u)))
@@ -89,29 +95,13 @@ void Graphics::SwapBuffers()
 			GRAPHICS_EXCEPTION(result);
 		}
 	}
+
+	ClearColor();
 }
 
-void Graphics::Tick(float delta)
+void Graphics::ClearColor() noexcept
 {
-	GraphicsCamera.Tick(delta);
-	SwapBuffers();
-	ClearColor(1.0f, 0.5f, 0.0f);
-	ClearDepth();
-}
-
-void Graphics::ClearColor(float red, float green, float blue) noexcept
-{
-	const float color[] = { red, green, blue };
-	Context->ClearRenderTargetView(RenderTargetView.Get(), color);
-}
-
-void Graphics::ClearDepth() noexcept
-{
-	Context->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0u);
-}
-
-void Graphics::DrawScene()
-{
+	Context->ClearRenderTargetView(RenderTargetView.Get(), backgroundColor);
 }
 
 const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const
