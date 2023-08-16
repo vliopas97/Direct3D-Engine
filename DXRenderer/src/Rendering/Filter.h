@@ -14,6 +14,7 @@ public:
 	void Draw() const;
 	void Setup(DepthStencil& depthStencil) const;
 
+	RenderTarget& GetRT() { return RenderTargetID; }
 protected:
 	using GPUObjectBase::Bind;
 

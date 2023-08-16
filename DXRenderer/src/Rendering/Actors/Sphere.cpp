@@ -40,7 +40,7 @@ void Sphere::Init()
 		VertexShader vertexShader("default");
 		first.Add<PixelShader>("default");
 		first.Add<InputLayout>("Sphere", vertexBuffer->GetLayout(), vertexShader.GetBlob());
-		Add<VertexShader>(vertexShader);
+		first.Add<VertexShader>(vertexShader);
 
 		const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
 		first.Add<UniformVS<XMMATRIX>>("SphereViewProj", viewProjection);

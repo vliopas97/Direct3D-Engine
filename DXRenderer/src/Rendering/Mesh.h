@@ -42,10 +42,9 @@ public:
 	void Draw();
 
 private:
-	void Init(const aiMesh& mesh);
-	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path);
+	void Init(const aiMesh& mesh, Step& first);
+	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path, Step& first);
 	std::pair<const char*, const char*> ResolveShaders() const;
-	void ResolveVertexIndexBuffers(const aiMesh& mesh);
 
 private:
 	std::string Name;

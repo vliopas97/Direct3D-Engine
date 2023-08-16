@@ -6,14 +6,14 @@
 #include <source_location>
 #include <filesystem>
 
-inline Sampler::Sampler(uint32_t slot)
+Sampler::Sampler(uint32_t slot, SamplerInitializer init)
 	:Slot(slot)
 {
 	D3D11_SAMPLER_DESC samplerDesc{};
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.Filter = init.EnableAnisotropic ? D3D11_FILTER_ANISOTROPIC : D3D11_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.AddressU = init.Reflect ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = init.Reflect ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = init.Reflect ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.MaxAnisotropy = D3D11_REQ_MAXANISOTROPY;
 	samplerDesc.MipLODBias = 0.0f;
 	samplerDesc.MinLOD = 0.0f;

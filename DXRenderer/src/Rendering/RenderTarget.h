@@ -31,6 +31,7 @@ public:
 	void Bind() const;
 	void Bind(DepthStencil& depthStencil) const;
 	void Clear() const;
+	void Clear(const std::array<float, 4>& color) const;
 private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;

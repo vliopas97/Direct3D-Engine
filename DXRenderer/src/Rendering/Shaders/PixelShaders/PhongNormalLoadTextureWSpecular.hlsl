@@ -37,6 +37,5 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, 
     const float specPower = pow(2.0f, specSample.a * 13.0f);
 
     const float3 specular = Specular(specColor, 1.0f, n, light.Direction, posCamera, att, specPower);
-    
     return float4(saturate(diffuse + ambient) * texSample.rgb + specular, texSample.a);
 }

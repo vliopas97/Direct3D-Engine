@@ -7,12 +7,18 @@
 #include <DirectXTex.h>
 #include <string>
 
-class Sampler
+struct SamplerInitializer
+{
+	bool EnableAnisotropic{ true };
+	bool Reflect{ false };
+};
+
+class Sampler : public Component
 {
 public:
-	Sampler(uint32_t slot = 0);
+	Sampler(uint32_t slot = 0, SamplerInitializer init = SamplerInitializer{});
 
-	void Bind() const;
+	void Bind() const override;
 private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> SamplerID;
 	uint32_t Slot;

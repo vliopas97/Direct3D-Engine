@@ -26,12 +26,15 @@ void RenderQueue::ExecuteImpl()
 	StencilState<> m1{};
 	StencilState<DepthStencilMode::Write > m2{};
 	StencilState<DepthStencilMode::Mask > m3{};
+	BlendState blend("default", false);
 	NullPixelShader n{};
 
 	DStencil.Clear();
-	FullScreenFilter.Setup(DStencil);
+	FullScreenFilter.GetRT().Clear({0.0f,0.0f,0.0f,0.0f});
+	CurrentGraphicsContext::GraphicsInfo->SwapBuffers(DStencil);
 
 	m1.Bind();
+	blend.Bind();
 	for (auto& t : Stages[0])
 		t.Execute();
 
@@ -40,11 +43,13 @@ void RenderQueue::ExecuteImpl()
 	for (auto& t : Stages[1])
 		t.Execute();
 
-	m3.Bind();
+	FullScreenFilter.GetRT().Bind();
+	m1.Bind();
 	for (auto& t : Stages[2])
 		t.Execute();
 
-	CurrentGraphicsContext::GraphicsInfo->SwapBuffers();
+	CurrentGraphicsContext::GraphicsInfo->SwapBuffers(DStencil);
+	m3.Bind();
 	FullScreenFilter.Draw();
 }
 

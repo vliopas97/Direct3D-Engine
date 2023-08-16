@@ -1,5 +1,7 @@
 #include "Filter.h"
 #include "CurrentGraphicsContext.h"
+#include "Texture.h"
+#include "State.h"
 
 Filter::Filter(uint32_t width, uint32_t height)
 	:RenderTargetID(width, height)
@@ -16,6 +18,8 @@ Filter::Filter(uint32_t width, uint32_t height)
 	Add<PixelShader>("FullScreenFilter");
 	Add<VertexBuffer>(vb);
 	Add<IndexBuffer>("$FullScreenFilter", indices);
+	Add<Sampler>(0, SamplerInitializer{ false, true });
+	Add<BlendState>("$FullScreenFilter", true);
 }
 
 void Filter::Draw() const
@@ -27,6 +31,5 @@ void Filter::Draw() const
 
 void Filter::Setup(DepthStencil& depthStencil) const
 {
-	RenderTargetID.Clear();
 	RenderTargetID.Bind(depthStencil);
 }

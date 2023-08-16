@@ -101,7 +101,7 @@ void Graphics::Tick(float delta)
 
 void Graphics::ClearColor() noexcept
 {
-	Context->ClearRenderTargetView(RenderTargetView.Get(), backgroundColor);
+	Context->ClearRenderTargetView(RenderTargetView.Get(), backgroundColor.data());
 }
 
 const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const

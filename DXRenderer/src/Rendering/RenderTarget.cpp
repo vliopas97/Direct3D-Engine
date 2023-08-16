@@ -79,5 +79,10 @@ void RenderTarget::Bind(DepthStencil& depthStencil) const
 
 void RenderTarget::Clear() const
 {
-	CurrentGraphicsContext::Context()->ClearRenderTargetView(RenderTargetView.Get(), backgroundColor);
+	CurrentGraphicsContext::Context()->ClearRenderTargetView(RenderTargetView.Get(), backgroundColor.data());
+}
+
+void RenderTarget::Clear(const std::array<float, 4>& color) const
+{
+	CurrentGraphicsContext::Context()->ClearRenderTargetView(RenderTargetView.Get(), color.data());
 }

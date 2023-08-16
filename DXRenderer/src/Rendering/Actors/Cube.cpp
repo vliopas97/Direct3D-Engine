@@ -77,7 +77,7 @@ void Cube::Init()
 		draw.Add<InputLayout>("Cube2", vertexBuffer->GetLayout(), vs.GetBlob());
 		draw.Add<VertexShader>(vs);
 
-		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelViewOutline);
+		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelView);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
 		draw.Add<UniformVS<XMMATRIX>>("Cube2", projection, 1);
 

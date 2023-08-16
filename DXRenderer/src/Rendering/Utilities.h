@@ -10,7 +10,7 @@
 #include <DirectXMath.h>
 #include <vector>
 
-constexpr float backgroundColor[3] = { 1.0f, 0.5f, 0.0f };
+constexpr std::array<float, 4> backgroundColor = { 1.0f, 0.5f, 0.0f, 0.0f };
 
 struct TransformationIntrinsics
 {

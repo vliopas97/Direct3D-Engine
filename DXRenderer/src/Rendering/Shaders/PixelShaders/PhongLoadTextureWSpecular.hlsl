@@ -8,9 +8,9 @@ cbuffer constBuffer : register(b2)
 }
 
 Texture2D tex : register(t0);
-Texture2D spec : register(t1);
+Texture2D spec : register(t2);
 SamplerState samplerState : register(s0);
-SamplerState samplerStateSpec : register(s1);
+SamplerState samplerStateSpec : register(s2);
 
 float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : TexCoords) : SV_Target
 {
