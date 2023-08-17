@@ -4,7 +4,7 @@ SamplerState samplerTex;
 static const int r = 7;
 static const float dim = (2 * r + 1) * (2 * r + 1);
 
-float4 main(float2 position : Position) : SV_Target
+float4 main(float2 position : texCoords) : SV_Target
 {
     uint width, height;
     tex.GetDimensions(width, height);

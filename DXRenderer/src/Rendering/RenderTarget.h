@@ -35,4 +35,6 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;
+
+	uint32_t Width, Height;
 };

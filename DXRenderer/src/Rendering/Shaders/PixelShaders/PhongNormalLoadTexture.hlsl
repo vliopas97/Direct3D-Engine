@@ -2,12 +2,12 @@
 #include "includes\LightVector.hlsli"
 #include "includes\ShaderOps.hlsli"
 
-cbuffer constBuffer : register(b1)
+cbuffer constBuffer : register(b1) // TO DO: FIX ALIGNMENT ISSUES
 {
     float3 materialColor;
     float specularIntensity;
     float Shininess;
-    bool NormalMapEnabled;
+    float NormalMapEnabled;
 };
 
 cbuffer constBuffer : register(b2)
@@ -30,7 +30,7 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, 
 
     float att = Attenuation(attConst, attLin, attQuad, light.Distance);
     const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, light.DirectionN, n);
-    float3 specular = Specular(materialColor, specularIntensity, n, light.Direction, posCamera, att, Shininess);
+    //float3 specular = Specular(materialColor, specularIntensity, n, light.Direction, posCamera, att, Shininess);
 
-    return float4(saturate((diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular), 1.0f);
+    return float4(saturate((diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb), 1.0f);
 }

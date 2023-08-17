@@ -23,34 +23,36 @@ void RenderQueue::Execute() { RenderQueue::Get().ExecuteImpl(); }
 
 void RenderQueue::ExecuteImpl()
 {
-	StencilState<> m1{};
-	StencilState<DepthStencilMode::Write > m2{};
-	StencilState<DepthStencilMode::Mask > m3{};
+	StencilState<> StencilOff{};
+	StencilState<DepthStencilMode::Write > StencilWrite{};
+	StencilState<DepthStencilMode::Mask > StencilMask{};
 	BlendState blend("default", false);
 	NullPixelShader n{};
 
 	DStencil.Clear();
-	FullScreenFilter.GetRT().Clear({0.0f,0.0f,0.0f,0.0f});
+	FullScreenFilter.RT1.Clear();
 	CurrentGraphicsContext::GraphicsInfo->SwapBuffers(DStencil);
 
-	m1.Bind();
+	StencilOff.Bind();
 	blend.Bind();
 	for (auto& t : Stages[0])
 		t.Execute();
 
-	m2.Bind();
+	StencilWrite.Bind();
 	n.Bind();
 	for (auto& t : Stages[1])
 		t.Execute();
 
-	FullScreenFilter.GetRT().Bind();
-	m1.Bind();
+	StencilOff.Bind();
+	FullScreenFilter.RT1.Bind();
 	for (auto& t : Stages[2])
 		t.Execute();
-
+	FullScreenFilter.RT2.Bind();
+	FullScreenFilter.RT1.BindAsTexture();
+	FullScreenFilter.DrawHorizontal();
 	CurrentGraphicsContext::GraphicsInfo->SwapBuffers(DStencil);
-	m3.Bind();
-	FullScreenFilter.Draw();
+	StencilMask.Bind();
+	FullScreenFilter.DrawVertical();
 }
 
 void RenderQueue::Reset() { RenderQueue::Get().ResetImpl(); }
@@ -63,7 +65,9 @@ void RenderQueue::ResetImpl()
 
 inline RenderQueue::RenderQueue()
 	:DStencil(CurrentGraphicsContext::GraphicsInfo->GetWidth(), CurrentGraphicsContext::GraphicsInfo->GetHeight()),
-	FullScreenFilter(CurrentGraphicsContext::GraphicsInfo->GetWidth(), CurrentGraphicsContext::GraphicsInfo->GetHeight())
+	FullScreenFilter(CurrentGraphicsContext::GraphicsInfo->GetWidth() / 2,
+					 CurrentGraphicsContext::GraphicsInfo->GetHeight() / 2,
+					 10, 4.5f)
 {}
 
 void RenderQueue::Add(Task task, size_t target) { RenderQueue::Get().AddImpl(task, target); }

@@ -31,6 +31,7 @@ void DepthStencil::Clear()
 }
 
 RenderTarget::RenderTarget(uint32_t width, uint32_t height)
+	:Width(width), Height(height)
 {
 	D3D11_TEXTURE2D_DESC textureDesc{};
 	textureDesc.Width = width;
@@ -70,11 +71,29 @@ void RenderTarget::BindAsTexture(uint32_t slot) const
 void RenderTarget::Bind() const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), nullptr);
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = (float)Width;
+	viewport.Height = (float)Height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	CurrentGraphicsContext::Context()->RSSetViewports(1u, &viewport);
 }
 
 void RenderTarget::Bind(DepthStencil& depthStencil) const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), depthStencil.DepthStencilView.Get());
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = (float)Width;
+	viewport.Height = (float)Height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	CurrentGraphicsContext::Context()->RSSetViewports(1u, &viewport);
 }
 
 void RenderTarget::Clear() const

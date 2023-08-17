@@ -8,9 +8,17 @@
 
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <numbers>
 #include <vector>
 
 constexpr std::array<float, 4> backgroundColor = { 1.0f, 0.5f, 0.0f, 0.0f };
+
+template<typename T>
+constexpr T gauss(T x, T sigma) noexcept
+{
+	const auto ss = std::pow(sigma, 2.0f);
+	return ((T)1.0 / std::pow((T)2.0 * (T)std::numbers::pi_v<T> * ss, 2.0f)) * exp(-std::pow(x, 2.0f) / ((T)2.0 * ss));
+}
 
 struct TransformationIntrinsics
 {

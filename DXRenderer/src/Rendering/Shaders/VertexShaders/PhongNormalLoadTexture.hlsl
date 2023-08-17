@@ -14,7 +14,7 @@ struct Output
     float3 normal : Normal;
     float3 tangent : Tangent;
     float3 bitangent : Bitangent;
-    float2 texCoords : TexCoord;
+    float2 texCoords : TexCoords;
     float4 pos : SV_Position;
 };
 

@@ -77,5 +77,5 @@ private:
 private:
 	std::array<std::vector<Task>, 3> Stages;
 	DepthStencil DStencil;
-	Filter FullScreenFilter;
+	GaussFilter FullScreenFilter;
 };

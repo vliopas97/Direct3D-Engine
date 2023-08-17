@@ -12,7 +12,7 @@ struct Output
 {
     float3 posCamera : Position;
     float3 normal : Normal;
-    float2 texCoords : TexCoord;
+    float2 texCoords : TexCoords;
     float4 pos : SV_Position;
 };
 

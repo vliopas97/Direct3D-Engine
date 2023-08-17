@@ -54,25 +54,34 @@ Graphics::Graphics(HWND windowHandle, uint32_t width, uint32_t height)
 	Microsoft::WRL::ComPtr<ID3D11Resource> backBuffer = nullptr;
 	GRAPHICS_ASSERT(SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
 	GRAPHICS_ASSERT(Device->CreateRenderTargetView(backBuffer.Get(), nullptr, RenderTargetView.GetAddressOf()));
-
-	D3D11_VIEWPORT viewport{};
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-	viewport.Width = (float)Width;
-	viewport.Height = (float)Height;
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	Context->RSSetViewports(1, &viewport);
 }
 
 void Graphics::SwapBuffers()
 {
 	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), nullptr);
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = (float)Width;
+	viewport.Height = (float)Height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	Context->RSSetViewports(1u, &viewport);
 }
 
 void Graphics::SwapBuffers(const DepthStencil& depthStencil)
 {
 	Context->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), depthStencil.DepthStencilView.Get());
+
+	D3D11_VIEWPORT viewport;
+	viewport.Width = (float)Width;
+	viewport.Height = (float)Height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	Context->RSSetViewports(1u, &viewport);
 }
 
 void Graphics::Tick(float delta)

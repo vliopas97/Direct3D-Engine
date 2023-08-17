@@ -1,6 +1,6 @@
 struct Output
 {
-    float2 uv : TexCoord;
+    float2 uv : TexCoords;
     float4 pos : SV_Position;
 };
 
