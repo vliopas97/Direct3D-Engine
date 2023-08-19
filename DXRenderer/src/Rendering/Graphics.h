@@ -26,9 +26,7 @@ public:
 	Camera& GetCamera();
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
-	
-	void SwapBuffers();
-	void SwapBuffers(const DepthStencil& depthStencil);
+	inline SharedPtr<RenderTarget> GetTarget() { return RTarget; }
 
 private:
 	void ClearColor() noexcept;
@@ -37,7 +35,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Device>        Device;
 	Microsoft::WRL::ComPtr<IDXGISwapChain>      SwapChain;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;
+	SharedPtr<RenderTarget> RTarget;
 
 	#ifndef NDEBUG
 	DXGIInfoManager InfoManager;

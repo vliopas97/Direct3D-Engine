@@ -4,6 +4,7 @@
 #include "Rendering\Graphics.h"
 #include "Rendering\CurrentGraphicsContext.h"
 #include "Rendering\State.h"
+#include "Rendering/RenderGraph/RenderQueue.h"
 
 Sphere::Sphere()
 {
@@ -35,7 +36,7 @@ void Sphere::Init()
 
 	Technique standard;
 	{
-		Step first(0);
+		Step first("phong");
 
 		VertexShader vertexShader("default");
 		first.Add<PixelShader>("default");
@@ -49,7 +50,6 @@ void Sphere::Init()
 		first.Add<UniformVS<XMMATRIX>>("SphereTransform", transform, 1);
 
 		first.Add<PS<XMVECTOR>>("SphereColor", XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
-		first.Add<BlendState>("Sphere", false);
 		first.Add<RasterizerState>(false);
 		standard.PushBack(std::move(first));
 	}

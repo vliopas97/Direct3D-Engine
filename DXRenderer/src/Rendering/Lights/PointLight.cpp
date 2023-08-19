@@ -34,6 +34,11 @@ void PointLight::Draw()
 	Mesh.Draw();
 }
 
+void PointLight::LinkTechniques()
+{
+	Mesh.LinkTechniques();
+}
+
 void PointLight::Tick(float delta)
 {
 	Mesh.Transform.Translation = Position;

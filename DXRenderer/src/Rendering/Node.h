@@ -23,6 +23,7 @@ public:
 
 	virtual void GUITransform() = 0;
 	void Tick(float delta);
+	void LinkTechniques();
 
 protected:
 	void ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, NodeBase*& selectedNode) const;

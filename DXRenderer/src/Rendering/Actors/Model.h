@@ -15,6 +15,7 @@ public:
 
 	virtual void GUI() override;
 	const std::string& GetPath() const { return Path; }
+	virtual void LinkTechniques() override;
 protected:
 
 private:

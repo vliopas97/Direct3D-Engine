@@ -249,6 +249,15 @@ void NodeBase::Tick(float delta)
 	}
 }
 
+void NodeBase::LinkTechniques()
+{
+	for (auto* mesh : Meshes)
+		mesh->LinkTechniques();
+
+	for (auto& child : Children)
+		child->LinkTechniques();
+}
+
 inline void NodeBase::ShowTree(int& trackedIndex, std::optional<int>& selectedIndex, NodeBase*& selectedNode) const
 {
 	const int currentNodeIndex = trackedIndex;

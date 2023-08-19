@@ -20,7 +20,7 @@ inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 	return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&Transform));
 }
 
-inline void PrimitiveComponent::Tick(float delta)
+void PrimitiveComponent::Tick(float delta)
 {
 	DirectX::XMStoreFloat4x4(&ModelView,
 							 GetTransform() * CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView());
@@ -30,7 +30,7 @@ Mesh::Mesh(const aiMesh& mesh, const std::string& meshName)
 	:Name(meshName)
 {
 	Technique standard;
-	Step first(0);
+	Step first("phong");
 	Init(mesh, first);
 
 	standard.PushBack(std::move(first));
@@ -41,7 +41,7 @@ Mesh::Mesh(const aiMesh& mesh, const std::string& meshName, const aiMaterial* co
 	:Name(meshName)
 {
 	Technique standard;
-	Step first(0);
+	Step first("phong");
 
 	LoadMaterial(mesh, materials, path, first);
 	Init(mesh, first);

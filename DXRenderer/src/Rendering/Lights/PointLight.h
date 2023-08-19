@@ -10,6 +10,7 @@ public:
 
 	void Bind();
 	void Draw();
+	void LinkTechniques();
 	void GUI();
 	void Tick(float delta);
 public:

@@ -5,7 +5,7 @@
 #include "Rendering/CurrentGraphicsContext.h"
 #include "Rendering/Shader.h"
 #include "Rendering/Utilities.h"
-#include "Rendering/RenderQueue.h"
+#include "RenderGraph/RenderQueue.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

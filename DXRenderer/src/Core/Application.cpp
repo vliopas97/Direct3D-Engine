@@ -81,6 +81,10 @@ Application::Application()
 
 	auto& camera = MainWindow->GetGraphicsContext().GetCamera();
 	camera.SetPosition({ -13.5f,6.0f,3.5f });
+
+	for (auto& c : Actors)
+		c->LinkTechniques();
+	Light.LinkTechniques();
 }
 
 void Application::Tick()
@@ -115,9 +119,9 @@ void Application::Tick()
 		}
 	}
 
-	RenderQueue::Execute();
+	RenderGraph::Execute();
 	ImGui->End();
 
 	MainWindow->Tick(delta);
-	RenderQueue::Reset();
+	RenderGraph::Reset();
 }

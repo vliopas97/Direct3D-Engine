@@ -5,6 +5,7 @@
 #include "Rendering\CurrentGraphicsContext.h"
 #include "Rendering\Material.h"
 #include "Rendering\State.h"
+#include "Rendering/RenderGraph/RenderQueue.h"
 
 Cube::Cube()
 {
@@ -45,7 +46,7 @@ void Cube::Init()
 
 	Technique standard;
 	{
-		Step first(0);
+		Step first("phong");
 		VertexShader vs("colorInput");
 		first.Add<PixelShader>("colorInput");
 		first.Add<InputLayout>("Cube", vertexBuffer->GetLayout(), vs.GetBlob());
@@ -60,10 +61,9 @@ void Cube::Init()
 	}
 	Technique outline;
 	{
-		Step mask(1);
+		Step mask("outlineMask");
 		VertexShader vs("colorInput");
 		mask.Add<InputLayout>("Cube1", vertexBuffer->GetLayout(), vs.GetBlob());
-		mask.Add<VertexShader>(vs);
 
 		mask.Add<UniformVS<XMMATRIX>>("Cube1", ModelView);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
@@ -71,13 +71,11 @@ void Cube::Init()
 		outline.PushBack(std::move(mask));
 	}
 	{
-		Step draw(2);
+		Step draw("outlineDraw");
 		VertexShader vs("colorInput");
-		draw.Add<PixelShader>("colorInput");
 		draw.Add<InputLayout>("Cube2", vertexBuffer->GetLayout(), vs.GetBlob());
-		draw.Add<VertexShader>(vs);
 
-		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelView);
+		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelViewOutline);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
 		draw.Add<UniformVS<XMMATRIX>>("Cube2", projection, 1);
 

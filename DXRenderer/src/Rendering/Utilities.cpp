@@ -1,5 +1,5 @@
 #include "Utilities.h"
-#include "RenderQueue.h"
+#include "RenderGraph\RenderQueue.h"
 
 TransformationMatrix::TransformationMatrix()
 	: Matrix(DirectX::XMMatrixIdentity()), Scale( 1.0f, 1.0f, 1.0f), Rotation(0.0f, 0.0f, 0.0f), 
@@ -82,4 +82,10 @@ GPUObject::GPUObject(GPUObject&& other) noexcept
 void GPUObject::Add(Technique&& technique)
 {
 	Techniques.emplace_back(MakeUnique<Technique>(std::move(technique)));
+}
+
+void GPUObject::LinkTechniques()
+{
+	for (auto& t : Techniques)
+		t->Link();
 }

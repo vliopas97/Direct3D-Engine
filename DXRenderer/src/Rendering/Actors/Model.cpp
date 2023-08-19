@@ -44,6 +44,11 @@ void Model::GUI()
 	ImGui::End();
 }
 
+void Model::LinkTechniques()
+{
+	Root->LinkTechniques();
+}
+
 void Model::Init(const std::string& filename)
 {
 	Path = "\\Model\\" + filename;

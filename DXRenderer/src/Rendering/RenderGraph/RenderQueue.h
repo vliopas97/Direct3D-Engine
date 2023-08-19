@@ -1,19 +1,17 @@
 #pragma once
 
-#include "Buffer.h"
+#include "Rendering/Buffer.h"
 #include "Core/Core.h"
-#include "Filter.h"
-#include "Graphics.h"
-#include "RenderQueue.h"
-#include "State.h"
-#include "Utilities.h"
+#include "Rendering/Graphics.h"
+#include "Rendering/State.h"
+#include "Rendering/Utilities.h"
 
 #include <vector>
 
 class Step
 {
 public:
-	Step(size_t pass);
+	Step(std::string name);
 
 	template<typename T, typename... Args>
 	void Add(Args&&... args)
@@ -23,10 +21,12 @@ public:
 
 	void Bind() const;
 	void Submit(const GPUObject& renderObject) const;
+	void Link();
 
 private:
-	size_t PassNumber;
+	std::string TargetPassName;
 	GPUObject Resources;
+	class RenderQueuePass* TargetPass{ nullptr };
 };
 
 class Task
@@ -50,32 +50,9 @@ public:
 
 	void PushBack(Step&& step);
 
+	void Link();
+
 private:
 	bool IsActive = true;
 	std::vector<Step> Steps;
-};
-
-class RenderQueue
-{
-public:
-	static void Add(Task task, size_t target);
-	static void Execute();
-	static void Reset();
-
-	static RenderQueue& Get();
-
-private:
-	void AddImpl(Task task, size_t target);
-	void ExecuteImpl();
-	void ResetImpl();
-
-private:
-	RenderQueue();
-	RenderQueue(const RenderQueue&) = delete;
-	RenderQueue& operator=(const RenderQueue&) = delete;
-
-private:
-	std::array<std::vector<Task>, 3> Stages;
-	DepthStencil DStencil;
-	GaussFilter FullScreenFilter;
 };
