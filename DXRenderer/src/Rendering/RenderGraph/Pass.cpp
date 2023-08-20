@@ -81,9 +81,12 @@ void Pass::Register(UniquePtr<PassOutputBase> output)
 inline void Pass::Bind() const
 {
 	if (RTarget)
-		RTarget->Bind(*DStencil.get());
+		if (DStencil.get())
+			RTarget->BindBuffer(*DStencil.get());
+		else
+			RTarget->BindBuffer();
 	else
-		DStencil->Bind();
+		DStencil->BindBuffer();
 }
 
 void Pass::SetInputSource(const std::string& inputName, const std::string& targetName)

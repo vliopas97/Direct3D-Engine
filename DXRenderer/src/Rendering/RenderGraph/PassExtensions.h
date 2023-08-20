@@ -73,3 +73,35 @@ class OutlineMaskPass : public RenderQueuePass
 public:
 	OutlineMaskPass(std::string&& name);
 };
+
+class BlurOutlineDrawPass : public RenderQueuePass
+{
+public:
+	BlurOutlineDrawPass(std::string&& name, uint32_t width, uint32_t height);
+
+	void Execute() const override;
+};
+
+class HorizontalBlurPass : public FullScreenPass
+{
+public:
+	HorizontalBlurPass(std::string&& name, uint32_t width, uint32_t height);
+	void Execute() const override;
+
+private:
+	SharedPtr<UniformPS<Kernel>> ConvKernel;
+	SharedPtr<UniformPS<BOOL>> HorizontalFlag;
+	SharedPtr<RenderTarget> BlurScratchIn;
+};
+
+class VerticalBlurPass : public FullScreenPass
+{
+public:
+	VerticalBlurPass(std::string&& name);
+	void Execute() const override;
+
+private:
+	SharedPtr<UniformPS<Kernel>> ConvKernel;
+	SharedPtr<UniformPS<BOOL>> HorizontalFlag;
+	SharedPtr<RenderTarget> BlurScratchIn;
+};

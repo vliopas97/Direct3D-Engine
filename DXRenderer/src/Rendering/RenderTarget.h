@@ -6,18 +6,13 @@
 #include <d3d11.h>
 #include <wrl.h>
 
-class BufferResource
+class DepthStencil
 {
 public:
-	virtual void Bind() const = 0;
-};
-
-class DepthStencil : public BufferResource
-{
-public:
-	void Bind() const;
-	void Bind(class RenderTarget& renderTarget);
+	void BindBuffer() const;
+	void BindBuffer(class RenderTarget& renderTarget);
 	void Clear();
+	virtual void Bind() {};
 
 protected:
 	DepthStencil(uint32_t width, uint32_t height, bool isShaderResource = true);
@@ -33,7 +28,7 @@ class DepthStencilInput : public DepthStencil
 {
 public:
 	DepthStencilInput(uint32_t width, uint32_t height, uint32_t slot = 0);
-	void BindAsTexture();
+	void Bind() override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ShaderResourceView;
@@ -46,13 +41,14 @@ public:
 	DepthStencilOutput(uint32_t width, uint32_t height);
 };
 
-class RenderTarget : public BufferResource
+class RenderTarget
 {
 public:
-	void Bind() const;
-	void Bind(DepthStencil& depthStencil) const;
+	virtual void BindBuffer() const;
+	void BindBuffer(DepthStencil& depthStencil) const;
 	void Clear() const;
 	void Clear(const std::array<float, 4>& color) const;
+	virtual void Bind() const {};
 	
 protected:
 	RenderTarget(uint32_t width, uint32_t height);
@@ -68,7 +64,7 @@ class RenderTargetInput : public RenderTarget
 {
 public:
 	RenderTargetInput(uint32_t width, uint32_t height, uint32_t slot = 0);
-	void BindAsTexture() const;
+	void Bind() const override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
@@ -79,4 +75,5 @@ class RenderTargetOutput : public RenderTarget
 {
 public:
 	RenderTargetOutput(ID3D11Texture2D* texture);
+	void Bind() const override;
 };

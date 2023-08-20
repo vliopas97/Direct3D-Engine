@@ -22,14 +22,14 @@ DepthStencil::DepthStencil(uint32_t width, uint32_t height,
 	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencilID.Get(), nullptr, &DepthStencilView);
 }
 
-void DepthStencil::Bind() const
+void DepthStencil::BindBuffer() const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(0, nullptr, DepthStencilView.Get());
 }
 
-void DepthStencil::Bind(RenderTarget& renderTarget)
+void DepthStencil::BindBuffer(RenderTarget& renderTarget)
 {
-	renderTarget.Bind(*this);
+	renderTarget.BindBuffer(*this);
 }
 
 void DepthStencil::Clear()
@@ -53,7 +53,7 @@ DepthStencilInput::DepthStencilInput(uint32_t width, uint32_t height, uint32_t s
 	CurrentGraphicsContext::Device()->CreateShaderResourceView(resource.Get(), &shaderResourceViewDesc, &ShaderResourceView);
 }
 
-void DepthStencilInput::BindAsTexture()
+void DepthStencilInput::Bind()
 {
 	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, ShaderResourceView.GetAddressOf());
 }
@@ -102,7 +102,7 @@ RenderTarget::RenderTarget(ID3D11Texture2D* texture)
 	CurrentGraphicsContext::Device()->CreateRenderTargetView(texture, &renderTargetViewDesc, &RenderTargetView);
 }
 
-void RenderTarget::Bind() const
+void RenderTarget::BindBuffer() const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), nullptr);
 
@@ -116,7 +116,7 @@ void RenderTarget::Bind() const
 	CurrentGraphicsContext::Context()->RSSetViewports(1u, &viewport);
 }
 
-void RenderTarget::Bind(DepthStencil& depthStencil) const
+void RenderTarget::BindBuffer(DepthStencil& depthStencil) const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), depthStencil.DepthStencilView.Get());
 
@@ -154,7 +154,7 @@ RenderTargetInput::RenderTargetInput(uint32_t width, uint32_t height, uint32_t s
 	CurrentGraphicsContext::Device()->CreateShaderResourceView(resource.Get(), &shaderResourceViewDesc, &TextureView);
 }
 
-void RenderTargetInput::BindAsTexture() const
+void RenderTargetInput::Bind() const
 {
 	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, TextureView.GetAddressOf());
 }
@@ -162,3 +162,8 @@ void RenderTargetInput::BindAsTexture() const
 RenderTargetOutput::RenderTargetOutput(ID3D11Texture2D* texture)
 	:RenderTarget(texture)
 {}
+
+void RenderTargetOutput::Bind() const
+{
+	ASSERT(false && "RenderTarget cannot be bound as an Output");
+}

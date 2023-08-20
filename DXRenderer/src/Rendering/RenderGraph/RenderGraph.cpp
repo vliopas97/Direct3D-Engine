@@ -52,6 +52,16 @@ RenderQueuePass& RenderGraph::GetRenderQueue(const std::string& passName)
 	return RenderGraph::Get().GetRenderQueueImpl(passName);
 }
 
+void RenderGraph::AddGlobalInputs(UniquePtr<PassInputBase> in)
+{
+	RenderGraph::Get().AddGlobalInputsImpl(std::move(in));
+}
+
+void RenderGraph::AddGlobalOutputs(UniquePtr<PassOutputBase> out)
+{
+	RenderGraph::Get().AddGlobalOutputsImpl(std::move(out));
+}
+
 RenderGraph::RenderGraph()
 	:BackBuffer(CurrentGraphicsContext::GraphicsInfo->GetTarget()),
 	DepthBuffer(MakeShared<DepthStencilOutput>(CurrentGraphicsContext::GraphicsInfo->GetWidth(),
@@ -59,7 +69,7 @@ RenderGraph::RenderGraph()
 {
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<RenderTarget>>("backBuffer", BackBuffer));
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<DepthStencil>>("depthBuffer", DepthBuffer));
-	GlobalInputs.emplace_back (MakeUnique<PassInput<RenderTarget>>("backBuffer", BackBuffer));
+	GlobalInputs.emplace_back(MakeUnique<PassInput<RenderTarget>>("backBuffer", BackBuffer));
 
 	//--------------------------
 
@@ -76,7 +86,7 @@ RenderGraph::RenderGraph()
 		AddImpl(std::move(pass));
 	}
 	{
-		auto pass =MakeUnique<OutlineMaskPass>("outlineMask");
+		auto pass = MakeUnique<OutlineMaskPass>("outlineMask");
 		pass->SetInputSource("depthStencil", "phong.depthStencil");
 		AddImpl(std::move(pass));
 	}
@@ -132,7 +142,7 @@ void RenderGraph::AddImpl(UniquePtr<Pass> pass)
 						   });
 
 	if (it != Passes.end()) throw std::invalid_argument("Pass name already exists");
-	
+
 	LinkInputsImpl(*pass);
 	Passes.emplace_back(std::move(pass));
 }
@@ -215,4 +225,14 @@ RenderQueuePass& RenderGraph::GetRenderQueueImpl(const std::string& passName)
 	{
 		throw std::invalid_argument("Cannot find a RenderQueuePass with such name");
 	}
+}
+
+void RenderGraph::AddGlobalInputsImpl(UniquePtr<PassInputBase> in)
+{
+	GlobalInputs.emplace_back(std::move(in));
+}
+
+void RenderGraph::AddGlobalOutputsImpl(UniquePtr<PassOutputBase> out)
+{
+	GlobalOutputs.emplace_back(std::move(out));
 }

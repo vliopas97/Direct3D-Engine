@@ -8,6 +8,10 @@ class DepthStencil;
 class RenderTarget;
 class PassOutputBase;
 
+template<typename T>
+concept ResourceType = std::is_base_of_v<DepthStencil, T> || std::is_base_of_v<RenderTarget, T> ||
+std::is_base_of_v<class Shader, T> || std::is_base_of_v<class Buffer, T> || std::is_base_of_v<class Component, T>;
+
 class PassInputBase
 {
 public:
@@ -31,8 +35,7 @@ private:
 	std::string OutputName;
 };
 
-template<typename T>
-requires std::is_base_of_v<BufferResource, T>
+template<ResourceType T>
 class PassInput : public PassInputBase
 {
 public:
@@ -59,8 +62,6 @@ public:
 
 	const std::string& GetName() const noexcept { return Name; }
 	virtual void Validate() const = 0;
-
-	virtual SharedPtr<BufferResource> GetBufferResource() const = 0;
 	
 protected:
 	PassOutputBase(std::string&& name);
@@ -69,9 +70,11 @@ private:
 	std::string Name;
 };
 
-template<typename T>
-requires std::is_base_of_v<BufferResource, T>
-class PassOutput : public PassOutputBase
+template<ResourceType T, bool IsImmutable = false>
+class PassOutput {};
+
+template<ResourceType T>
+class PassOutput<T, false> : public PassOutputBase
 {
 public:
 	PassOutput(std::string&& name, SharedPtr<T>& resource)
@@ -81,7 +84,7 @@ public:
 	virtual void Validate() const override
 	{}
 
-	virtual SharedPtr<BufferResource> GetBufferResource() const override
+	SharedPtr<T> GetResource() const
 	{
 		if (IsLinked)
 			throw std::runtime_error("Resource " + GetName() + " bound twice");
@@ -96,16 +99,56 @@ private:
 };
 
 template<typename T>
-requires std::is_base_of_v<BufferResource, T>
+class PassOutput<T, true> : public PassOutputBase
+{
+public:
+	PassOutput(std::string&& name, SharedPtr<T>& resource)
+		:PassOutputBase(std::move(name)), Resource(resource)
+	{}
+
+	virtual void Validate() const override
+	{}
+
+	SharedPtr<T> GetResource() const
+	{
+		return Resource;
+	}
+
+private:
+	SharedPtr<T>& Resource;
+};
+
+template<ResourceType T>
 void PassInput<T>::Bind(PassOutputBase& out)
 {
-	auto ptr = std::dynamic_pointer_cast<T>(out.GetBufferResource());
-	if (!ptr)
-		throw std::runtime_error("Binding input " + GetName() + " to output "
-								 + GetPassName() + "." + GetOutputName() + "has incompatible type with output");
+	//if (auto ptr = std::dynamic_pointer_cast<T>(dynamic_cast<PassOutput<T>&>(out).GetResource()))
+	//	Target = std::move(ptr);
+	//else
+	//{
+	//	auto ptr = std::dynamic_pointer_cast<T>(dynamic_cast<PassOutput<T, true>&>(out).GetResource());
+	//}
 
-	Target = std::move(ptr);
-	IsLinked = true;
+	if (auto* outPtr = dynamic_cast<PassOutput<T>*>(&out))
+	{
+		auto ptr = std::dynamic_pointer_cast<T>(outPtr->GetResource());
+		Target = std::move(ptr);
+		IsLinked = true;
+	}
+	else if (auto* outPtr = dynamic_cast<PassOutput<T, true>*>(&out))
+	{
+		auto ptr = std::dynamic_pointer_cast<T>(outPtr->GetResource());
+		Target = std::move(ptr);
+		IsLinked = true;
+	}
+	else
+		throw std::bad_cast();
+
+	//if (!ptr)
+	//	throw std::runtime_error("Binding input " + GetName() + " to output "
+	//							 + GetPassName() + "." + GetOutputName() + "has incompatible type with output");
+
+	//Target = std::move(ptr);
+	//IsLinked = true;
 }
 
 class Pass

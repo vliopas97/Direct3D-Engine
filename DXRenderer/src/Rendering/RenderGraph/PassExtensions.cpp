@@ -59,7 +59,6 @@ FullScreenPass::FullScreenPass(std::string&& name)
 	Add<VertexBuffer>(vb);
 	Add<IndexBuffer>("$FullScreenFilter", indices);
 	Add<Sampler>(0, SamplerInitializer{ false, true });
-	Add<BlendState>("$FullScreenFilter", true);
 }
 
 void FullScreenPass::Execute() const
@@ -102,6 +101,7 @@ PhongPass::PhongPass(std::string&& name)
 	Register<PassOutput<RenderTarget>>("renderTarget", RTarget);
 	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
 	Add<StencilState<DepthStencilMode::Off>>();
+	Add<BlendState>("phongBlend", false);
 }
 
 OutlineDrawPass::OutlineDrawPass(std::string&& name)
@@ -127,4 +127,72 @@ OutlineMaskPass::OutlineMaskPass(std::string&& name)
 	Add<NullPixelShader>();
 	Add<StencilState<DepthStencilMode::Write>>();
 	Add<RasterizerState>(false);
+}
+
+BlurOutlineDrawPass::BlurOutlineDrawPass(std::string&& name, uint32_t width, uint32_t height)
+	:RenderQueuePass(std::move(name))
+{
+	RTarget = MakeUnique<RenderTargetInput>(width / 2, height / 2);
+	Add<VertexShader>("colorInput");
+	Add<PixelShader>("colorInput");
+	Add<StencilState<DepthStencilMode::Mask>>();
+	Add<BlendState>("bluroutlinepass", false);
+	Register<PassOutput<RenderTarget, true>>("scratchOut", RTarget);
+}
+
+void BlurOutlineDrawPass::Execute() const
+{
+	RTarget->Clear();
+	RenderQueuePass::Execute();
+}
+
+HorizontalBlurPass::HorizontalBlurPass(std::string&& name, uint32_t width, uint32_t height)
+	:FullScreenPass(std::move(name))
+{
+	Add<PixelShader>("FullScreenFilterOpt");
+	Add<StencilState<DepthStencilMode::Off>>();
+	Add<Sampler>(false);
+
+	Register<PassInput<UniformPS<Kernel>>>("control", ConvKernel);
+	Register<PassInput<UniformPS<BOOL>>>("direction", HorizontalFlag);
+	Register<PassInput<RenderTarget>>("scratchIn", BlurScratchIn);
+
+	RTarget = MakeShared<RenderTargetInput>(width / 2, height / 2);
+	Register<PassOutput<RenderTarget, true>>("scratchOut", RTarget);
+}
+
+void HorizontalBlurPass::Execute() const
+{
+	HorizontalFlag->GetResourceRef() = true;
+	HorizontalFlag->Bind();
+	ConvKernel->Bind();
+	BlurScratchIn->Bind();
+	BlendState("$FullScreenFilter", true).Bind();
+	FullScreenPass::Execute();
+}
+
+VerticalBlurPass::VerticalBlurPass(std::string&& name)
+	:FullScreenPass(std::move(name))
+{
+	Add<PixelShader>("FullScreenFilterOpt");
+	Add<StencilState<DepthStencilMode::Mask>>();
+
+	Register<PassInput<UniformPS<Kernel>>>("control", ConvKernel);
+	Register<PassInput<UniformPS<BOOL>>>("direction", HorizontalFlag);
+	Register<PassInput<RenderTarget>>("scratchIn", BlurScratchIn);
+	Register<PassInput<RenderTarget>>("renderTarget", RTarget);
+	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
+
+	Register<PassOutput<RenderTarget>>("renderTarget", RTarget);
+	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
+}
+
+void VerticalBlurPass::Execute() const
+{
+	HorizontalFlag->GetResourceRef() = false;
+	HorizontalFlag->Bind();
+	ConvKernel->Bind();
+	BlurScratchIn->Bind();
+	BlendState("$FullScreenFilter", true).Bind();
+	FullScreenPass::Execute();
 }

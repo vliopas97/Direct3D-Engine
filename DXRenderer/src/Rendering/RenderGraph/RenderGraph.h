@@ -22,6 +22,9 @@ public:
 	static void Validate();
 	static RenderQueuePass& GetRenderQueue(const std::string& passName);
 
+	static void AddGlobalInputs(UniquePtr<PassInputBase> in);
+	static void AddGlobalOutputs(UniquePtr<PassOutputBase> out);
+
 private:
 	RenderGraph();
 	~RenderGraph() = default;
@@ -34,6 +37,10 @@ private:
 	void LinkGlobalInputsImpl();
 	void ValidateImpl();
 	RenderQueuePass& GetRenderQueueImpl(const std::string& passName);
+
+
+	void AddGlobalInputsImpl(UniquePtr<PassInputBase> in);
+	void AddGlobalOutputsImpl(UniquePtr<PassOutputBase> out);
 
 private:
 	std::vector<UniquePtr<Pass>> Passes;

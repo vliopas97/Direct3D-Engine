@@ -194,3 +194,13 @@ public:
 protected:
 	std::vector<UniquePtr<Technique>> Techniques;
 };
+
+static constexpr uint32_t MaxRadius = 15;
+struct Kernel
+{
+	uint32_t Taps;
+	float padding[3];
+	DirectX::XMFLOAT4 Coeff[2 * MaxRadius + 1];
+};
+
+Kernel InitKernel(uint32_t radius = 7, float sigma = 2.6f);

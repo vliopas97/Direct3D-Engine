@@ -379,7 +379,7 @@ public:
 	Uniform(Args&&... args)
 		:Buffer(std::get<0>(std::forward_as_tuple(std::forward<Args>(args)...)))
 	{
-		Resource = &(std::get<1>(std::forward_as_tuple(std::forward<Args>(args)...)));
+		Resource = const_cast<ResourceType*>(&std::get<1>(std::forward_as_tuple(std::forward<Args>(args)...)));
 		ConstantBufferRef = MakeUnique<T>(std::forward<Args>(args)...);
 		Tag = ConstantBufferRef->Tag;
 		BufferID = ConstantBufferRef->BufferID;
@@ -402,6 +402,9 @@ public:
 			+ std::to_string(ConstantBufferRef->Slot);
 	}
 
+	inline ResourceType& GetResourceRef() { return *Resource; }
+	inline const ResourceType& GetResourceRef() const { return *Resource; }
+
 private:
 	void Update() const
 	{
@@ -413,7 +416,7 @@ private:
 
 private:
 	UniquePtr<T> ConstantBufferRef;
-	const ResourceType* Resource;
+	ResourceType* Resource;
 };
 
 template<typename T>

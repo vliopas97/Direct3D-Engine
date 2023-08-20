@@ -22,5 +22,5 @@ public:
 	ComponentGroup& operator=(ComponentGroup&& other) noexcept;
 
 private:
-	std::vector<UniquePtr<Component>> Components;
+	std::vector<UniquePtr<Component>> Components{};
 };

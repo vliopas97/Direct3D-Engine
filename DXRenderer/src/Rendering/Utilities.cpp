@@ -89,3 +89,24 @@ void GPUObject::LinkTechniques()
 	for (auto& t : Techniques)
 		t->Link();
 }
+
+Kernel InitKernel(uint32_t radius, float sigma)
+{
+	Kernel kernel;
+	ASSERT(radius <= MaxRadius);
+	kernel.Taps = radius * 2 + 1;
+	float sum = 0.0f;
+	for (size_t i = 0; i < kernel.Taps; i++)
+	{
+		auto x = static_cast<float>((int)i - (int)radius);
+		auto g = gauss(x, sigma);
+		sum += g;
+		kernel.Coeff[i].x = g;
+	}
+	for (size_t i = 0; i < kernel.Taps; i++)
+	{
+		kernel.Coeff[i].x /= sum;
+	}
+
+	return kernel;
+}
