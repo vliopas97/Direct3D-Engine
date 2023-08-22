@@ -20,12 +20,12 @@ Sphere::Sphere(const TransformationIntrinsics& intrinsics)
 void Sphere::Tick(float delta)
 {
 	Transform.Update();
+	viewProjection = CurrentGraphicsContext::GraphicsInfo->GetViewProjection();
 }
 
 void Sphere::Init()
 {
 	using namespace DirectX;
-
 	auto data = Primitives::Sphere::Create<Primitives::VertexElement>();
 	data.Transform(XMMatrixScaling(0.1f, 0.1f, 0.1f));
 
@@ -43,8 +43,7 @@ void Sphere::Init()
 		first.Add<InputLayout>("Sphere", vertexBuffer->GetLayout(), vertexShader.GetBlob());
 		first.Add<VertexShader>(vertexShader);
 
-		const XMMATRIX& viewProjection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetViewProjection();
-		first.Add<UniformVS<XMMATRIX>>("SphereViewProj", viewProjection);
+		first.Add<UniformVS<XMMATRIX>>("SphereViewProj", CurrentGraphicsContext::GraphicsInfo->GetViewProjection());
 
 		auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
 		first.Add<UniformVS<XMMATRIX>>("SphereTransform", transform, 1);

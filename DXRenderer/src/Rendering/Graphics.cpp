@@ -10,7 +10,7 @@
 #include "Actors\Actor.h"
 
 Graphics::Graphics(HWND windowHandle, uint32_t width, uint32_t height)
-	:GraphicsCamera(5.0f, 16.0f / 9.0f, 0.1f, 400.0f), Width(width), Height(height)
+	:GraphicsCamera{nullptr}, Width(width), Height(height)
 {
 	CurrentGraphicsContext::GraphicsInfo = this;
 
@@ -68,7 +68,10 @@ Graphics::Graphics(HWND windowHandle, uint32_t width, uint32_t height)
 
 void Graphics::Tick(float delta)
 {
-	GraphicsCamera.Tick(delta);
+	GraphicsCamera->Tick(delta);
+	View = GraphicsCamera->GetView();
+	Projection = GraphicsCamera->GetProjection();
+	ViewProjection = GraphicsCamera->GetViewProjection();
 
 #ifndef NDEBUG
 	InfoManager.Reset();
@@ -100,9 +103,9 @@ const Microsoft::WRL::ComPtr<ID3D11Device>& Graphics::GetDevice() const
 	return Device;
 }
 
-Camera& Graphics::GetCamera()
+void Graphics::SetCamera(Camera& camera)
 {
-	return GraphicsCamera;
+	GraphicsCamera = &camera;
 }
 
 const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& Graphics::GetContext() const

@@ -28,6 +28,7 @@ private:
 	Timer Benchmarker;
 	
 	std::vector <UniquePtr< class Actor >> Actors;
-	PointLight Light;
+	CameraGroup Cameras;
+	UniquePtr<PointLight> Light;
 	static Application* Instance;
 };

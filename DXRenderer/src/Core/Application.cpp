@@ -47,11 +47,21 @@ void Application::OnEvent(Event& e)
 }
 
 Application::Application()
-	:MainWindow(MakeUnique<Window>()), Light()
+	:MainWindow(MakeUnique<Window>())
 {
 	ASSERT(!Instance);
 	Instance = this;
 	auto cursor = LoadCursor(nullptr, IDC_ARROW);
+
+	Camera* camera = new Camera();
+	camera->SetPosition({ -13.5f,6.0f,3.5f });
+	Camera* camera2 = new Camera();
+	camera2->SetPosition({ -13.5f,28.8f,-6.4f });
+	camera2->SetRotation({ pi / 180.0f * 13.0f, pi / 180.0f * 61.0f , 0.0f });
+	Cameras.AddCamera(UniquePtr<Camera>(camera));
+	Cameras.AddCamera(UniquePtr<Camera>(camera2));
+	MainWindow->GetGraphicsContext().SetCamera(Cameras.GetCamera());
+
 	SetCursor(cursor);
 
 	MainWindow->SetEventCallbackFunction([this](Event& e)
@@ -66,7 +76,7 @@ Application::Application()
 	trInt.Z = 10.0f;
 	trInt.Roll = 180.0f;
 	trInt.Yaw = -90.0f;
-	Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
+	//Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
 	trInt.X = -13.5f;
 	trInt.Y = 6.0f;
 	trInt.Z = 8.0f;
@@ -76,23 +86,25 @@ Application::Application()
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
 
-	Light.Properties.Ambient = { 0.05f, 0.05f, 0.05f };
-	Light.Properties.Position = { -12.0f, 12.0f, 15.0f };
-
-	auto& camera = MainWindow->GetGraphicsContext().GetCamera();
-	camera.SetPosition({ -13.5f,6.0f,3.5f });
-
 	for (auto& c : Actors)
 		c->LinkTechniques();
-	Light.LinkTechniques();
+
+	Light = MakeUnique<PointLight>();
+	Light->Properties.Ambient = { 0.05f, 0.05f, 0.05f };
+	Light->Properties.Position = { -12.0f, 12.0f, 15.0f };
+	Light->LinkTechniques();
+
 }
 
 void Application::Tick()
 {
 	float delta = Benchmarker.GetAndReset();
 
+	MainWindow->GetGraphicsContext().SetCamera(Cameras.GetCamera());
+
 	ImGui->Begin();
-	Light.Bind();
+	Cameras.GUI();
+	Light->Bind();
 	for (auto& c : Actors)
 	{
 		c->Tick(delta);
@@ -100,9 +112,9 @@ void Application::Tick()
 		c->GUI();
 	}
 
-	Light.Tick(delta);
-	Light.Draw();
-	Light.GUI();
+	Light->Tick(delta);
+	Light->Draw();
+	Light->GUI();
 	ImGui->Render();
 
 	if (MainWindow->Input.IsKeyPressed(VK_INSERT))

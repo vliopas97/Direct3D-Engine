@@ -29,6 +29,6 @@ DirectX::XMMATRIX Actor::GetTransform() const
 void Actor::Tick(float delta)
 {
 	Transform.Update();
-	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetView();
 }
 

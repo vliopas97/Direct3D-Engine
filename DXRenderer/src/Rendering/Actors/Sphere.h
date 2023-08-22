@@ -12,4 +12,7 @@ public:
 
 private:
 	void Init();
+
+private:
+	DirectX::XMMATRIX viewProjection;
 };

@@ -31,7 +31,7 @@ void ImGuiLayer::Render()
 	if (showDemoWindow)
 		ImGui::ShowDemoWindow(&showDemoWindow);
 
-	Application::GetApp().GetWindow()->GetGraphicsContext().GetCamera().GUI();
+	//Application::GetApp().GetWindow()->GetGraphicsContext().GetCamera().GUI();
 }
 
 void ImGuiLayer::OnDetach()

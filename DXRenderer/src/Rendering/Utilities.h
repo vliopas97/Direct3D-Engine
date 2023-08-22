@@ -13,6 +13,7 @@
 #include <sstream>
 
 constexpr std::array<float, 4> backgroundColor = { 1.0f, 0.5f, 0.0f, 0.0f };
+constexpr float pi = (float)std::numbers::pi_v<float>;
 
 template<typename T>
 constexpr T gauss(T x, T sigma) noexcept

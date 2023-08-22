@@ -23,7 +23,7 @@ inline DirectX::XMMATRIX PrimitiveComponent::GetTransform() const
 void PrimitiveComponent::Tick(float delta)
 {
 	DirectX::XMStoreFloat4x4(&ModelView,
-							 GetTransform() * CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView());
+							 GetTransform() * CurrentGraphicsContext::GraphicsInfo->GetView());
 }
 
 Mesh::Mesh(const aiMesh& mesh, const std::string& meshName)
@@ -153,10 +153,10 @@ void Mesh::Init(const aiMesh& mesh, Step& first)
 
 	Add<IndexBuffer>(Name + "IndexBufferModel", indices);
 
-	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	const DirectX::XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetView();
 	first.Add<UniformPS<XMMATRIX>>(Name + "View", view, 2);
 
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 	first.Add<UniformVS<XMMATRIX>>(Name + "Proj", projection, 1);
 
 	auto& modelView = *reinterpret_cast<const XMMATRIX*>(&ModelView);

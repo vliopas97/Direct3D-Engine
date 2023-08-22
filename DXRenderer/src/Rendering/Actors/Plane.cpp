@@ -69,10 +69,10 @@ void Plane::Init()
 	//Add(std::move(vertexBuffer));
 	Add<IndexBuffer>("Plane", data.Indices);
 
-	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	const XMMATRIX& view = CurrentGraphicsContext::GraphicsInfo->GetView();
 	Add<UniformPS<XMMATRIX>>("View", view, 2);
 
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
 
 	auto& modelView = ModelView;

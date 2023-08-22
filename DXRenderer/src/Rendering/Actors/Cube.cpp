@@ -53,7 +53,7 @@ void Cube::Init()
 		first.Add<VertexShader>(vs);
 
 		first.Add<UniformVS<XMMATRIX>>("Cube", ModelView);
-		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 		first.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 
 		first.Add<PS<XMFLOAT4>>("CubeColor", DirectX::XMFLOAT4{ 0.8f, 0.8f, 0.8f, 1.0f });
@@ -66,7 +66,7 @@ void Cube::Init()
 		mask.Add<InputLayout>("Cube1", vertexBuffer->GetLayout(), vs.GetBlob());
 
 		mask.Add<UniformVS<XMMATRIX>>("Cube1", ModelView);
-		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 		mask.Add<UniformVS<XMMATRIX>>("Cube1", projection, 1);
 		outline.PushBack(std::move(mask));
 	}
@@ -76,7 +76,7 @@ void Cube::Init()
 		draw.Add<InputLayout>("Cube2", vertexBuffer->GetLayout(), vs.GetBlob());
 
 		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelViewOutline);
-		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 		draw.Add<UniformVS<XMMATRIX>>("Cube2", projection, 1);
 
 		draw.Add<PS<XMFLOAT4>>("CubeColor2", DirectX::XMFLOAT4{ 1.0f, 0.4f, 0.4f, 1.0f });
@@ -105,7 +105,7 @@ CubeOutline::CubeOutline(const Cube& cube)
 	Add<IndexBuffer>("CubeOutline", data.Indices);
 
 	Add<UniformVS<XMMATRIX>>("CubeOutlineTransform", ModelView);
-	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetCamera().GetProjection();
+	const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 	Add<UniformVS<XMMATRIX>>("CubeOutlineProj", projection, 1);
 
 	Add<PS<XMFLOAT4>>("CubeOutlineColor", Color);
@@ -115,5 +115,5 @@ CubeOutline::CubeOutline(const Cube& cube)
 void CubeOutline::Tick(float delta)
 {
 	Transform.GetMatrix() = DirectX::XMMatrixScaling(1.03f, 1.03f, 1.03f) * CubeRef.GetTransform();
-	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetCamera().GetView();
+	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetView();
 }

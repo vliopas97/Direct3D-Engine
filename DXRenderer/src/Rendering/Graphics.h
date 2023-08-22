@@ -23,10 +23,14 @@ public:
 	const Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetContext() const;
 	const Microsoft::WRL::ComPtr<ID3D11Device>& GetDevice() const;
 
-	Camera& GetCamera();
+	void SetCamera(Camera& camera);
 	inline uint32_t GetWidth() const { return Width; }
 	inline uint32_t GetHeight() const { return Height; }
 	inline SharedPtr<RenderTarget> GetTarget() { return RTarget; }
+
+	inline const DirectX::XMMATRIX& GetView() { return View; }
+	inline const DirectX::XMMATRIX& GetProjection() { return Projection; }
+	inline const DirectX::XMMATRIX& GetViewProjection() { return ViewProjection; }
 
 private:
 	void ClearColor() noexcept;
@@ -41,7 +45,10 @@ private:
 	DXGIInfoManager InfoManager;
 	#endif
 
-	Camera GraphicsCamera;
+	Camera* GraphicsCamera;
 
 	uint32_t Width, Height;
+	DirectX::XMMATRIX View;
+	DirectX::XMMATRIX Projection;
+	DirectX::XMMATRIX ViewProjection;
 };
