@@ -160,7 +160,7 @@ void Mesh::Init(const aiMesh& mesh, Step& first)
 	first.Add<UniformVS<XMMATRIX>>(Name + "Proj", projection, 1);
 
 	auto& modelView = *reinterpret_cast<const XMMATRIX*>(&ModelView);
-	first.Add<UniformVS<XMMATRIX>>(Name + "Transform", modelView);
+	first.Add<UniformVS<XMMATRIX>>(Name + "Transform" + UIDTag(), modelView);
 
 	if (!HasSpecular)
 	{

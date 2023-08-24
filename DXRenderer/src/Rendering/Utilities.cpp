@@ -1,6 +1,8 @@
 #include "Utilities.h"
 #include "RenderGraph\RenderQueue.h"
 
+unsigned long GPUObject::UID = 0;
+
 TransformationMatrix::TransformationMatrix()
 	: Matrix(DirectX::XMMatrixIdentity()), Scale( 1.0f, 1.0f, 1.0f), Rotation(0.0f, 0.0f, 0.0f), 
 	Translation(0.0f, 0.0f, 0.0f)
@@ -71,6 +73,11 @@ const IndexBuffer* GPUObjectBase::GetIndexBuffer() const
 	const IndexBuffer* ptr = Buffers.GetIndexBuffer();
 	ASSERT(ptr);
 	return ptr;
+}
+
+GPUObject::GPUObject()
+{
+	UID++;
 }
 
 GPUObject::GPUObject(GPUObject&& other) noexcept

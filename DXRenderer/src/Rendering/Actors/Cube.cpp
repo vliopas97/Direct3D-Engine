@@ -43,7 +43,6 @@ void Cube::Init()
 	);
 	Add<IndexBuffer>("Cube", data.Indices);
 
-
 	Technique standard;
 	{
 		Step first("phong");
@@ -52,7 +51,7 @@ void Cube::Init()
 		first.Add<InputLayout>("Cube", vertexBuffer->GetLayout(), vs.GetBlob());
 		first.Add<VertexShader>(vs);
 
-		first.Add<UniformVS<XMMATRIX>>("Cube", ModelView);
+		first.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), ModelView);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 		first.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 
@@ -65,9 +64,9 @@ void Cube::Init()
 		VertexShader vs("colorInput");
 		mask.Add<InputLayout>("Cube1", vertexBuffer->GetLayout(), vs.GetBlob());
 
-		mask.Add<UniformVS<XMMATRIX>>("Cube1", ModelView);
+		mask.Add<UniformVS<XMMATRIX>>("Cube1" + UIDTag(), ModelView);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
-		mask.Add<UniformVS<XMMATRIX>>("Cube1", projection, 1);
+		mask.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 		outline.PushBack(std::move(mask));
 	}
 	{
@@ -75,11 +74,11 @@ void Cube::Init()
 		VertexShader vs("colorInput");
 		draw.Add<InputLayout>("Cube2", vertexBuffer->GetLayout(), vs.GetBlob());
 
-		draw.Add<UniformVS<XMMATRIX>>("Cube2", ModelViewOutline);
+		draw.Add<UniformVS<XMMATRIX>>("Cube2" + UIDTag(), ModelViewOutline);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
-		draw.Add<UniformVS<XMMATRIX>>("Cube2", projection, 1);
+		draw.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 
-		draw.Add<PS<XMFLOAT4>>("CubeColor2", DirectX::XMFLOAT4{ 1.0f, 0.4f, 0.4f, 1.0f });
+		draw.Add<PS<XMFLOAT4>>("CubeColorOutline", DirectX::XMFLOAT4{ 1.0f, 0.4f, 0.4f, 1.0f });
 		outline.PushBack(std::move(draw));
 	}
 

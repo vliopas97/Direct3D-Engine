@@ -186,7 +186,7 @@ class GPUObject : public GPUObjectBase
 {
 public:
 	using GPUObjectBase::Add;
-	GPUObject() = default;
+	GPUObject();;
 	virtual ~GPUObject() = default;
 	GPUObject(GPUObject&& other) noexcept;
 	void Add(Technique&& technique);
@@ -194,6 +194,10 @@ public:
 
 protected:
 	std::vector<UniquePtr<Technique>> Techniques;
+	inline std::string UIDTag() const { return std::to_string(UID); }
+
+private:
+	static unsigned long UID;
 };
 
 static constexpr uint32_t MaxRadius = 15;

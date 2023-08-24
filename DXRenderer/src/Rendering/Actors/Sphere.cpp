@@ -46,7 +46,7 @@ void Sphere::Init()
 		first.Add<UniformVS<XMMATRIX>>("SphereViewProj", CurrentGraphicsContext::GraphicsInfo->GetViewProjection());
 
 		auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform.GetMatrix());
-		first.Add<UniformVS<XMMATRIX>>("SphereTransform", transform, 1);
+		first.Add<UniformVS<XMMATRIX>>("SphereTransform" + UIDTag(), transform, 1);
 
 		first.Add<PS<XMVECTOR>>("SphereColor", XMVECTOR(XMVectorSet(1.0f, 0.9f, 0.6f, 1.0f)));
 		first.Add<RasterizerState>(false);

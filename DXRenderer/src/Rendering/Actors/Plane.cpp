@@ -76,7 +76,7 @@ void Plane::Init()
 	Add<UniformVS<XMMATRIX>>("Proj", projection, 1);
 
 	auto& modelView = ModelView;
-	Add<UniformVS<XMMATRIX>>("Transform", modelView);
+	Add<UniformVS<XMMATRIX>>("Transform" + UIDTag(), modelView);
 
 	auto material = MakeUnique<Material>(1);
 	material->Properties.specularIntensity = 0.3f;
