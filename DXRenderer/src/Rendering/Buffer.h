@@ -193,9 +193,11 @@ class VertexBuffer : public Buffer
 {
 public:
 	template<typename Vertex>
-	VertexBuffer(const std::string& tag, const std::vector<Vertex>& vertices, 
-				 const BufferLayout& layout)
-		:Buffer(tag), Layout(layout), Topology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	VertexBuffer(const std::string& tag, 
+				 const std::vector<Vertex>& vertices, 
+				 const BufferLayout& layout, 
+				 D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+		:Buffer(tag), Layout(layout), Topology(topology)
 	{
 		D3D11_BUFFER_DESC vertexBufferDesc;
 		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;

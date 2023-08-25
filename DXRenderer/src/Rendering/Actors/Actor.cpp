@@ -32,3 +32,27 @@ void Actor::Tick(float delta)
 	ModelView = Transform.GetMatrix() * CurrentGraphicsContext::GraphicsInfo->GetView();
 }
 
+
+void Actor::SetPosition(const DirectX::XMFLOAT3& position)
+{
+	X = position.x;
+	Y = position.y;
+	Z = position.z;
+}
+
+void Actor::SetRotation(const DirectX::XMFLOAT3& rotation)
+{
+	Pitch = DirectX::XMConvertToDegrees(rotation.x);
+	Yaw =   DirectX::XMConvertToDegrees(rotation.y);
+	Roll =  DirectX::XMConvertToDegrees(rotation.z);
+	Transform.Update();
+}
+
+void Actor::SetRotationDeg(const DirectX::XMFLOAT3 rotationDegrees)
+{
+	Pitch = rotationDegrees.x;
+	Yaw =   rotationDegrees.y;
+	Roll =  rotationDegrees.z;
+}
+
+

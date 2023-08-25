@@ -3,7 +3,7 @@
 #include "Rendering\Actors\Cube.h"
 #include "Rendering\Actors\Plane.h"
 #include "Rendering\Actors\Model.h"
-
+#include "Rendering/Actors/CameraViewer.h"
 #include "Rendering/ResourcePool.h"
 
 Application* Application::Instance = nullptr;
@@ -82,6 +82,8 @@ Application::Application()
 	trInt.Z = 8.0f;
 	trInt.Sx = trInt.Sy = trInt.Sz = 2.f;
 	Actors.emplace_back(MakeUnique<Cube>(trInt));
+	trInt.Y += 2.0f;
+	//Actors.emplace_back(MakeUnique<CameraViewer>());
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
@@ -94,6 +96,7 @@ Application::Application()
 	Light->Properties.Position = { -12.0f, 12.0f, 15.0f };
 	Light->LinkTechniques();
 
+	Cameras.LinkTechniques();
 }
 
 void Application::Tick()
@@ -111,7 +114,7 @@ void Application::Tick()
 		c->Draw();
 		c->GUI();
 	}
-
+	Cameras.Draw();
 	Light->Tick(delta);
 	Light->Draw();
 	Light->GUI();

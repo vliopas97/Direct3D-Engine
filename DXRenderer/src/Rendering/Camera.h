@@ -43,6 +43,9 @@ public:
 	void GUI();
 	void Tick(float delta);
 
+	void LinkTechniques();
+	void Draw();
+
 private:
 	void UpdateViewMatrix();
 
@@ -57,6 +60,8 @@ private:
 	float TranslationSpeed = 10.0f, RotationSpeed = 0.05f;
 	std::string Tag;
 
+	UniquePtr<class CameraViewer> CameraObject;
+
 	static uint32_t UID;
 };
 
@@ -68,6 +73,9 @@ public:
 	Camera& GetCamera();
 	void SetCameraAsSelected();
 	void GUI();
+
+	void LinkTechniques();
+	void Draw();
 
 private:
 	std::vector<UniquePtr<Camera>> Cameras;

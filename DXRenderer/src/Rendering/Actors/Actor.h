@@ -29,6 +29,11 @@ public:
 
 	virtual void GUI() {}
 
+
+	void SetPosition(const DirectX::XMFLOAT3& position);
+	void SetRotation(const DirectX::XMFLOAT3& rotation);
+	void SetRotationDeg(const DirectX::XMFLOAT3 rotationDegrees);
+
 public:
 	union
 	{

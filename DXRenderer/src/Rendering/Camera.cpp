@@ -1,6 +1,7 @@
 #include "Camera.h"
 
 #include "Core/Application.h"
+#include "Actors/CameraViewer.h"
 
 #include <numbers>
 #include <imgui.h>
@@ -58,7 +59,8 @@ void Projection::Tick(float delta)
 }
 
 Camera::Camera()
-	:Projection(), View(DirectX::XMMatrixIdentity())
+	:Projection(), View(DirectX::XMMatrixIdentity()),
+	CameraObject(MakeUnique<CameraViewer>())
 {
 	ViewProjection = View * Projection.GetMatrix();
 	Tag = std::string("Camera " + std::to_string(UID++));
@@ -67,12 +69,14 @@ Camera::Camera()
 inline void Camera::SetPosition(const DirectX::XMFLOAT3& position)
 {
 	Position = position;
+	CameraObject->SetPosition(Position);
 	UpdateViewMatrix();
 }
 
 inline void Camera::SetRotation(const DirectX::XMFLOAT3& rotation)
 {
 	Rotation = rotation;
+	CameraObject->SetRotation(Rotation);
 	UpdateViewMatrix();
 }
 
@@ -96,6 +100,11 @@ void Camera::GUI()
 void Camera::Tick(float delta)
 {
 	using namespace DirectX;
+
+	CameraObject->SetPosition(Position);
+	CameraObject->SetRotation(Rotation);
+	CameraObject->Tick(delta);
+
 	auto& input = Application::GetApp().GetWindow()->Input;
 	DirectX::XMFLOAT3 cameraPosition{};
 	if (input.IsKeyPressed(0x57))
@@ -157,6 +166,16 @@ void Camera::Tick(float delta)
 	this->Projection.Tick(delta);
 }
 
+void Camera::LinkTechniques()
+{
+	CameraObject->LinkTechniques();
+}
+
+void Camera::Draw()
+{
+	CameraObject->Draw();
+}
+
 inline void Camera::UpdateViewMatrix()
 {
 	using namespace DirectX;
@@ -202,4 +221,19 @@ void CameraGroup::GUI()
 		GetCamera().GUI();
 	}
 	ImGui::End();
+}
+
+void CameraGroup::LinkTechniques()
+{
+	for (auto& camera : Cameras)
+		camera->LinkTechniques();
+}
+
+void CameraGroup::Draw()
+{
+	for (size_t i = 0; i < Cameras.size(); i++)
+	{
+		if(i != SelectedCameraIndex)
+			Cameras[i]->Draw();
+	}
 }
