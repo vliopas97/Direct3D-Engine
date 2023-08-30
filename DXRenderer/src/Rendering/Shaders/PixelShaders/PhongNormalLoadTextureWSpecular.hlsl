@@ -24,7 +24,8 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, 
     
     clip(texSample.a < 0.1f ? -1 : 1);
     
-    if (ShadowCheck(shadowPos))
+    const float shadowIntensity = Shadow(shadowPos);
+    if (shadowIntensity != 0.0f)
     {
         if (dot(n, posCamera) >= 0)
             n = -n;
@@ -42,6 +43,9 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float3 t : Tangent, 
         const float specPower = pow(2.0f, specSample.a * 13.0f);
 
         specular = Specular(specColor, 1.0f, n, light.Direction, posCamera, att, specPower);
+        
+        diffuse *= shadowIntensity;
+        specular *= shadowIntensity;
     }
     
     return float4(saturate(diffuse + ambient) * texSample.rgb + specular, texSample.a);

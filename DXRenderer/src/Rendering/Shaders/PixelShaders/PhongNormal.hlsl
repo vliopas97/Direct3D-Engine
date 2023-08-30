@@ -27,7 +27,8 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : T
     float3 diffuse = float3(0.0f, 0.0f, 0.0f);
     float3 specular = float3(0.0f, 0.0f, 0.0f);
     
-    if (ShadowCheck(shadowPos))
+    const float shadowIntensity = Shadow(shadowPos);
+    if (shadowIntensity != 0.0f)
     {
         if (NormalMapEnabled)
         {
@@ -49,6 +50,9 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : T
         diffuse = Diffuse(diffuseColor, diffuseIntensity, att, light.DirectionN, n);
     
         specular = Specular(materialColor, specularIntensity, n, light.Direction, posCamera, att, Shininess);
+        
+        diffuse *= shadowIntensity;
+        specular *= shadowIntensity;
     }
 
     return float4(saturate((diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular), 1.0f);

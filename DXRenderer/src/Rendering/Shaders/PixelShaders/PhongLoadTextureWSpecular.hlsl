@@ -18,7 +18,8 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : T
     float3 diffuse = float3(0.0f, 0.0f, 0.0f);
     float3 specular = float3(0.0f, 0.0f, 0.0f);
     
-    if (ShadowCheck(shadowPos))
+    const float shadowIntensity = Shadow(shadowPos);
+    if (shadowIntensity != 0.0f)
     {
         n = normalize(n);
         float3 lightWorld = (float3) mul(float4(-lightPos.xy, lightPos.z, 1.0f), view);
@@ -32,6 +33,9 @@ float4 main(float3 posCamera : Position, float3 n : Normal, float2 texCoords : T
         const float specPower = pow(2.0f, specSample.a * 13.0f);
     
         specular = Specular(specColor, 1.0f, n, light.Direction, posCamera, att, specPower);
+        
+        diffuse *= shadowIntensity;
+        specular *= shadowIntensity;
     }
     
     return float4(saturate(diffuse + ambient) * tex.Sample(samplerState, texCoords).rgb + specular, 1.0f);
