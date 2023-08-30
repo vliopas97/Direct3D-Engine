@@ -23,7 +23,7 @@ public:
 	Actor(const Actor&) = delete;
 	Actor& operator=(const Actor&) = delete;
 
-	virtual void Draw();
+	virtual void Submit(size_t channelsIn);
 	DirectX::XMMATRIX GetTransform() const;
 	virtual void Tick(float delta);
 

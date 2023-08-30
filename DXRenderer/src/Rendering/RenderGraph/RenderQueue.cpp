@@ -33,9 +33,13 @@ void Task::Execute() const
 	CurrentGraphicsContext::Context()->DrawIndexed(RenderObject->GetIndexBuffer()->GetCount(), 0, 0);
 }
 
-void Technique::Submit(const GPUObject& renderObject)
+Technique::Technique(size_t channels)
+	:Channels(channels)
+{}
+
+void Technique::Submit(const GPUObject& renderObject, size_t channelsIn)
 {
-	if (!IsActive) return;
+	if (!IsActive || (Channels & channelsIn) == 0) return;
 
 	for (const auto& step : Steps)
 		step.Submit(renderObject);

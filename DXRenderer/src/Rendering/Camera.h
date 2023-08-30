@@ -44,7 +44,7 @@ public:
 	void Tick(float delta);
 
 	void LinkTechniques();
-	void Draw();
+	void Submit(size_t channelsIn);
 
 private:
 	void UpdateViewMatrix();
@@ -63,6 +63,8 @@ private:
 	UniquePtr<class CameraViewer> CameraObject;
 
 	static uint32_t UID;
+
+	friend class PointLight;
 };
 
 class CameraGroup
@@ -75,7 +77,7 @@ public:
 	void GUI();
 
 	void LinkTechniques();
-	void Draw();
+	void Submit(size_t channelsIn);
 
 private:
 	std::vector<UniquePtr<Camera>> Cameras;

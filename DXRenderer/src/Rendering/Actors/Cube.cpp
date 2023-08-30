@@ -18,9 +18,9 @@ Cube::Cube(const TransformationIntrinsics& intrinsics)
 	Init();
 }
 
-void Cube::Draw()
+void Cube::Submit(size_t channelsIn)
 {
-	Actor::Draw();
+	Actor::Submit(channelsIn);
 }
 
 inline void Cube::Tick(float delta)
@@ -32,39 +32,39 @@ inline void Cube::Tick(float delta)
 void Cube::Init()
 {
 	using namespace DirectX;
-
-	auto data = Primitives::Cube::Create<Primitives::VertexElement>();
+	struct VertexNormal : Primitives::VertexElement { DirectX::XMFLOAT3 Normal; };
+	auto data = Primitives::Cube::CreateWNormals<VertexNormal>();
 
 	UniquePtr<VertexBuffer> vertexBuffer = MakeUnique<VertexBuffer>(
 		"Cube",
 		data.Vertices,
 		BufferLayout
-		{ { "Position", LayoutElement::DataType::Float3 } }
+		{ { "Position", LayoutElement::DataType::Float3 }, { "Normal", LayoutElement::DataType::Float3 } }
 	);
 	Add<IndexBuffer>("Cube", data.Indices);
 
-	Technique standard;
+	Technique standard(Channels::Main);
 	{
 		Step first("phong");
-		VertexShader vs("colorInput");
-		first.Add<PixelShader>("colorInput");
+		VertexShader vs("ShadowCubeTest");
+		first.Add<PixelShader>("ShadowCubeTest");
 		first.Add<InputLayout>("Cube", vertexBuffer->GetLayout(), vs.GetBlob());
 		first.Add<VertexShader>(vs);
 
-		first.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), ModelView);
+		first.Add<UniformVS<XMMATRIX>>("CubeTransform" + UIDTag(), Transform.GetMatrix());
+		first.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), ModelView, 1);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
-		first.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
-
-		first.Add<PS<XMFLOAT4>>("CubeColor", DirectX::XMFLOAT4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		first.Add<UniformVS<XMMATRIX>>("Cube", projection, 2);
+		first.Add<PS<XMFLOAT4>>("CubeColor", DirectX::XMFLOAT4{ 0.7f, 0.7f, 0.7f, 1.0f }, 1);
 		standard.PushBack(std::move(first));
 	}
-	Technique outline;
+	Technique outline(Channels::Main);
 	{
 		Step mask("outlineMask");
 		VertexShader vs("colorInput");
 		mask.Add<InputLayout>("Cube1", vertexBuffer->GetLayout(), vs.GetBlob());
 
-		mask.Add<UniformVS<XMMATRIX>>("Cube1" + UIDTag(), ModelView);
+		mask.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), ModelView);
 		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
 		mask.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
 		outline.PushBack(std::move(mask));
@@ -81,9 +81,20 @@ void Cube::Init()
 		draw.Add<PS<XMFLOAT4>>("CubeColorOutline", DirectX::XMFLOAT4{ 1.0f, 0.4f, 0.4f, 1.0f });
 		outline.PushBack(std::move(draw));
 	}
+	Technique shadowMap(Channels::Shadow);
+	{
+		Step draw("shadowMap");
+		
+		VertexShader vs("colorInput");
+		draw.Add<InputLayout>("Cube3", vertexBuffer->GetLayout(), vs.GetBlob());
+		draw.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), Transform.GetMatrix());
+		
+		shadowMap.PushBack(std::move(draw));
+	}
 
 	Add(std::move(standard));
 	Add(std::move(outline));
+	Add(std::move(shadowMap));
 	Add(std::move(vertexBuffer));
 }
 

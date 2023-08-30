@@ -121,13 +121,6 @@ private:
 template<ResourceType T>
 void PassInput<T>::Bind(PassOutputBase& out)
 {
-	//if (auto ptr = std::dynamic_pointer_cast<T>(dynamic_cast<PassOutput<T>&>(out).GetResource()))
-	//	Target = std::move(ptr);
-	//else
-	//{
-	//	auto ptr = std::dynamic_pointer_cast<T>(dynamic_cast<PassOutput<T, true>&>(out).GetResource());
-	//}
-
 	if (auto* outPtr = dynamic_cast<PassOutput<T>*>(&out))
 	{
 		auto ptr = std::dynamic_pointer_cast<T>(outPtr->GetResource());
@@ -142,13 +135,6 @@ void PassInput<T>::Bind(PassOutputBase& out)
 	}
 	else
 		throw std::bad_cast();
-
-	//if (!ptr)
-	//	throw std::runtime_error("Binding input " + GetName() + " to output "
-	//							 + GetPassName() + "." + GetOutputName() + "has incompatible type with output");
-
-	//Target = std::move(ptr);
-	//IsLinked = true;
 }
 
 class Pass

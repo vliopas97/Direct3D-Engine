@@ -6,6 +6,8 @@
 #include "Rendering/Actors/CameraViewer.h"
 #include "Rendering/ResourcePool.h"
 
+#include "Rendering/CurrentGraphicsContext.h"
+
 Application* Application::Instance = nullptr;
 
 Application& Application::GetApp()
@@ -76,14 +78,13 @@ Application::Application()
 	trInt.Z = 10.0f;
 	trInt.Roll = 180.0f;
 	trInt.Yaw = -90.0f;
-	//Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
+	Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
 	trInt.X = -13.5f;
 	trInt.Y = 6.0f;
 	trInt.Z = 8.0f;
 	trInt.Sx = trInt.Sy = trInt.Sz = 2.f;
 	Actors.emplace_back(MakeUnique<Cube>(trInt));
 	trInt.Y += 2.0f;
-	//Actors.emplace_back(MakeUnique<CameraViewer>());
 
 	ImGui = MakeUnique<ImGuiLayer>();
 	ImGui->OnAttach();
@@ -98,11 +99,14 @@ Application::Application()
 
 	Cameras.LinkTechniques();
 }
-
 void Application::Tick()
 {
 	float delta = Benchmarker.GetAndReset();
+	ID3D11RenderTargetView* nullRenderTargetViews[] = { nullptr };
+	ID3D11DepthStencilView* nullDepthStencilView = nullptr;
 
+	// Unbind render targets and depth/stencil buffer
+	CurrentGraphicsContext::Context()->OMSetRenderTargets(ARRAYSIZE(nullRenderTargetViews), nullRenderTargetViews, nullDepthStencilView);
 	MainWindow->GetGraphicsContext().SetCamera(Cameras.GetCamera());
 
 	ImGui->Begin();
@@ -111,12 +115,13 @@ void Application::Tick()
 	for (auto& c : Actors)
 	{
 		c->Tick(delta);
-		c->Draw();
+		c->Submit(Channels::Main);
+		c->Submit(Channels::Shadow);
 		c->GUI();
 	}
-	Cameras.Draw();
+	Cameras.Submit(Channels::Main);
 	Light->Tick(delta);
-	Light->Draw();
+	Light->Submit(Channels::Main);
 	Light->GUI();
 	ImGui->Render();
 

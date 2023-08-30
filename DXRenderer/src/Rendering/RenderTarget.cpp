@@ -1,8 +1,53 @@
 #include "RenderTarget.h"
 #include "CurrentGraphicsContext.h"
 
-DepthStencil::DepthStencil(uint32_t width, uint32_t height,
-						   bool isShaderResource)
+namespace
+{
+
+	DXGI_FORMAT GetFormat(DepthStencilUse use)
+	{
+		switch (use)
+		{
+		case DepthStencilUse::Standard:
+			return DXGI_FORMAT_D24_UNORM_S8_UINT;
+		case DepthStencilUse::ShadowDepth:
+			return DXGI_FORMAT_D32_FLOAT;
+		default:
+			throw std::runtime_error("Depth stencil use mode unsupported");
+		}
+	}
+
+	DXGI_FORMAT GetFormatTypeless(DepthStencilUse use)
+	{
+		switch (use)
+		{
+		case DepthStencilUse::Standard:
+			return DXGI_FORMAT_R24G8_TYPELESS;
+		case DepthStencilUse::ShadowDepth:
+			return DXGI_FORMAT_R32_TYPELESS;
+		default:
+			throw std::runtime_error("Depth stencil use mode unsupported");
+		}
+	}
+
+	DXGI_FORMAT GetFormatForTexture(DepthStencilUse use)
+	{
+		switch (use)
+		{
+		case DepthStencilUse::Standard:
+			return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		case DepthStencilUse::ShadowDepth:
+			return DXGI_FORMAT_R32_FLOAT;
+		default:
+			throw std::runtime_error("Depth stencil use mode unsupported");
+		}
+	}
+}
+
+DepthStencil::DepthStencil(uint32_t width, 
+						   uint32_t height,
+						   bool isShaderResource,
+						   DepthStencilUse use)
 {
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencilID;
 
@@ -11,15 +56,21 @@ DepthStencil::DepthStencil(uint32_t width, uint32_t height,
 	descDepth.Height = height;
 	descDepth.MipLevels = 1u;
 	descDepth.ArraySize = 1u;
-	descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	descDepth.Format = GetFormatTypeless(use);
 	descDepth.SampleDesc.Count = 1u;
 	descDepth.SampleDesc.Quality = 0u;
 	descDepth.Usage = D3D11_USAGE_DEFAULT;
 	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL 
 		| (isShaderResource ? D3D11_BIND_SHADER_RESOURCE : 0);
 
-	CurrentGraphicsContext::Device()->CreateTexture2D(&descDepth, nullptr, &depthStencilID);
-	CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencilID.Get(), nullptr, &DepthStencilView);
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateTexture2D(&descDepth, nullptr, &depthStencilID));
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = GetFormat(use);
+	depthStencilViewDesc.Flags = 0;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.Texture2D.MipSlice = 0;
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencilID.Get(), &depthStencilViewDesc, &DepthStencilView));
 }
 
 void DepthStencil::BindBuffer() const
@@ -39,27 +90,28 @@ void DepthStencil::Clear()
 															 1.0f, 0);
 }
 
-DepthStencilInput::DepthStencilInput(uint32_t width, uint32_t height, uint32_t slot)
-	: DepthStencil(width, height, true), Slot(slot)
+DepthStencilInput::DepthStencilInput(uint32_t width, uint32_t height, uint32_t slot, DepthStencilUse use)
+	: DepthStencil(width, height, true, use), Slot(slot)
 {
 	Microsoft::WRL::ComPtr<ID3D11Resource> resource;
 	DepthStencilView->GetResource(&resource);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = GetFormatForTexture(use);
 	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-	CurrentGraphicsContext::Device()->CreateShaderResourceView(resource.Get(), &shaderResourceViewDesc, &ShaderResourceView);
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateShaderResourceView(resource.Get(), &shaderResourceViewDesc, &ShaderResourceView))	;
 }
 
 void DepthStencilInput::Bind()
 {
-	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, ShaderResourceView.GetAddressOf());
+	(CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, ShaderResourceView.GetAddressOf()));
 }
 
 DepthStencilOutput::DepthStencilOutput(uint32_t width, uint32_t height)
-	: DepthStencil(width, height, false)
+	: DepthStencil(width, height, false, DepthStencilUse::Standard)
 {}
 
 RenderTarget::RenderTarget(uint32_t width, uint32_t height)

@@ -148,6 +148,12 @@ public:
 
 class Technique;
 
+namespace Channels
+{
+	inline constexpr size_t Main = 0b01;
+	inline constexpr size_t Shadow = 0b10;
+}
+
 class GPUObjectBase
 {
 public:

@@ -43,7 +43,8 @@ private:
 class Technique
 {
 public:
-	void Submit(const GPUObject& renderObject);
+	Technique(size_t channels);
+	void Submit(const GPUObject& renderObject, size_t channelsIn);
 
 	inline void Activate() { IsActive = true; }
 	inline void Deactivate() { IsActive = false; }
@@ -55,4 +56,5 @@ public:
 private:
 	bool IsActive = true;
 	std::vector<Step> Steps;
+	size_t Channels;
 };

@@ -47,7 +47,7 @@ public:
 	DirectX::XMMATRIX GetTransform() const override;
 	//void SetupAttachment(Node* parent);
 
-	void Draw();
+	void Submit(size_t channelsIn);
 
 	void ShowTree();
 

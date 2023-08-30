@@ -89,7 +89,6 @@ void Graphics::Tick(float delta)
 			GRAPHICS_EXCEPTION(result);
 		}
 	}
-
 	ClearColor();
 }
 

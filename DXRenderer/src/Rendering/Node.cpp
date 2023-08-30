@@ -35,13 +35,13 @@ public:
 		return DirectX::XMLoadFloat4x4(reinterpret_cast<const DirectX::XMFLOAT4X4*>(&RelativeTransform));
 	}
 
-	void Draw()
+	void Submit(size_t channelsIn)
 	{
 		for (auto* mesh : Meshes)
-			mesh->Draw();
+			mesh->Submit(channelsIn);
 
 		for (auto& child : Children)
-			child->Draw();
+			child->Submit(channelsIn);
 	}
 
 	void SetupChild(UniquePtr<NodeInternal> child)
@@ -113,13 +113,13 @@ inline DirectX::XMMATRIX Node::GetTransform() const
 	return Owner.GetTransform();
 }
 
-void Node::Draw()
+void Node::Submit(size_t channelsIn)
 {
 	for (auto* mesh : Meshes)
-		mesh->Draw();
+		mesh->Submit(channelsIn);
 
 	for (auto& child : Children)
-		child->Draw();
+		child->Submit(channelsIn);
 }
 
 void Node::ShowTree()

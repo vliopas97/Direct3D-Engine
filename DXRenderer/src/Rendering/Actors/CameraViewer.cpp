@@ -24,7 +24,7 @@ CameraViewer::CameraViewer()
 	VertexBuffer vb{ tag, vertices, BufferLayout{ LayoutElement::ElementType::Position3 }, D3D11_PRIMITIVE_TOPOLOGY_LINELIST };
 	IndexBuffer ib{ tag, indices };
 
-	Technique standard;
+	Technique standard(Channels::Main);
 	{
 		Step first("phong");
 

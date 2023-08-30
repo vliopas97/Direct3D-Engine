@@ -34,7 +34,7 @@ void Sphere::Init()
 
 	Add<IndexBuffer>("Sphere", data.Indices);
 
-	Technique standard;
+	Technique standard(Channels::Main);
 	{
 		Step first("phong");
 

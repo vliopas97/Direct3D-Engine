@@ -39,11 +39,9 @@ public:
 	Mesh(const aiMesh& mesh, const std::string& meshName, const aiMaterial* const* materials, const std::string& path);
 
 	void Bind() const override;
-	void Draw();
+	void Submit(size_t channelsIn);
 
 private:
-	void Init(const aiMesh& mesh, Step& first);
-	void LoadMaterial(const aiMesh& mesh, const aiMaterial* const* materials, const std::string& path, Step& first);
 	std::pair<const char*, const char*> ResolveShaders() const;
 
 private:

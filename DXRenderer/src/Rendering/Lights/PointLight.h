@@ -2,6 +2,7 @@
 
 #include "Rendering\Buffer.h"
 #include "Rendering\Actors\Sphere.h"
+#include "Rendering/Camera.h"
 
 class PointLight
 {
@@ -9,10 +10,13 @@ public:
 	PointLight();
 
 	void Bind();
-	void Draw();
+	void Submit(size_t channelsIn);
 	void LinkTechniques();
 	void GUI();
 	void Tick(float delta);
+
+	inline const DirectX::XMMATRIX& GetViewProjection() const { return ViewProjection; }
+
 public:
 	struct LightProperties
 	{
@@ -44,4 +48,10 @@ public:
 private:
 	Sphere Mesh;
 	UniformPS<LightProperties> Model;
+	UniformVS<DirectX::XMMATRIX> ShadowMatrix;
+
+	DirectX::XMFLOAT3 Rotation{};
+	DirectX::XMMATRIX ViewProjection;
+
+	Camera Cam;
 };

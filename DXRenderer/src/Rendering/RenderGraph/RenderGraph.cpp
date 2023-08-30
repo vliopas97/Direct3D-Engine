@@ -80,7 +80,12 @@ RenderGraph::RenderGraph()
 		AddImpl(std::move(pass));
 	}
 	{
+		auto pass = MakeUnique<ShadowMappingPass>("shadowMap");
+		AddImpl(std::move(pass));
+	}
+	{
 		auto pass = MakeUnique<PhongPass>("phong");
+		pass->SetInputSource("shadowMap", "shadowMap.map");
 		pass->SetInputSource("renderTarget", "clear.renderTarget");
 		pass->SetInputSource("depthStencil", "clear.depthStencil");
 		AddImpl(std::move(pass));

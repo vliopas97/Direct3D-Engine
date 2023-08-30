@@ -15,10 +15,10 @@ Actor::Actor(const TransformationIntrinsics& intrinsics)
 {
 }
 
-void Actor::Draw()
+void Actor::Submit(size_t channelsIn)
 {
 	for (auto& t : Techniques)
-		t->Submit(*this);
+		t->Submit(*this, channelsIn);
 }
 
 DirectX::XMMATRIX Actor::GetTransform() const

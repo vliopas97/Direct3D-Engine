@@ -24,6 +24,17 @@ private:
 	uint32_t Slot;
 };
 
+class ShadowSampler : public Component
+{
+public:
+	ShadowSampler(uint32_t slot = 0);
+
+	void Bind() const override;
+private:
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> SamplerID;
+	uint32_t Slot;
+};
+
 class Texture : public Component
 {
 public:

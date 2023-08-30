@@ -10,7 +10,7 @@ public:
 	Model(const std::string& filename);
 	Model(const std::string& filename, const TransformationIntrinsics& intrinsics);
 
-	virtual void Draw() override;
+	virtual void Submit(size_t channelsIn) override;
 	virtual void Tick(float delta) override;
 
 	virtual void GUI() override;

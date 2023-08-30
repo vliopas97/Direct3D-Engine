@@ -27,6 +27,23 @@ inline void Sampler::Bind() const
 	CurrentGraphicsContext::Context()->PSSetSamplers(Slot, 1, SamplerID.GetAddressOf());
 }
 
+ShadowSampler::ShadowSampler(uint32_t slot)
+	:Slot(slot)
+{
+	D3D11_SAMPLER_DESC samplerDesc = CD3D11_SAMPLER_DESC{ CD3D11_DEFAULT{} };
+
+	samplerDesc.BorderColor[0] = 1.0f;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+
+	CurrentGraphicsContext::Device()->CreateSamplerState(&samplerDesc, &SamplerID);
+}
+
+void ShadowSampler::Bind() const
+{
+	CurrentGraphicsContext::Context()->PSSetSamplers(Slot, 1, SamplerID.GetAddressOf());
+}
+
 Texture::Texture(const std::string& filename, uint32_t slot)
 	:Slot(slot), TextureSampler{ Slot }
 {

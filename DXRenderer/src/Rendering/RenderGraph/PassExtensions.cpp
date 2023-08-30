@@ -98,10 +98,18 @@ PhongPass::PhongPass(std::string&& name)
 {
 	Register<PassInput<RenderTarget>>("renderTarget", RTarget);
 	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
+	Register<PassInput<DepthStencil>>("shadowMap", ShadowMap);
 	Register<PassOutput<RenderTarget>>("renderTarget", RTarget);
 	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
 	Add<StencilState<DepthStencilMode::Off>>();
 	Add<BlendState>("phongBlend", false);
+	Add<ShadowSampler>(3);
+}
+
+void PhongPass::Execute() const
+{
+	ShadowMap->Bind();
+	RenderQueuePass::Execute();
 }
 
 OutlineDrawPass::OutlineDrawPass(std::string&& name)
@@ -195,4 +203,28 @@ void VerticalBlurPass::Execute() const
 	BlurScratchIn->Bind();
 	BlendState("$FullScreenFilter", true).Bind();
 	FullScreenPass::Execute();
+}
+
+ShadowMappingPass::ShadowMappingPass(std::string&& name)
+	:RenderQueuePass(std::move(name))
+{
+	DStencil = MakeUnique<DepthStencilInput>(CurrentGraphicsContext::GraphicsInfo->GetWidth(),
+											 CurrentGraphicsContext::GraphicsInfo->GetHeight(),
+											 3,
+											 DepthStencilUse::ShadowDepth);
+	Add<VertexShader>("ShadowMapUpdate");
+	Add<NullPixelShader>();
+	Add<StencilState<DepthStencilMode::Off>>();
+	Add<BlendState>("shadowMapBL", false);
+
+	Register<PassOutput<DepthStencil>>("map", DStencil);
+}
+
+void ShadowMappingPass::Execute() const
+{
+	ID3D11ShaderResourceView* const pNullTex = nullptr;
+	CurrentGraphicsContext::Context()->PSSetShaderResources(3, 1, &pNullTex); // shadow map texture
+	DStencil->Clear();
+	RenderQueuePass::Execute();
+	CurrentGraphicsContext::Context()->OMSetRenderTargets(0, nullptr, nullptr);
 }

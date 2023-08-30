@@ -11,7 +11,7 @@ public:
 	Cube();
 	Cube(const TransformationIntrinsics& intrinsics);
 
-	void Draw() override;
+	void Submit(size_t channelsIn) override;
 	void Tick(float delta) override;
 private:
 	void Init();

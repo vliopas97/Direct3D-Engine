@@ -19,9 +19,9 @@ Model::Model(const std::string& filename, const TransformationIntrinsics& intrin
 	Init(filename);
 }
 
-void Model::Draw()
+void Model::Submit(size_t channelsIn)
 {
-	Root->Draw();
+	Root->Submit(channelsIn);
 	Components.Bind();
 }
 

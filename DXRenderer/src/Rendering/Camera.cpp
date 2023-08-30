@@ -171,9 +171,9 @@ void Camera::LinkTechniques()
 	CameraObject->LinkTechniques();
 }
 
-void Camera::Draw()
+void Camera::Submit(size_t channelsIn)
 {
-	CameraObject->Draw();
+	CameraObject->Submit(channelsIn);
 }
 
 inline void Camera::UpdateViewMatrix()
@@ -229,11 +229,11 @@ void CameraGroup::LinkTechniques()
 		camera->LinkTechniques();
 }
 
-void CameraGroup::Draw()
+void CameraGroup::Submit(size_t channelsIn)
 {
 	for (size_t i = 0; i < Cameras.size(); i++)
 	{
 		if(i != SelectedCameraIndex)
-			Cameras[i]->Draw();
+			Cameras[i]->Submit(channelsIn);
 	}
 }

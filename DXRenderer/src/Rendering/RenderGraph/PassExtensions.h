@@ -60,6 +60,10 @@ class PhongPass : public RenderQueuePass
 {
 public:
 	PhongPass(std::string&& name);
+	void Execute() const override;
+
+private:
+	SharedPtr<DepthStencil> ShadowMap;
 };
 
 class OutlineDrawPass : public RenderQueuePass
@@ -104,4 +108,11 @@ private:
 	SharedPtr<UniformPS<Kernel>> ConvKernel;
 	SharedPtr<UniformPS<BOOL>> HorizontalFlag;
 	SharedPtr<RenderTarget> BlurScratchIn;
+};
+
+class ShadowMappingPass : public RenderQueuePass
+{
+public:
+	ShadowMappingPass(std::string&& name);
+	void Execute() const override;
 };

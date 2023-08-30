@@ -6,6 +6,12 @@
 #include <d3d11.h>
 #include <wrl.h>
 
+enum class DepthStencilUse
+{
+	Standard,
+	ShadowDepth
+};
+
 class DepthStencil
 {
 public:
@@ -15,7 +21,7 @@ public:
 	virtual void Bind() {};
 
 protected:
-	DepthStencil(uint32_t width, uint32_t height, bool isShaderResource = true);
+	DepthStencil(uint32_t width, uint32_t height, bool isShaderResource, DepthStencilUse use);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthStencilView;
@@ -27,7 +33,8 @@ protected:
 class DepthStencilInput : public DepthStencil
 {
 public:
-	DepthStencilInput(uint32_t width, uint32_t height, uint32_t slot = 0);
+	DepthStencilInput(uint32_t width, uint32_t height, uint32_t slot = 0,
+					  DepthStencilUse use = DepthStencilUse::Standard);
 	void Bind() override;
 
 private:

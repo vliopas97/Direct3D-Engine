@@ -128,6 +128,43 @@ std::string GraphicsException::GetErrorInfo() const noexcept
 	return Info;
 }
 
+
+GraphicsExceptionInfo::GraphicsExceptionInfo(int line, const char* file, std::vector<std::string> messages) noexcept
+	:ExceptionBase(line, file)
+{
+	for (const auto& m : messages)
+	{
+		Info += m;
+		Info.push_back('\n');
+	}
+
+	if (!Info.empty())
+		Info.pop_back();
+}
+
+const char* GraphicsExceptionInfo::what() const noexcept
+{
+	std::ostringstream oss;
+	if (!Info.empty())
+	{
+		oss << "\n[Error Info]\n" << GetErrorInfo() << std::endl << std::endl;
+	}
+	oss << GetRawMessage();
+	ErrorMessage = oss.str();
+	return ErrorMessage.c_str();
+}
+
+const char* GraphicsExceptionInfo::GetType() const noexcept
+{
+	return "Graphics Exception (No Info)";
+}
+
+std::string GraphicsExceptionInfo::GetErrorInfo() const noexcept
+{
+	return Info;
+}
+
+
 const char* DeviceRemovedException::GetType() const noexcept
 {
 	return "Device Removed Exception";
