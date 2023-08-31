@@ -94,13 +94,19 @@ RenderGraph::RenderGraph()
 		AddImpl(std::move(pass));
 	}
 	{
-		auto pass = MakeUnique<OutlineMaskPass>("outlineMask");
+		auto pass = MakeUnique<SkyboxPass>("skybox");
+		pass->SetInputSource("renderTarget", "phong.renderTarget");
 		pass->SetInputSource("depthStencil", "phong.depthStencil");
 		AddImpl(std::move(pass));
 	}
 	{
+		auto pass = MakeUnique<OutlineMaskPass>("outlineMask");
+		pass->SetInputSource("depthStencil", "skybox.depthStencil");
+		AddImpl(std::move(pass));
+	}
+	{
 		auto pass = MakeUnique<OutlineDrawPass>("outlineDraw");
-		pass->SetInputSource("renderTarget", "phong.renderTarget");
+		pass->SetInputSource("renderTarget", "skybox.renderTarget");
 		pass->SetInputSource("depthStencil", "outlineMask.depthStencil");
 		AddImpl(std::move(pass));
 	}

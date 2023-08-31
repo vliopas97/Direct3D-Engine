@@ -119,3 +119,14 @@ public:
 private:
 	SharedPtr<ShadowRasterizerState> ShadowRasterizer;
 };
+
+class SkyboxPass : public ResourcesPass
+{
+public:
+	SkyboxPass(std::string&& name);
+
+	void Execute() const override;
+
+private:
+	uint32_t Count;
+};

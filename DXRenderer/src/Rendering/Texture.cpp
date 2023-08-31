@@ -47,7 +47,7 @@ void ShadowSampler::Bind() const
 }
 
 Texture::Texture(const std::string& filename, uint32_t slot)
-	:Slot(slot), TextureSampler{ Slot }
+	:Slot(slot), TextureSampler{ slot, SamplerInitializer{ false, false } }
 {
 	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\" + filename;
 	wchar_t wideName[512];
@@ -81,6 +81,58 @@ Texture::Texture(const std::string& filename, uint32_t slot)
 }
 
 inline void Texture::Bind() const
+{
+	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, TextureView.GetAddressOf());
+	TextureSampler.Bind();
+}
+
+CubeTexture::CubeTexture(uint32_t slot)
+	:Slot(slot), TextureSampler{}
+{
+	auto filepath = std::filesystem::current_path().parent_path().string() + "\\Content\\Img\\Skybox\\";
+
+	std::vector<DirectX::ScratchImage> images(6);
+	for (size_t i = 0; i < images.size(); i++)
+	{
+		auto shortName = filepath + std::to_string(i) + ".png";
+		wchar_t wideName[512];
+		mbstowcs_s(nullptr, wideName, shortName.c_str(), _TRUNCATE);
+		GRAPHICS_ASSERT(DirectX::LoadFromWICFile(wideName, DirectX::WIC_FLAGS_NONE, nullptr, images[i]));
+	}
+
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	textureDesc.Width = images[0].GetMetadata().width;
+	textureDesc.Height = images[0].GetMetadata().height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 6;
+	textureDesc.Format = images[0].GetMetadata().format;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+	D3D11_SUBRESOURCE_DATA subResourceData[6];
+	for (size_t i = 0; i < 6; i++)
+	{
+		subResourceData[i].pSysMem = images[i].GetPixels();
+		subResourceData[i].SysMemPitch = images[i].GetImage(0, 0, 0)->rowPitch;
+		subResourceData[i].SysMemSlicePitch = 0;
+	}
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateTexture2D(&textureDesc, subResourceData, &texture));
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC sourceDesc{};
+	sourceDesc.Format = textureDesc.Format;
+	sourceDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	sourceDesc.Texture2D.MostDetailedMip = 0;
+	sourceDesc.Texture2D.MipLevels = 1;
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateShaderResourceView(texture.Get(), &sourceDesc, &TextureView));
+}
+
+void CubeTexture::Bind() const
 {
 	CurrentGraphicsContext::Context()->PSSetShaderResources(Slot, 1, TextureView.GetAddressOf());
 	TextureSampler.Bind();

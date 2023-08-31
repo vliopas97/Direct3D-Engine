@@ -4,12 +4,13 @@
 #include "Rendering/Shader.h"
 #include "Rendering/State.h"
 #include "Rendering/Texture.h"
+#include "Rendering/Actors/Primitives.h"
 
 ResourcesPass::ResourcesPass(std::string&& name)
 	:Pass(std::move(name))
 {}
 
-ResourcesPass::ResourcesPass(std::string && name, GPUObjectBase && resources)
+ResourcesPass::ResourcesPass(std::string&& name, GPUObjectBase&& resources)
 	: Pass(std::move(name)), Resources(std::move(resources))
 {}
 
@@ -228,4 +229,39 @@ void ShadowMappingPass::Execute() const
 	DStencil->Clear();
 	RenderQueuePass::Execute();
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+SkyboxPass::SkyboxPass(std::string&& name)
+	:ResourcesPass(std::move(name))
+{
+	const auto tag = "$Skybox";
+
+	Register<PassInput<RenderTarget>>("renderTarget", RTarget);
+	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
+	Add<CubeTexture>();
+	Add<StencilState<DepthStencilMode::Skybox>>();
+	Add<RasterizerState>(true);
+
+	auto data = Primitives::Cube::Create<Primitives::VertexElement>();
+	Count = data.Indices.size();
+
+	VertexShader vs("Skybox");
+	VertexBuffer vb(tag, data.Vertices, BufferLayout{ { "Position", LayoutElement::DataType::Float3} });
+	Add<InputLayout>(tag, vb.GetLayout(), vs.GetBlob());
+	Add<UniformVS<DirectX::XMMATRIX>>(tag, CurrentGraphicsContext::GraphicsInfo->GetViewProjection());
+
+	Add<VertexBuffer>(vb);
+	Add<IndexBuffer>(tag, data.Indices);
+
+	Add<VertexShader>(vs);
+	Add<PixelShader>("Skybox");
+	
+	Register<PassOutput<RenderTarget>>("renderTarget", RTarget);
+	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
+}
+
+void SkyboxPass::Execute() const
+{
+	Bind();
+	CurrentGraphicsContext::Context()->DrawIndexed(Count, 0, 0);
 }

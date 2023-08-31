@@ -56,7 +56,8 @@ enum class DepthStencilMode
 {
 	Off,
 	Write,
-	Mask
+	Mask,
+	Skybox
 };
 
 template<DepthStencilMode Mode = DepthStencilMode::Off>
@@ -89,6 +90,13 @@ public:
 			depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
 
 			Tag = "Mask";
+		}
+		else if constexpr (Mode == DepthStencilMode::Skybox)
+		{
+			depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+			depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+
+			Tag = "Skybox";
 		}
 
 		CurrentGraphicsContext::Device()->CreateDepthStencilState(&depthStencilDesc, &StateID);

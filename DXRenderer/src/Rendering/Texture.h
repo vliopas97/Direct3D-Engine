@@ -54,3 +54,15 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureID;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
 };
+
+class CubeTexture : public Component
+{
+public:
+	CubeTexture(uint32_t slot = 0);
+	void Bind() const override;
+
+private:
+	uint32_t Slot;
+	Sampler TextureSampler;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
+};
