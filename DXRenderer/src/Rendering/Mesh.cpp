@@ -258,17 +258,15 @@ Mesh::Mesh(const aiMesh& mesh, const std::string& meshName, const aiMaterial* co
 	{
 		Step draw("shadowMap");
 		VertexShader vs("ShadowMapUpdate");
-		draw.Add<InputLayout>("Cube3", vertexBuffer->GetLayout(), vs.GetBlob());
+		draw.Add<InputLayout>(Name, vertexBuffer->GetLayout(), vs.GetBlob());
 
-		auto& modelView = *reinterpret_cast<const XMMATRIX*>(&ModelView);
-		draw.Add<UniformVS<XMMATRIX>>("Cube1" + UIDTag(), modelView);
-		const DirectX::XMMATRIX& projection = CurrentGraphicsContext::GraphicsInfo->GetProjection();
-		draw.Add<UniformVS<XMMATRIX>>("Cube", projection, 1);
+		auto& transform = *reinterpret_cast<const XMMATRIX*>(&Transform);
+		draw.Add<UniformVS<XMMATRIX>>(Name + "Model" + UIDTag(), transform);
 		shadowMap.PushBack(std::move(draw));
 	}
 
 	Add(std::move(standard));
-	//Add(std::move(shadowMap));
+	Add(std::move(shadowMap));
 }
 
 inline void Mesh::Bind() const

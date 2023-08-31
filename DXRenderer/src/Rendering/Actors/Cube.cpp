@@ -85,7 +85,7 @@ void Cube::Init()
 	{
 		Step draw("shadowMap");
 		
-		VertexShader vs("colorInput");
+		VertexShader vs("ShadowMapUpdate");
 		draw.Add<InputLayout>("Cube3", vertexBuffer->GetLayout(), vs.GetBlob());
 		draw.Add<UniformVS<XMMATRIX>>("Cube" + UIDTag(), Transform.GetMatrix());
 		
