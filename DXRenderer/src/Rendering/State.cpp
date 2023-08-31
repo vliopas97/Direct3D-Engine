@@ -65,3 +65,33 @@ std::string RasterizerState::GetID() const
 {
 	return std::string(typeid(RasterizerState).name()) + std::to_string(RenderBothSides);
 }
+
+ShadowRasterizerState::ShadowRasterizerState()
+	:ShadowRasterizerState(40, 4.5f, 1.0f)
+{}
+
+ShadowRasterizerState::ShadowRasterizerState(int depthBias, float slopeBias, float clamp)
+	:DepthBias(depthBias), SlopeBias(slopeBias), Clamp(clamp)
+{
+	D3D11_RASTERIZER_DESC rasterizerDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT{});
+	rasterizerDesc.DepthBias = depthBias;
+	rasterizerDesc.SlopeScaledDepthBias = slopeBias;
+	rasterizerDesc.DepthBiasClamp = clamp;
+
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateRasterizerState(&rasterizerDesc, &StateID));
+}
+
+void ShadowRasterizerState::Bind() const
+{
+	CurrentGraphicsContext::Context()->RSSetState(StateID.Get());
+}
+
+void ShadowRasterizerState::Unbind() const
+{
+	CurrentGraphicsContext::Context()->RSSetState(nullptr);
+}
+
+std::string ShadowRasterizerState::GetID() const
+{
+	return std::string(typeid(ShadowRasterizerState).name()) + std::to_string(DepthBias) + std::to_string(SlopeBias) + std::to_string(Clamp);
+}

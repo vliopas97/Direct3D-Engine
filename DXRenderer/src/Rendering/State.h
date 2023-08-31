@@ -36,6 +36,22 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> StateID;
 };
 
+class ShadowRasterizerState : public State
+{
+public:
+	ShadowRasterizerState();
+	ShadowRasterizerState(int depthBias, float slopeBias, float clamp);
+
+	void Bind() const override;
+	void Unbind() const override;
+
+	std::string GetID() const;
+
+private:
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> StateID;
+	float DepthBias, SlopeBias, Clamp;
+};
+
 enum class DepthStencilMode
 {
 	Off,

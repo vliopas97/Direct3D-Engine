@@ -8,6 +8,7 @@ class PassOutputBase;
 class RenderQueuePass;
 class DepthStencil;
 class RenderTarget;
+class ShadowRasterizerState;
 
 class RenderGraph
 {
@@ -48,5 +49,6 @@ private:
 	std::vector<UniquePtr<PassOutputBase>> GlobalOutputs;
 	SharedPtr<DepthStencil> DepthBuffer;
 	SharedPtr<RenderTarget> BackBuffer;
+	SharedPtr<ShadowRasterizerState> ShadowRasterizer;
 	bool IsValidated = false;
 };

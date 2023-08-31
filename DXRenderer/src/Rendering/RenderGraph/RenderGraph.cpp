@@ -65,10 +65,12 @@ void RenderGraph::AddGlobalOutputs(UniquePtr<PassOutputBase> out)
 RenderGraph::RenderGraph()
 	:BackBuffer(CurrentGraphicsContext::GraphicsInfo->GetTarget()),
 	DepthBuffer(MakeShared<DepthStencilOutput>(CurrentGraphicsContext::GraphicsInfo->GetWidth(),
-											   CurrentGraphicsContext::GraphicsInfo->GetHeight()))
+											   CurrentGraphicsContext::GraphicsInfo->GetHeight())),
+	ShadowRasterizer(MakeShared<ShadowRasterizerState>())
 {
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<RenderTarget>>("backBuffer", BackBuffer));
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<DepthStencil>>("depthBuffer", DepthBuffer));
+	GlobalOutputs.emplace_back(MakeUnique <PassOutput<ShadowRasterizerState>>("shadowRasterizer", ShadowRasterizer));
 	GlobalInputs.emplace_back(MakeUnique<PassInput<RenderTarget>>("backBuffer", BackBuffer));
 
 	//--------------------------
@@ -81,6 +83,7 @@ RenderGraph::RenderGraph()
 	}
 	{
 		auto pass = MakeUnique<ShadowMappingPass>("shadowMap");
+		pass->SetInputSource("shadowRasterizer", "$.shadowRasterizer");
 		AddImpl(std::move(pass));
 	}
 	{

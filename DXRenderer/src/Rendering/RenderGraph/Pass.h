@@ -10,7 +10,7 @@ class PassOutputBase;
 
 template<typename T>
 concept ResourceType = std::is_base_of_v<DepthStencil, T> || std::is_base_of_v<RenderTarget, T> ||
-std::is_base_of_v<class Shader, T> || std::is_base_of_v<class Buffer, T> || std::is_base_of_v<class Component, T>;
+std::is_base_of_v<class Shader, T> || std::is_base_of_v<class BufferBase, T> || std::is_base_of_v<class Component, T>;
 
 class PassInputBase
 {

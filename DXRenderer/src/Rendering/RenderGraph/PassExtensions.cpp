@@ -217,6 +217,7 @@ ShadowMappingPass::ShadowMappingPass(std::string&& name)
 	Add<StencilState<DepthStencilMode::Off>>();
 	Add<BlendState>("shadowMapBL", false);
 
+	Register<PassInput<ShadowRasterizerState>>("shadowRasterizer", ShadowRasterizer);
 	Register<PassOutput<DepthStencil>>("map", DStencil);
 }
 

@@ -115,4 +115,7 @@ class ShadowMappingPass : public RenderQueuePass
 public:
 	ShadowMappingPass(std::string&& name);
 	void Execute() const override;
+
+private:
+	SharedPtr<ShadowRasterizerState> ShadowRasterizer;
 };
