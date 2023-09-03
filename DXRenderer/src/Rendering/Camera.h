@@ -63,8 +63,6 @@ private:
 	UniquePtr<class CameraViewer> CameraObject;
 
 	static uint32_t UID;
-
-	friend class PointLight;
 };
 
 class CameraGroup

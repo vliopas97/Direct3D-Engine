@@ -22,6 +22,7 @@ public:
 	static void LinkGlobalInputs();
 	static void Validate();
 	static RenderQueuePass& GetRenderQueue(const std::string& passName);
+	static void SetUpLightSource(const class PointLight* pointLight);
 
 	static void AddGlobalInputs(UniquePtr<PassInputBase> in);
 	static void AddGlobalOutputs(UniquePtr<PassOutputBase> out);
@@ -38,7 +39,7 @@ private:
 	void LinkGlobalInputsImpl();
 	void ValidateImpl();
 	RenderQueuePass& GetRenderQueueImpl(const std::string& passName);
-
+	void SetUpLightSourceImpl(const PointLight* pointLight);
 
 	void AddGlobalInputsImpl(UniquePtr<PassInputBase> in);
 	void AddGlobalOutputsImpl(UniquePtr<PassOutputBase> out);

@@ -1,34 +1,20 @@
-Texture2D shadowMap : register(t3);
+TextureCube shadowMap : register(t3);
 SamplerComparisonState shadowSamplerState : register(s3);
 
-static const float shadowBias = 0.00005f;
-#define SAMPLING_RADIUS 2
+static const float zf = 100.0f;
+static const float zn = 0.5f;
+static const float c1 = zf / (zf - zn);
+static const float c0 = -zn * zf / (zf - zn);
+
+float CalculateShadowDepth(const in float4 shadowPos)
+{
+    const float3 m = abs(shadowPos).xyz;
+    const float major = max(m.x, max(m.y, m.z));
+    return (c1 * major + c0) / major;
+}
 
 float Shadow(in float4 shadowPos)
 {
-    float shadowIntensity = 0.0f;
-    
-    shadowPos.xyz = shadowPos.xyz / shadowPos.w;
-    
-    if (shadowPos.z > 1.0f || shadowPos.z < 0.0f)
-    {
-        shadowIntensity = 1.0f;
-    }
-    else
-    {
-        [unroll]
-        for (int x = -SAMPLING_RADIUS; x <= SAMPLING_RADIUS; x++)
-        {
-            [unroll]
-            for (int y = -SAMPLING_RADIUS; y <= SAMPLING_RADIUS; y++)
-            {
-                shadowIntensity += shadowMap.SampleCmpLevelZero(shadowSamplerState, 
-                shadowPos.xy, shadowPos.z - shadowBias, int2(x, y));
-            }
-        }
-        
-        shadowIntensity /= ((SAMPLING_RADIUS * 2 + 1) * (SAMPLING_RADIUS * 2 + 1));
-    }
-    
-    return shadowIntensity;
+    shadowPos.xy = -shadowPos.xy;
+    return shadowMap.SampleCmpLevelZero(shadowSamplerState, shadowPos.xyz, CalculateShadowDepth(shadowPos));
 }

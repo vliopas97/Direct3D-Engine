@@ -3,6 +3,8 @@
 #include "Pass.h"
 #include "Rendering/Utilities.h"
 #include "RenderQueue.h"
+#include "Rendering/Texture.h"
+#include "Rendering/DepthCube.h"
 
 class ResourcesPass : public Pass
 {
@@ -63,7 +65,7 @@ public:
 	void Execute() const override;
 
 private:
-	SharedPtr<DepthStencil> ShadowMap;
+	SharedPtr<CubeTextureDepth> ShadowMap;
 };
 
 class OutlineDrawPass : public RenderQueuePass
@@ -110,14 +112,33 @@ private:
 	SharedPtr<RenderTarget> BlurScratchIn;
 };
 
+class PointLight;
+
 class ShadowMappingPass : public RenderQueuePass
 {
 public:
-	ShadowMappingPass(std::string&& name);
+	ShadowMappingPass(std::string&& name, const PointLight* pointLight = nullptr);
 	void Execute() const override;
+
+	void SetLightSource(const PointLight* pointLight);
+	void SetDepthBuffer(SharedPtr<DepthStencil> depthStencil) const;
 
 private:
 	SharedPtr<ShadowRasterizerState> ShadowRasterizer;
+	const PointLight* LightSource;
+	SharedPtr<CubeTextureDepth> DepthCube;
+
+	mutable DirectX::XMMATRIX Projection;
+	mutable DirectX::XMMATRIX View;
+	mutable DirectX::XMMATRIX ViewProjection;
+
+	UniquePtr<UniformVS<DirectX::XMMATRIX>>	 ViewUniform;
+	UniquePtr<UniformVS<DirectX::XMMATRIX>>	 ViewProjectionUniform;
+
+	std::array<DirectX::XMFLOAT3, 6> CameraUp;
+	std::array<DirectX::XMFLOAT3, 6> CameraOrientation;
+
+	static constexpr uint32_t DepthDim = 1080;
 };
 
 class SkyboxPass : public ResourcesPass

@@ -2,6 +2,7 @@
 
 #include "Core\Core.h"
 #include "Component.h"
+#include "RenderTarget.h"
 
 #include <d3d11.h>
 #include <DirectXTex.h>
@@ -39,7 +40,7 @@ class Texture : public Component
 {
 public:
 	Texture(const std::string& filename, uint32_t slot = 0);
-	
+
 	inline uint32_t GetWidth() const { return (uint32_t)Image.GetMetadata().width; }
 	inline uint32_t GetHeight() const { return (uint32_t)Image.GetMetadata().height; }
 

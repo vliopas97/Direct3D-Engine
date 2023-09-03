@@ -73,6 +73,21 @@ DepthStencil::DepthStencil(uint32_t width,
 	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateDepthStencilView(depthStencilID.Get(), &depthStencilViewDesc, &DepthStencilView));
 }
 
+DepthStencil::DepthStencil(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture, uint32_t face)
+{
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	texture->GetDesc(&textureDesc);
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dSVDesc{};
+	dSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dSVDesc.Flags = 0;
+	dSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+	dSVDesc.Texture2DArray.MipSlice = 0;
+	dSVDesc.Texture2DArray.ArraySize = 1;
+	dSVDesc.Texture2DArray.FirstArraySlice = face;
+	GRAPHICS_ASSERT(CurrentGraphicsContext::Device()->CreateDepthStencilView(texture.Get(), &dSVDesc, &DepthStencilView));
+}
+
 void DepthStencil::BindBuffer() const
 {
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(0, nullptr, DepthStencilView.Get());
@@ -114,6 +129,10 @@ DepthStencilOutput::DepthStencilOutput(uint32_t width, uint32_t height)
 	: DepthStencil(width, height, false, DepthStencilUse::Standard)
 {}
 
+DepthStencilOutput::DepthStencilOutput(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture, uint32_t face)
+	:DepthStencil(std::move(texture), face)
+{}
+
 RenderTarget::RenderTarget(uint32_t width, uint32_t height)
 	:Width(width), Height(height)
 {
@@ -151,6 +170,7 @@ RenderTarget::RenderTarget(ID3D11Texture2D* texture)
 	renderTargetViewDesc.Format = textureDesc.Format;
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D = D3D11_TEX2D_RTV{ 0 };
+
 	CurrentGraphicsContext::Device()->CreateRenderTargetView(texture, &renderTargetViewDesc, &RenderTargetView);
 }
 

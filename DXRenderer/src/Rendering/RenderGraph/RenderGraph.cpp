@@ -52,6 +52,11 @@ RenderQueuePass& RenderGraph::GetRenderQueue(const std::string& passName)
 	return RenderGraph::Get().GetRenderQueueImpl(passName);
 }
 
+void RenderGraph::SetUpLightSource(const PointLight* pointLight)
+{
+	RenderGraph::Get().SetUpLightSourceImpl(pointLight);
+}
+
 void RenderGraph::AddGlobalInputs(UniquePtr<PassInputBase> in)
 {
 	RenderGraph::Get().AddGlobalInputsImpl(std::move(in));
@@ -70,7 +75,6 @@ RenderGraph::RenderGraph()
 {
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<RenderTarget>>("backBuffer", BackBuffer));
 	GlobalOutputs.emplace_back(MakeUnique<PassOutput<DepthStencil>>("depthBuffer", DepthBuffer));
-	GlobalOutputs.emplace_back(MakeUnique <PassOutput<ShadowRasterizerState>>("shadowRasterizer", ShadowRasterizer));
 	GlobalInputs.emplace_back(MakeUnique<PassInput<RenderTarget>>("backBuffer", BackBuffer));
 
 	//--------------------------
@@ -83,7 +87,6 @@ RenderGraph::RenderGraph()
 	}
 	{
 		auto pass = MakeUnique<ShadowMappingPass>("shadowMap");
-		pass->SetInputSource("shadowRasterizer", "$.shadowRasterizer");
 		AddImpl(std::move(pass));
 	}
 	{
@@ -239,6 +242,21 @@ RenderQueuePass& RenderGraph::GetRenderQueueImpl(const std::string& passName)
 	{
 		throw std::invalid_argument("Cannot find a RenderQueuePass with such name");
 	}
+}
+
+void RenderGraph::SetUpLightSourceImpl(const PointLight* pointLight)
+{
+	auto shadowPassName = "shadowMap";
+	const auto it = std::find_if(Passes.begin(), Passes.end(), [&shadowPassName](const auto& pass)
+								 {
+									 return pass->GetName() == shadowPassName;
+								 });
+	ASSERT(it != Passes.end() && "Name not found!");
+
+	if (auto* outPtr = dynamic_cast<ShadowMappingPass*>((*it).get()))
+		outPtr->SetLightSource(pointLight);
+	else
+		throw std::bad_cast();
 }
 
 void RenderGraph::AddGlobalInputsImpl(UniquePtr<PassInputBase> in)

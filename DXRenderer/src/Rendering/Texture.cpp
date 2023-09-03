@@ -1,5 +1,6 @@
 #include "Core\Exception.h"
 #include "Rendering\CurrentGraphicsContext.h"
+#include "RenderTarget.h"
 #include "Texture.h"
 
 #include <wrl.h>

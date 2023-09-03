@@ -78,7 +78,7 @@ Application::Application()
 	trInt.Z = 10.0f;
 	trInt.Roll = 180.0f;
 	trInt.Yaw = -90.0f;
-	//Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
+	Actors.emplace_back(MakeUnique<Model>("Sponza\\sponza.obj", trInt));
 	trInt.X = -13.5f;
 	trInt.Y = 6.0f;
 	trInt.Z = 8.0f;
@@ -98,6 +98,7 @@ Application::Application()
 	Light->LinkTechniques();
 
 	Cameras.LinkTechniques();
+	RenderGraph::SetUpLightSource(Light.get());
 }
 void Application::Tick()
 {

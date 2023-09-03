@@ -5,6 +5,7 @@
 
 #include <d3d11.h>
 #include <wrl.h>
+#include <optional>
 
 enum class DepthStencilUse
 {
@@ -22,6 +23,7 @@ public:
 
 protected:
 	DepthStencil(uint32_t width, uint32_t height, bool isShaderResource, DepthStencilUse use);
+	DepthStencil(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture, uint32_t face);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthStencilView;
@@ -46,6 +48,7 @@ class DepthStencilOutput : public DepthStencil
 {
 public:
 	DepthStencilOutput(uint32_t width, uint32_t height);
+	DepthStencilOutput(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture, uint32_t face);
 };
 
 class RenderTarget

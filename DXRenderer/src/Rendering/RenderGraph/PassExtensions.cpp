@@ -1,10 +1,12 @@
 #include "PassExtensions.h"
-#include "Rendering/RenderTarget.h"
+#include "Rendering/Actors/Primitives.h"
 #include "Rendering/Buffer.h"
+#include "Rendering/Lights/PointLight.h"
+#include "Rendering/RenderTarget.h"
 #include "Rendering/Shader.h"
 #include "Rendering/State.h"
 #include "Rendering/Texture.h"
-#include "Rendering/Actors/Primitives.h"
+#include "Rendering/Viewport.h"
 
 ResourcesPass::ResourcesPass(std::string&& name)
 	:Pass(std::move(name))
@@ -99,7 +101,7 @@ PhongPass::PhongPass(std::string&& name)
 {
 	Register<PassInput<RenderTarget>>("renderTarget", RTarget);
 	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
-	Register<PassInput<DepthStencil>>("shadowMap", ShadowMap);
+	Register<PassInput<CubeTextureDepth>>("shadowMap", ShadowMap);
 	Register<PassOutput<RenderTarget>>("renderTarget", RTarget);
 	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
 	Add<StencilState<DepthStencilMode::Off>>();
@@ -206,29 +208,76 @@ void VerticalBlurPass::Execute() const
 	FullScreenPass::Execute();
 }
 
-ShadowMappingPass::ShadowMappingPass(std::string&& name)
-	:RenderQueuePass(std::move(name))
+ShadowMappingPass::ShadowMappingPass(std::string&& name, const PointLight* pointLight)
+	:RenderQueuePass(std::move(name)), LightSource(pointLight)
 {
-	DStencil = MakeUnique<DepthStencilInput>(CurrentGraphicsContext::GraphicsInfo->GetWidth(),
-											 CurrentGraphicsContext::GraphicsInfo->GetHeight(),
-											 3,
-											 DepthStencilUse::ShadowDepth);
+	DepthCube = MakeShared<CubeTextureDepth>(DepthDim, 3);
 	Add<VertexShader>("ShadowMapUpdate");
-	Add<NullPixelShader>();
 	Add<StencilState<DepthStencilMode::Off>>();
 	Add<BlendState>("shadowMapBL", false);
+	Add<Viewport>(DepthDim, DepthDim);
+	Add<ShadowRasterizerState>();
 
-	Register<PassInput<ShadowRasterizerState>>("shadowRasterizer", ShadowRasterizer);
-	Register<PassOutput<DepthStencil>>("map", DStencil);
+	ViewUniform = MakeUnique< UniformVS<DirectX::XMMATRIX>>("$shadowView", View, 3);
+	ViewProjectionUniform = MakeUnique< UniformVS<DirectX::XMMATRIX>>("$shadowViewProj", ViewProjection, 4);
+
+	Register<PassOutput<CubeTextureDepth>>("map", DepthCube);
+
+	Projection = DirectX::XMMatrixPerspectiveFovLH(pi / 2.0f, 1.0f, 0.5f, 100.0f);
+
+	CameraOrientation[0] = DirectX::XMFLOAT3{ 0, pi / 2.0f, 0 };
+	CameraOrientation[1] = DirectX::XMFLOAT3{ 0, -pi / 2.0f, 0 };
+	CameraOrientation[2] = DirectX::XMFLOAT3{ -pi / 2.0f, 0, 0 };
+	CameraOrientation[3] = DirectX::XMFLOAT3{ pi / 2.0f, 0, 0 };
+	CameraOrientation[4] = DirectX::XMFLOAT3{ 0, 0, 0 };
+	CameraOrientation[5] = DirectX::XMFLOAT3{ 0, -pi, 0 };
+
+	SetDepthBuffer(DepthCube->operator[](0));
 }
 
 void ShadowMappingPass::Execute() const
 {
+	using namespace DirectX;
+
 	ID3D11ShaderResourceView* const pNullTex = nullptr;
 	CurrentGraphicsContext::Context()->PSSetShaderResources(3, 1, &pNullTex); // shadow map texture
-	DStencil->Clear();
-	RenderQueuePass::Execute();
+
+	auto position = LightSource->Position;
+	for (size_t i = 0; i < 6; i++)
+	{
+		auto depthStencil = (*DepthCube)[i];
+		depthStencil->Clear();
+		SetDepthBuffer(std::move(depthStencil));
+
+		auto Rotation = CameraOrientation[i];
+		DirectX::XMMATRIX transform = XMMatrixRotationRollPitchYaw(-Rotation.x, -Rotation.y, Rotation.z) *
+			XMMatrixTranslation(-position.x, -position.y, position.z);
+		View = XMMatrixInverse(nullptr, transform);
+		ViewProjection = View * Projection;
+
+		ViewUniform->Bind();
+		ViewProjectionUniform->Bind();
+		RenderQueuePass::Execute();
+	}
+
+	View =XMMatrixTranslation(-position.x, -position.y, position.z);
+	View = XMMatrixInverse(nullptr, View);
+	ViewProjection = View * Projection;
+
+	ViewUniform->Bind();
+	ViewProjectionUniform->Bind();
+
 	CurrentGraphicsContext::Context()->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+void ShadowMappingPass::SetLightSource(const PointLight* pointLight)
+{
+	LightSource = pointLight;
+}
+
+void ShadowMappingPass::SetDepthBuffer(SharedPtr<DepthStencil> depthStencil) const
+{
+	const_cast<ShadowMappingPass*>(this)->DStencil = depthStencil;
 }
 
 SkyboxPass::SkyboxPass(std::string&& name)

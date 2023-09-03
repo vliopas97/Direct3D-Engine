@@ -1,3 +1,5 @@
+#include "include/shadowOps.hlsli"
+
 cbuffer constBuffer : register(b0)
 {
     row_major matrix model;
@@ -11,11 +13,6 @@ cbuffer constBuffer : register(b1)
 cbuffer constBuffer : register(b2)
 {
     row_major matrix projection;
-}
-
-cbuffer constBuffer : register(b3)
-{
-    row_major matrix shadowViewProj;
 }
 
 struct Output
@@ -34,8 +31,7 @@ Output main( float3 pos : Position, float3 n : Normal )
     output.normal = mul(n, (float3x3) modelView);
     output.pos = mul(float4(output.posWorld, 1.0f), projection);
     
-    const float4 shadowProj = mul(mul(float4(pos, 1.0f), model), shadowViewProj);
-    output.shadowPos = shadowProj * float4(0.5f, -0.5f, 1.0f, 1.0f) + (float4(0.5f, 0.5f, 0.0f, 0.0f) * shadowProj.w);
+    output.shadowPos = ShadowConversion(pos, model);
     
     return output;
 }

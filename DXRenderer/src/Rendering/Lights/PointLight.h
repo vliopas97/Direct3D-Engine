@@ -15,8 +15,6 @@ public:
 	void GUI();
 	void Tick(float delta);
 
-	inline const DirectX::XMMATRIX& GetViewProjection() const { return ViewProjection; }
-
 public:
 	struct LightProperties
 	{
@@ -48,10 +46,4 @@ public:
 private:
 	Sphere Mesh;
 	UniformPS<LightProperties> Model;
-	UniformVS<DirectX::XMMATRIX> ShadowMatrix;
-
-	DirectX::XMFLOAT3 Rotation{};
-	DirectX::XMMATRIX ViewProjection;
-
-	Camera Cam;
 };
