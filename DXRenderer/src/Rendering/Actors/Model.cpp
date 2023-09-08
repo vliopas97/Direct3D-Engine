@@ -34,7 +34,7 @@ void Model::Tick(float delta)
 
 void Model::GUI()
 {
-	if (ImGui::Begin("Leon"))
+	if (ImGui::Begin("Scene"))
 	{
 		ImGui::Columns(2, nullptr, true);
 

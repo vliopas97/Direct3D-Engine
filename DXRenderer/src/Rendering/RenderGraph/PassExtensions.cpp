@@ -135,7 +135,6 @@ OutlineMaskPass::OutlineMaskPass(std::string&& name)
 	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
 	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
 	Add<VertexShader>("colorInput");
-	Add<NullPixelShader>();
 	Add<StencilState<DepthStencilMode::Write>>();
 	Add<RasterizerState>(false);
 }
