@@ -135,6 +135,7 @@ OutlineMaskPass::OutlineMaskPass(std::string&& name)
 	Register<PassInput<DepthStencil>>("depthStencil", DStencil);
 	Register<PassOutput<DepthStencil>>("depthStencil", DStencil);
 	Add<VertexShader>("colorInput");
+	Add<NullPixelShader>();
 	Add<StencilState<DepthStencilMode::Write>>();
 	Add<RasterizerState>(false);
 }
@@ -212,6 +213,7 @@ ShadowMappingPass::ShadowMappingPass(std::string&& name, const PointLight* point
 {
 	DepthCube = MakeShared<CubeTextureDepth>(DepthDim, 3);
 	Add<VertexShader>("ShadowMapUpdate");
+	Add<NullPixelShader>();
 	Add<StencilState<DepthStencilMode::Off>>();
 	Add<BlendState>("shadowMapBL", false);
 	Add<Viewport>(DepthDim, DepthDim);
